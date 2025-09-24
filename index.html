@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sparkle Study Lounge</title>
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+    <div class="sparkle-overlay" aria-hidden="true"></div>
+    <main class="app" role="main">
+        <header class="hero">
+            <div class="hero__badge">Pink Study Quest</div>
+            <h1 class="hero__title">Sparkle Study Lounge</h1>
+            <p class="hero__tagline">Gamify every study session with pink energy, sweet treats, and glam focus rituals.</p>
+        </header>
+
+        <section class="screen screen--active" data-screen="intro" aria-labelledby="intro-title">
+            <h2 id="intro-title">Set the Vibe</h2>
+            <form id="intro-form" class="card form">
+                <label class="form__label" for="name-input">Who's stepping onto the study runway?</label>
+                <input id="name-input" class="input" name="name" type="text" placeholder="Enter a glamorous name" autocomplete="name" />
+                <p class="form__hint">Tip: leave blank to surprise Emilija with her own sparkle.</p>
+                <button type="submit" class="btn btn--primary">Continue</button>
+            </form>
+        </section>
+
+        <section class="screen" data-screen="tasks" aria-labelledby="tasks-title">
+            <h2 id="tasks-title">Craft the Study Lineup</h2>
+            <div class="layout">
+                <div class="card card--soft">
+                    <p>List up to three quests you want to glam-ify today. Think chapters, concepts, or anything craving glitter.</p>
+                    <div class="task-entry">
+                        <input id="task-input" class="input" type="text" maxlength="120" placeholder="e.g. Anatomy: upper limb muscles" />
+                        <button id="add-task" type="button" class="btn btn--pill">Add Quest</button>
+                    </div>
+                    <p class="form__hint">Need inspo? Mix sweet rewards with focused sprints.</p>
+                </div>
+                <div class="card" aria-live="polite">
+                    <h3 class="card__title">Glitter Board</h3>
+                    <ul id="task-list" class="task-list"></ul>
+                    <button id="start-game" type="button" class="btn btn--primary" disabled>Launch the Sparkle Session</button>
+                </div>
+            </div>
+        </section>
+
+        <section class="screen" data-screen="game" aria-live="polite" aria-labelledby="round-title">
+            <div class="status-bar">
+                <span id="round-indicator">Round 1 / 3</span>
+                <span id="sparkle-indicator">Sparkle Points: <span id="sparkle-points">0</span></span>
+            </div>
+            <article class="card scene">
+                <h2 id="round-title" class="scene__title"></h2>
+                <p id="round-scene" class="scene__narrative"></p>
+                <div id="options" class="option-grid"></div>
+                <div id="round-result" class="result" hidden>
+                    <h3 class="result__title">Technique Twist</h3>
+                    <p id="technique-text"></p>
+                    <p id="affirmation-text" class="result__affirm"></p>
+                    <p id="treat-text" class="result__treat"></p>
+                    <button id="next-round" class="btn btn--primary">Next Glow Moment</button>
+                </div>
+            </article>
+        </section>
+
+        <section class="screen" data-screen="recap" aria-labelledby="recap-title">
+            <article class="card card--glow">
+                <h2 id="recap-title">Radiance Recap</h2>
+                <p id="recap-intro"></p>
+                <ul id="recap-tasks" class="task-list task-list--recap"></ul>
+                <p id="recap-vibe" class="recap__vibe"></p>
+                <div class="recap__actions">
+                    <button id="play-again" class="btn btn--primary">Play Again</button>
+                    <button id="edit-quests" class="btn btn--secondary">Adjust Quests</button>
+                </div>
+            </article>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <span>Made with &hearts;, white chocolate, and salty caramel sparkles.</span>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
