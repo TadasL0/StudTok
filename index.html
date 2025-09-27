@@ -4,9 +4,39 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Sparkle Study Lounge</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:wght@400;500;600;700;900&family=Quicksand:wght@400;600;700&display=swap"
+        rel="stylesheet"
+    />
     <link rel="stylesheet" href="style.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.6.172/pdf.min.js" defer></script>
 </head>
 <body>
+    <div class="welcome-splash" aria-hidden="true">
+        <div class="welcome-splash__content">
+            <span class="welcome-splash__salute">Hi,</span>
+            <span id="splash-name" class="welcome-splash__name">Emilija!</span>
+        </div>
+        <div class="welcome-splash__particles" aria-hidden="true">
+            <span class="welcome-splash__heart" style="--x:8%; --delay:0s; --duration:7s; --size:46px;"></span>
+            <span class="welcome-splash__heart welcome-splash__heart--small" style="--x:22%; --delay:-2s; --duration:8.5s; --size:34px;"></span>
+            <span class="welcome-splash__heart" style="--x:48%; --delay:-1s; --duration:7.8s; --size:40px;"></span>
+            <span class="welcome-splash__heart" style="--x:72%; --delay:-3.4s; --duration:9s; --size:44px;"></span>
+            <span class="welcome-splash__heart welcome-splash__heart--small" style="--x:88%; --delay:-4.1s; --duration:8s; --size:30px;"></span>
+            <span class="welcome-splash__choco welcome-splash__choco--bowtie" style="--x:15%; --delay:-1.6s; --duration:9.4s; --size:46px;"></span>
+            <span class="welcome-splash__choco welcome-splash__choco--heel" style="--x:36%; --delay:-3s; --duration:8.6s; --size:40px;"></span>
+            <span class="welcome-splash__choco welcome-splash__choco--tequila" style="--x:58%; --delay:-2.2s; --duration:7.2s; --size:44px;"></span>
+            <span class="welcome-splash__choco welcome-splash__choco--bowtie" style="--x:79%; --delay:-5s; --duration:8.8s; --size:42px;"></span>
+            <span class="welcome-splash__plush welcome-splash__plush--bunny" style="--x:12%; --delay:-1.8s; --duration:9.2s; --size:60px;"></span>
+            <span class="welcome-splash__plush welcome-splash__plush--bear" style="--x:44%; --delay:-3.6s; --duration:8.4s; --size:56px;"></span>
+            <span class="welcome-splash__plush welcome-splash__plush--bunny" style="--x:66%; --delay:-4.8s; --duration:9.6s; --size:62px;"></span>
+            <span class="welcome-splash__plush welcome-splash__plush--bear" style="--x:90%; --delay:-2.9s; --duration:8.1s; --size:52px;"></span>
+            <span class="welcome-splash__heart" style="--x:30%; --delay:-5.4s; --duration:9.6s; --size:50px;"></span>
+            <span class="welcome-splash__heart welcome-splash__heart--tiny" style="--x:64%; --delay:-6.2s; --duration:7.4s; --size:24px;"></span>
+        </div>
+    </div>
     <div class="sparkle-overlay" aria-hidden="true"></div>
     <main class="app" role="main">
         <header class="hero">
@@ -17,70 +47,111 @@
 
         <section class="screen screen--active" data-screen="intro" aria-labelledby="intro-title">
             <h2 id="intro-title">Set the Vibe</h2>
-            <form id="intro-form" class="card form">
-                <label class="form__label" for="name-input">Who's stepping onto the study runway?</label>
-                <input id="name-input" class="input" name="name" type="text" placeholder="Enter a glamorous name" autocomplete="name" />
-                <p class="form__hint">Tip: leave blank to surprise Emilija with her own sparkle.</p>
-                <button type="submit" class="btn btn--primary">Continue</button>
+            <form id="intro-form" class="card intro-card" aria-describedby="intro-helper">
+                <p id="intro-helper" class="intro-card__helper">Pick a name for the lounge, add your OpenAI key, and we&apos;ll unlock the pink study studio.</p>
+
+                <div class="intro-card__field">
+                    <label class="form__label" for="name-input">Study persona</label>
+                    <input id="name-input" class="input" name="name" type="text" placeholder="e.g. Glam Anatomy Queen" autocomplete="name" required />
+                </div>
+
+                <div class="intro-card__field intro-card__field--inline">
+                    <label class="form__label" for="intro-api-key">OpenAI API key</label>
+                    <div class="intro-card__key">
+                        <input id="intro-api-key" class="input intro-card__input" name="apiKey" type="password" placeholder="sk-..." autocomplete="off" required />
+                        <button id="intro-toggle-key" type="button" class="btn btn--secondary btn--tiny" aria-label="Toggle API key visibility">Show</button>
+                    </div>
+                    <p class="flashcard-form__hint">Keys are stored locally only if you ask us to remember them.</p>
+                </div>
+
+                <label class="flashcard-form__remember intro-card__remember">
+                    <input id="intro-remember-key" type="checkbox" />
+                    <span>Remember this key on this device</span>
+                </label>
+
+                <button type="submit" class="btn btn--primary intro-card__submit">Enter the Lounge</button>
             </form>
         </section>
 
-        <section class="screen" data-screen="tasks" aria-labelledby="tasks-title">
-            <h2 id="tasks-title">Craft the Study Lineup</h2>
-            <div class="layout">
-                <div class="card card--soft">
-                    <p>List up to three quests you want to glam-ify today. Think chapters, concepts, or anything craving glitter.</p>
-                    <div class="task-entry">
-                        <input id="task-input" class="input" type="text" maxlength="120" placeholder="e.g. Anatomy: upper limb muscles" />
-                        <button id="add-task" type="button" class="btn btn--pill">Add Quest</button>
+        <section class="screen" data-screen="tasks" aria-labelledby="studio-title">
+            <h2 id="studio-title">Sparkle Study Studio</h2>
+            <div class="studio-actions">
+                <p class="studio-actions__note">Need to change your name or API key?</p>
+                <button id="edit-setup" type="button" class="btn btn--secondary btn--tiny">Back to Setup</button>
+            </div>
+
+            <div class="studio-grid">
+                <div class="card flashcard-card" aria-live="polite">
+                    <div class="flashcard-card__header">
+                        <h3 class="card__title" id="flashcard-title">Pink PDF Flashcard Mixer</h3>
+                        <p class="flashcard-card__tagline">Drop in a PDF, whisper your API key, and we&apos;ll conjure a deck of dreamy study flashcards just for you.</p>
                     </div>
-                    <p class="form__hint">Need inspo? Mix sweet rewards with focused sprints.</p>
+
+                    <form id="flashcard-form" class="flashcard-form" aria-labelledby="flashcard-title">
+                        <label class="flashcard-form__field" for="pdf-input">
+                            <span class="flashcard-form__label">Choose a PDF</span>
+                            <input id="pdf-input" name="pdf" type="file" accept="application/pdf" required />
+                        </label>
+                        <button id="generate-flashcards" class="btn btn--primary" type="submit">Conjure Flashcards</button>
+                        <p id="flashcard-status" class="flashcard-status" role="status" aria-live="polite"></p>
+                    </form>
+
+                    <div id="flashcard-widget" class="flashcard-widget" hidden aria-labelledby="flashcard-title">
+                        <div class="flashcard-widget__controls">
+                            <button id="flashcard-prev" type="button" class="btn btn--pill" aria-label="Previous flashcard">Prev</button>
+                            <span id="flashcard-counter" class="flashcard-widget__counter">0 / 0</span>
+                            <button id="flashcard-next" type="button" class="btn btn--pill" aria-label="Next flashcard">Next</button>
+                        </div>
+                        <div class="flashcard-widget__stage">
+                            <button id="flashcard-card" type="button" class="flashcard-widget__card" aria-live="polite" aria-label="Flip flashcard">
+                                <div class="flashcard-widget__side flashcard-widget__side--front">
+                                    <h4 class="flashcard-widget__heading">Prompt</h4>
+                                    <p id="flashcard-front" class="flashcard-widget__text"></p>
+                                </div>
+                                <div class="flashcard-widget__side flashcard-widget__side--back">
+                                    <h4 class="flashcard-widget__heading">Answer</h4>
+                                    <p id="flashcard-back" class="flashcard-widget__text"></p>
+                                </div>
+                            </button>
+                        </div>
+                        <div id="flashcard-tags" class="flashcard-widget__tags" aria-live="polite"></div>
+                        <p class="flashcard-widget__hint">Tap or press space/enter to flip. Use the pink pills to browse.</p>
+                    </div>
                 </div>
-                <div class="card" aria-live="polite">
-                    <h3 class="card__title">Glitter Board</h3>
-                    <ul id="task-list" class="task-list"></ul>
-                    <button id="start-game" type="button" class="btn btn--primary" disabled>Launch the Sparkle Session</button>
+
+                <div class="card notepad-card" aria-live="polite">
+                    <div class="notepad-card__header">
+                        <h3 class="card__title" id="notepad-title">Glam To-Do Notepad</h3>
+                        <p class="notepad-card__tagline">Jot glittery tasks, check them off, and pin the big ones to the board.</p>
+                    </div>
+                    <form id="notepad-form" class="notepad-form" aria-labelledby="notepad-title">
+                        <input id="notepad-input" class="input notepad-input" type="text" maxlength="160" placeholder="" autocomplete="off" required />
+                        <button class="btn btn--primary btn--tiny" type="submit">Add Scribble</button>
+                    </form>
+                    <ul id="notepad-list" class="notepad-list"></ul>
+                    <p class="notepad-empty" hidden>Nothing noted yet. Dream up a task!</p>
+                </div>
+
+                <div class="card sticky-card" aria-live="polite">
+                    <div class="sticky-card__header">
+                        <h3 class="card__title" id="sticky-title">Pinned Pastel Board</h3>
+                        <p class="sticky-card__tagline">Pin fave concepts as pastel notes. Unpin to let them drift away.</p>
+                        <button id="clear-stickies" type="button" class="btn btn--secondary btn--tiny">Clear Board</button>
+                    </div>
+                    <div id="sticky-board" class="sticky-board" aria-labelledby="sticky-title"></div>
+                    <p id="sticky-empty" class="sticky-empty">No notes pinned yet. Pin something delightful!</p>
                 </div>
             </div>
         </section>
 
-        <section class="screen" data-screen="game" aria-live="polite" aria-labelledby="round-title">
-            <div class="status-bar">
-                <span id="round-indicator">Round 1 / 3</span>
-                <span id="sparkle-indicator">Sparkle Points: <span id="sparkle-points">0</span></span>
-            </div>
-            <article class="card scene">
-                <h2 id="round-title" class="scene__title"></h2>
-                <p id="round-scene" class="scene__narrative"></p>
-                <div id="options" class="option-grid"></div>
-                <div id="round-result" class="result" hidden>
-                    <h3 class="result__title">Technique Twist</h3>
-                    <p id="technique-text"></p>
-                    <p id="affirmation-text" class="result__affirm"></p>
-                    <p id="treat-text" class="result__treat"></p>
-                    <button id="next-round" class="btn btn--primary">Next Glow Moment</button>
-                </div>
-            </article>
-        </section>
+        <section class="screen" data-screen="game" aria-live="polite" aria-labelledby="round-title" hidden></section>
 
-        <section class="screen" data-screen="recap" aria-labelledby="recap-title">
-            <article class="card card--glow">
-                <h2 id="recap-title">Radiance Recap</h2>
-                <p id="recap-intro"></p>
-                <ul id="recap-tasks" class="task-list task-list--recap"></ul>
-                <p id="recap-vibe" class="recap__vibe"></p>
-                <div class="recap__actions">
-                    <button id="play-again" class="btn btn--primary">Play Again</button>
-                    <button id="edit-quests" class="btn btn--secondary">Adjust Quests</button>
-                </div>
-            </article>
-        </section>
+        <section class="screen" data-screen="recap" aria-labelledby="recap-title" hidden></section>
     </main>
 
     <footer class="footer">
         <span>Made with &hearts;, white chocolate, and salty caramel sparkles.</span>
     </footer>
-
     <script src="script.js"></script>
 </body>
 </html>

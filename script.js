@@ -3,124 +3,104 @@
 const screens = document.querySelectorAll('.screen');
 const nameInput = document.getElementById('name-input');
 const introForm = document.getElementById('intro-form');
-const taskInput = document.getElementById('task-input');
-const addTaskBtn = document.getElementById('add-task');
-const taskList = document.getElementById('task-list');
-const startGameBtn = document.getElementById('start-game');
-const optionsContainer = document.getElementById('options');
-const roundTitle = document.getElementById('round-title');
-const roundScene = document.getElementById('round-scene');
-const roundIndicator = document.getElementById('round-indicator');
-const sparklePoints = document.getElementById('sparkle-points');
-const sparkleIndicator = document.getElementById('sparkle-indicator');
-const resultPanel = document.getElementById('round-result');
-const techniqueText = document.getElementById('technique-text');
-const affirmationText = document.getElementById('affirmation-text');
-const treatText = document.getElementById('treat-text');
-const nextRoundBtn = document.getElementById('next-round');
-const recapIntro = document.getElementById('recap-intro');
-const recapTasks = document.getElementById('recap-tasks');
-const recapVibe = document.getElementById('recap-vibe');
-const playAgainBtn = document.getElementById('play-again');
-const editQuestsBtn = document.getElementById('edit-quests');
 
-const HEART = '\u2661';
-const SPARKLE = '\u2728';
+const flashcardForm = document.getElementById('flashcard-form');
+const pdfInput = document.getElementById('pdf-input');
+const flashcardStatus = document.getElementById('flashcard-status');
+const flashcardWidget = document.getElementById('flashcard-widget');
+const flashcardCard = document.getElementById('flashcard-card');
+const flashcardFront = document.getElementById('flashcard-front');
+const flashcardBack = document.getElementById('flashcard-back');
+const flashcardPrevBtn = document.getElementById('flashcard-prev');
+const flashcardNextBtn = document.getElementById('flashcard-next');
+const flashcardCounter = document.getElementById('flashcard-counter');
+const flashcardTags = document.getElementById('flashcard-tags');
+const generateFlashcardsBtn = document.getElementById('generate-flashcards');
+
+const introApiKeyInput = document.getElementById('intro-api-key');
+const introToggleKeyBtn = document.getElementById('intro-toggle-key');
+const introRememberKeyCheckbox = document.getElementById('intro-remember-key');
+const editSetupBtn = document.getElementById('edit-setup');
+
+const splash = document.querySelector('.welcome-splash');
+const splashName = document.getElementById('splash-name');
+
+const notepadForm = document.getElementById('notepad-form');
+const notepadInput = document.getElementById('notepad-input');
+const notepadList = document.getElementById('notepad-list');
+const notepadEmpty = document.querySelector('.notepad-empty');
+
+const stickyBoard = document.getElementById('sticky-board');
+const stickyEmpty = document.getElementById('sticky-empty');
+const clearStickiesBtn = document.getElementById('clear-stickies');
 
 const state = {
     name: 'Emilija',
-    tasks: [],
-    selectedTasks: [],
-    currentRound: 0,
-    totalRounds: 0,
-    sparkle: 0,
-    roundResolved: false,
+    apiKey: '',
+    notepadPrompt: '',
 };
 
-const ROUNDS = [
+const flashcardState = {
+    cards: [],
+    index: 0,
+    flipped: false,
+};
+
+const FLASHCARD_STORAGE_KEY = 'pinkStudy.apiKey';
+const FLASHCARD_MODEL = 'gpt-4.1-mini';
+const OPENAI_ENDPOINT = 'https://api.openai.com/v1/chat/completions';
+const MAX_PDF_CHARACTERS = 9000;
+const MAX_PDF_SIZE = 8 * 1024 * 1024; // 8 MB
+
+const NOTEPAD_PROMPTS = [
+    { text: 'Pasiruošti medžiagų mokslui', weight: 3 },
+    { text: 'Pasiruošti matematikai', weight: 3 },
+    { text: 'Pasiruošti braižybai', weight: 3 },
+    { text: 'Pasiruošti medžiagų mechanikai', weight: 3 },
+    { text: 'Atsipalaiduoti ir parūkyti', weight: 1 },
+    { text: 'Palepinti save šokoladu', weight: 1 },
+];
+
+const STICKY_PALETTES = [
     {
-        title: 'Blushing Blueprint',
-        scene: 'You step into the Pink Study Lounge, walls shimmering with rose quartz hues. On a velvet chaise rests today\'s focus: {task}.',
-        options: [
-            {
-                label: 'Velvet Vision Board',
-                description: 'Sketch the cutest storyboard for this concept while high-heeled bookmarks keep your notes in line. Group key ideas into three spotlight moments.',
-                technique: 'Create a mini mind-map using colors: blush for main ideas, champagne for details.',
-                boost: 3,
-            },
-            {
-                label: 'Cotton Candy Countdown',
-                description: 'Set a 15-minute timer, nibble on white chocolate bark, and race the clock to capture the juiciest facts before the bell.',
-                technique: 'Sprint-study for 15 minutes, then spend 3 minutes summarizing the highlights aloud.',
-                boost: 2,
-            },
-            {
-                label: 'Blossom Buddy Notes',
-                description: 'Invite your inner glam squad: narrate the topic like a runway host while noting three dazzling takeaways to text your study partner.',
-                technique: 'Teach it back in your own words and voice-record the recap for later replays.',
-                boost: 4,
-            },
-        ],
+        bg1: 'rgba(255, 250, 230, 0.96)',
+        bg2: 'rgba(255, 212, 232, 0.92)',
+        pinStrong: 'rgba(255, 138, 196, 0.95)',
+        pinSoft: 'rgba(255, 170, 215, 0.5)',
+        text: '#44263f',
     },
     {
-        title: 'Heel Haute Hustle',
-        scene: 'Marble runways guide you to the Focus Atrium. Strappy stilettos click with determination as the next sparkle mission emerges: {task}.',
-        options: [
-            {
-                label: 'Runway Rehearsal',
-                description: 'Strut through flashcards like they\'re finale looks. Each confident answer earns a salty caramel star pinned to your sash.',
-                technique: 'Flip each card twice: once for recall, once to explain why it matters.',
-                boost: 3,
-            },
-            {
-                label: 'Glossy Grid Shuffle',
-                description: 'Lay your notes out like a boutique display, matching concepts to their glam partners.',
-                technique: 'Use a table: column one for terms, column two for glittery real-life examples.',
-                boost: 2,
-            },
-            {
-                label: 'Stiletto Stepbacks',
-                description: 'Every 10 minutes, pause, breathe, adjust the tiara, and ask: "What\'s the boldest idea I\'m wearing right now?".',
-                technique: 'Cycle focus with three Pomodoro rounds, celebrating each break with a stretch pose.',
-                boost: 4,
-            },
-        ],
+        bg1: 'rgba(255, 248, 252, 0.96)',
+        bg2: 'rgba(255, 228, 242, 0.92)',
+        pinStrong: 'rgba(255, 183, 219, 0.95)',
+        pinSoft: 'rgba(255, 183, 219, 0.45)',
+        text: '#3f2b35',
     },
     {
-        title: 'Caramel Cloud Cooldown',
-        scene: 'The lounge melts into a dessert lab. Crystal jars of white chocolate pearls glow softly while a salted caramel fountain hums beside {task}.',
-        options: [
-            {
-                label: 'Sweet Synthesis',
-                description: 'Blend the topic into a parfait by stacking key ideas, supporting sprinkles, and a cherry summary on top.',
-                technique: 'Summarize the chapter in five glitter-bullets, bolding the must-remember gems.',
-                boost: 3,
-            },
-            {
-                label: 'Treat Yourself Test',
-                description: 'Quiz yourself with sugar-sweet questions. Each correct answer earns a drizzle of caramel confidence.',
-                technique: 'Draft five self-check questions and answer them dramatically in the mirror.',
-                boost: 4,
-            },
-            {
-                label: 'Glow Journal Moment',
-                description: 'Jot three moments you felt genuinely beautiful mastering this material. Seal it with a kiss of gratitude.',
-                technique: 'Reflect in a journal: write one sensory detail, one insight, one proud mantra.',
-                boost: 2,
-            },
-        ],
+        bg1: 'rgba(255, 245, 240, 0.95)',
+        bg2: 'rgba(255, 219, 170, 0.92)',
+        pinStrong: 'rgba(255, 185, 120, 0.95)',
+        pinSoft: 'rgba(255, 185, 120, 0.5)',
+        text: '#3f2b20',
+    },
+    {
+        bg1: 'rgba(255, 240, 247, 0.95)',
+        bg2: 'rgba(255, 220, 239, 0.92)',
+        pinStrong: 'rgba(255, 170, 215, 0.95)',
+        pinSoft: 'rgba(255, 170, 215, 0.45)',
+        text: '#3f2d3c',
+    },
+    {
+        bg1: 'rgba(255, 247, 240, 0.95)',
+        bg2: 'rgba(255, 226, 214, 0.92)',
+        pinStrong: 'rgba(255, 190, 160, 0.95)',
+        pinSoft: 'rgba(255, 190, 160, 0.5)',
+        text: '#3f3025',
     },
 ];
 
-const AFFIRMATIONS = [
-    'Your sparkle is study-proof!',
-    'Glamour and grit? You own both.',
-    'Every concept bows to your brilliance.',
-    'Heels high, focus higher.',
-    'Sweet success tastes like white chocolate victory.',
-];
-
-const TREATS = ['white chocolate curl', 'salty caramel sparkle', 'pink macaron', 'sugar crystal'];
+let audioContext;
+let splashTimeout;
 
 function showScreen(id) {
     screens.forEach((screen) => {
@@ -128,234 +108,564 @@ function showScreen(id) {
     });
 }
 
-function resetRoundState() {
-    state.roundResolved = false;
-    resultPanel.hidden = true;
-    techniqueText.textContent = '';
-    affirmationText.textContent = '';
-    treatText.textContent = '';
+function updateGreetingNames() {
+    if (splashName) {
+        splashName.textContent = `${state.name}!`;
+    }
 }
 
-function updateTaskList() {
-    taskList.innerHTML = '';
+function setFlashcardStatus(message, mood = 'info') {
+    if (!flashcardStatus) return;
+    flashcardStatus.textContent = message;
+    flashcardStatus.classList.remove('flashcard-status--error', 'flashcard-status--success', 'flashcard-status--pending');
+    if (mood === 'error') {
+        flashcardStatus.classList.add('flashcard-status--error');
+    } else if (mood === 'success') {
+        flashcardStatus.classList.add('flashcard-status--success');
+    } else if (mood === 'pending') {
+        flashcardStatus.classList.add('flashcard-status--pending');
+    }
+}
 
-    if (state.tasks.length === 0) {
-        const placeholder = document.createElement('li');
-        placeholder.className = 'task-placeholder';
-        const icon = document.createElement('span');
-        icon.className = 'task-icon';
-        icon.textContent = HEART;
-        const label = document.createElement('span');
-        label.className = 'task-label';
-        label.textContent = 'No quests yet -- add something dreamy!';
-        placeholder.append(icon, label);
-        taskList.appendChild(placeholder);
-    } else {
-        state.tasks.forEach((task, index) => {
-            const item = document.createElement('li');
-            const icon = document.createElement('span');
-            icon.className = 'task-icon';
-            icon.textContent = HEART;
-            const label = document.createElement('span');
-            label.className = 'task-label';
-            label.textContent = task;
-            const remove = document.createElement('button');
-            remove.type = 'button';
-            remove.setAttribute('aria-label', `Remove quest ${index + 1}`);
-            remove.textContent = '\u00d7';
-            remove.addEventListener('click', () => {
-                state.tasks.splice(index, 1);
-                updateTaskList();
-            });
-            item.append(icon, label, remove);
-            taskList.appendChild(item);
+function scheduleSplashHide(delay = 2600) {
+    if (!splash) return;
+    clearTimeout(splashTimeout);
+    splashTimeout = setTimeout(() => {
+        splash.classList.add('welcome-splash--hide');
+        setTimeout(() => {
+            splash?.remove();
+        }, 800);
+    }, delay);
+}
+
+async function extractTextFromPdf(file) {
+    if (!window.pdfjsLib) {
+        throw new Error('PDF helper failed to load. Check your connection and reload.');
+    }
+
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    let gathered = '';
+
+    for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
+        const page = await pdf.getPage(pageNumber);
+        const content = await page.getTextContent();
+        const pageText = content.items.map((item) => item.str).join(' ');
+        gathered += `\n\nPage ${pageNumber}:\n${pageText}`;
+        if (gathered.length >= MAX_PDF_CHARACTERS) {
+            gathered = gathered.slice(0, MAX_PDF_CHARACTERS);
+            break;
+        }
+    }
+
+    return gathered.trim();
+}
+
+async function fetchFlashcardsFromApi(text, apiKey) {
+    const prompt = [
+        {
+            role: 'system',
+            content:
+                'You are a bubbly study coach who only responds with compact JSON. Return an array under "flashcards", each item with "question", "answer", and optional "tags" (array). Keep questions friendly, answers concise, no markdown.',
+        },
+        {
+            role: 'user',
+            content: `Create 8 flashcards from this study material. Focus on key facts, definitions, or processes. ${text}`,
+        },
+    ];
+
+    const response = await fetch(OPENAI_ENDPOINT, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+            model: FLASHCARD_MODEL,
+            temperature: 0.5,
+            messages: prompt,
+        }),
+    });
+
+    if (!response.ok) {
+        let details = '';
+        try {
+            const errorPayload = await response.json();
+            details = errorPayload?.error?.message || '';
+        } catch (error) {
+            details = '';
+        }
+        const message = details ? `${response.status} error: ${details}` : `API request failed with status ${response.status}`;
+        throw new Error(message);
+    }
+
+    const data = await response.json();
+    const rawContent = data?.choices?.[0]?.message?.content?.trim();
+    return normaliseFlashcards(rawContent);
+}
+
+function normaliseFlashcards(rawContent) {
+    if (!rawContent) return [];
+    const cleaned = rawContent.replace(/```json|```/gi, '').trim();
+    let parsed;
+
+    try {
+        parsed = JSON.parse(cleaned);
+    } catch (error) {
+        return [];
+    }
+
+    const items = Array.isArray(parsed) ? parsed : parsed.flashcards;
+    if (!Array.isArray(items)) return [];
+
+    return items
+        .map((item) => ({
+            question: String(item.question || '').trim(),
+            answer: String(item.answer || '').trim(),
+            tags: Array.isArray(item.tags)
+                ? item.tags.map((tag) => String(tag).trim()).filter(Boolean)
+                : [],
+        }))
+        .filter((card) => card.question && card.answer);
+}
+
+function renderFlashcard() {
+    if (
+        !flashcardWidget ||
+        !flashcardCard ||
+        !flashcardFront ||
+        !flashcardBack ||
+        !flashcardCounter ||
+        !flashcardTags
+    ) {
+        return;
+    }
+
+    if (flashcardState.cards.length === 0) {
+        flashcardWidget.hidden = true;
+        return;
+    }
+
+    const total = flashcardState.cards.length;
+    const current = flashcardState.cards[flashcardState.index];
+
+    flashcardWidget.hidden = false;
+    flashcardCard.dataset.flipped = flashcardState.flipped ? 'true' : 'false';
+    flashcardFront.textContent = current.question;
+    flashcardBack.textContent = current.answer;
+    flashcardCounter.textContent = `${flashcardState.index + 1} / ${total}`;
+
+    flashcardTags.innerHTML = '';
+    if (current.tags.length > 0) {
+        current.tags.forEach((tag) => {
+            const chip = document.createElement('span');
+            chip.className = 'flashcard-widget__tag';
+            chip.textContent = tag;
+            flashcardTags.appendChild(chip);
         });
     }
 
-    addTaskBtn.disabled = state.tasks.length >= 3;
-    addTaskBtn.textContent = state.tasks.length >= 3 ? 'Max quests reached' : 'Add Quest';
-    startGameBtn.disabled = state.tasks.length === 0;
+    const disableNav = total <= 1;
+    flashcardPrevBtn.disabled = disableNav;
+    flashcardNextBtn.disabled = disableNav;
 }
 
-function prepareGame() {
-    state.selectedTasks = state.tasks.slice(0, ROUNDS.length);
-    if (state.selectedTasks.length === 0) {
-        state.selectedTasks = ['daydreaming up your next big idea'];
+function showFlashcardByIndex(index) {
+    const total = flashcardState.cards.length;
+    if (total === 0) return;
+
+    const wrappedIndex = (index + total) % total;
+    flashcardState.index = wrappedIndex;
+    flashcardState.flipped = false;
+    renderFlashcard();
+    if (flashcardCard) {
+        flashcardCard.focus({ preventScroll: true });
     }
-    state.totalRounds = state.selectedTasks.length;
-    state.currentRound = 0;
-    state.sparkle = 0;
-    resetRoundState();
-    renderRound();
-    showScreen('game');
 }
 
-function renderRound() {
-    const roundData = ROUNDS[state.currentRound];
-    const focusTask = state.selectedTasks[state.currentRound] || state.selectedTasks[0];
+function toggleFlashcardFace() {
+    flashcardState.flipped = !flashcardState.flipped;
+    if (flashcardCard) {
+        flashcardCard.dataset.flipped = flashcardState.flipped ? 'true' : 'false';
+    }
+}
 
-    roundTitle.textContent = `${HEART} ${roundData.title} ${HEART}`;
-    roundScene.textContent = roundData.scene.replace('{task}', focusTask);
-    roundIndicator.textContent = `Round ${state.currentRound + 1} / ${state.totalRounds}`;
-    sparklePoints.textContent = state.sparkle.toString();
-    sparkleIndicator.setAttribute('data-points', state.sparkle.toString());
-
-    optionsContainer.innerHTML = '';
-    resetRoundState();
-
-    roundData.options.forEach((option) => {
-        const card = document.createElement('button');
-        card.type = 'button';
-        card.className = 'option-card';
-        card.setAttribute('aria-pressed', 'false');
-
-        const badge = document.createElement('span');
-        badge.className = 'option-card__badge';
-        badge.textContent = `+${option.boost} SP`;
-
-        const label = document.createElement('span');
-        label.className = 'option-card__label';
-        label.textContent = option.label;
-
-        const description = document.createElement('p');
-        description.className = 'option-card__description';
-        description.textContent = option.description;
-
-        card.append(badge, label, description);
-        card.addEventListener('click', () => handleOptionSelect(option, card));
-        card.addEventListener('keydown', (event) => {
-            if (event.key === 'Enter' || event.key === ' ') {
-                event.preventDefault();
-                handleOptionSelect(option, card);
+function loadStoredApiKey() {
+    try {
+        const stored = localStorage.getItem(FLASHCARD_STORAGE_KEY);
+        if (stored) {
+            state.apiKey = stored;
+            if (introApiKeyInput) {
+                introApiKeyInput.value = stored;
             }
-        });
-
-        optionsContainer.appendChild(card);
-    });
-
-    nextRoundBtn.textContent = state.currentRound + 1 === state.totalRounds ? 'See the Radiance Recap' : 'Next Glow Moment';
-}
-
-function randomItem(items) {
-    return items[Math.floor(Math.random() * items.length)];
-}
-
-function handleOptionSelect(option, selectedCard) {
-    if (state.roundResolved) return;
-
-    state.roundResolved = true;
-    state.sparkle += option.boost;
-    sparklePoints.textContent = state.sparkle.toString();
-
-    const cards = optionsContainer.querySelectorAll('.option-card');
-    cards.forEach((card) => {
-        card.classList.add('disabled');
-        card.setAttribute('aria-pressed', card === selectedCard ? 'true' : 'false');
-    });
-
-    selectedCard.classList.add('selected');
-
-    techniqueText.textContent = option.technique;
-    affirmationText.textContent = `${SPARKLE} ${randomItem(AFFIRMATIONS)}`;
-    treatText.textContent = `Reward unlocked: a ${randomItem(TREATS)}!`;
-
-    resultPanel.hidden = false;
-    nextRoundBtn.focus();
-}
-
-function handleNextRound() {
-    if (!state.roundResolved) {
-        return;
+            if (introRememberKeyCheckbox) {
+                introRememberKeyCheckbox.checked = true;
+            }
+        }
+    } catch (error) {
+        // Storage may be disabled; ignore politely.
     }
+}
 
-    state.currentRound += 1;
-    if (state.currentRound >= state.totalRounds) {
-        showRecap();
+function persistApiKey(value, shouldRemember) {
+    try {
+        if (shouldRemember && value) {
+            localStorage.setItem(FLASHCARD_STORAGE_KEY, value);
+        } else {
+            localStorage.removeItem(FLASHCARD_STORAGE_KEY);
+        }
+    } catch (error) {
+        // Best effort only.
+    }
+}
+
+function pickWeightedNotepadPrompt() {
+    const totalWeight = NOTEPAD_PROMPTS.reduce((sum, prompt) => sum + prompt.weight, 0);
+    let ticket = Math.random() * totalWeight;
+    for (const prompt of NOTEPAD_PROMPTS) {
+        ticket -= prompt.weight;
+        if (ticket <= 0) {
+            return prompt.text;
+        }
+    }
+    return NOTEPAD_PROMPTS[0]?.text || '';
+}
+
+function ensureNotepadPlaceholder(force = false) {
+    if (!notepadInput) return;
+    if (!state.notepadPrompt) {
+        state.notepadPrompt = pickWeightedNotepadPrompt();
+    }
+    if (force || notepadInput.value.trim() === '') {
+        notepadInput.placeholder = state.notepadPrompt;
+    }
+}
+
+function clearFlashcardWidget() {
+    flashcardState.cards = [];
+    flashcardState.index = 0;
+    flashcardState.flipped = false;
+    if (flashcardWidget) {
+        flashcardWidget.hidden = true;
+    }
+    if (flashcardFront) flashcardFront.textContent = '';
+    if (flashcardBack) flashcardBack.textContent = '';
+    if (flashcardCounter) flashcardCounter.textContent = '0 / 0';
+    if (flashcardTags) flashcardTags.innerHTML = '';
+    if (flashcardCard) flashcardCard.dataset.flipped = 'false';
+}
+
+function updateNotepadEmptyState() {
+    if (!notepadEmpty) return;
+    const hasItems = notepadList && notepadList.children.length > 0;
+    notepadEmpty.hidden = hasItems;
+}
+
+function createNotepadItem(text) {
+    if (!notepadList) return null;
+    const id = `scribble-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    const item = document.createElement('li');
+    item.className = 'notepad-item';
+    item.dataset.id = id;
+
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.id = id;
+    checkbox.className = 'notepad-item__checkbox';
+
+    const label = document.createElement('label');
+    label.className = 'notepad-item__label';
+    label.setAttribute('for', id);
+    label.textContent = text;
+
+    const pinBtn = document.createElement('button');
+    pinBtn.type = 'button';
+    pinBtn.className = 'notepad-item__pin';
+    pinBtn.textContent = 'Pin it';
+
+    checkbox.addEventListener('change', () => {
+        label.classList.toggle('notepad-item__label--done', checkbox.checked);
+    });
+
+    pinBtn.addEventListener('click', () => {
+        createStickyNote(text);
+        pinBtn.textContent = 'Pinned!';
+        pinBtn.disabled = true;
+        setTimeout(() => {
+            pinBtn.textContent = 'Pin it';
+            pinBtn.disabled = false;
+        }, 1400);
+    });
+
+    item.append(checkbox, label, pinBtn);
+    return item;
+}
+
+function updateStickyEmptyState() {
+    if (!stickyEmpty) return;
+    const hasNotes = stickyBoard && stickyBoard.children.length > 0;
+    stickyEmpty.hidden = hasNotes;
+}
+
+function createStickyNote(text) {
+    if (!stickyBoard) return;
+    const palette = STICKY_PALETTES[Math.floor(Math.random() * STICKY_PALETTES.length)];
+    const note = document.createElement('article');
+    note.className = 'sticky-note sticky-note--enter';
+    note.setAttribute('role', 'note');
+    note.setAttribute('tabindex', '0');
+    note.style.setProperty('--note-bg1', palette.bg1);
+    note.style.setProperty('--note-bg2', palette.bg2);
+    note.style.setProperty('--pin-color-strong', palette.pinStrong);
+    note.style.setProperty('--pin-color-soft', palette.pinSoft);
+    note.style.color = palette.text;
+
+    if (Math.random() > 0.5) {
+        note.classList.add('sticky-note--tilt-left');
     } else {
-        renderRound();
+        note.classList.add('sticky-note--tilt-right');
     }
-}
 
-function showRecap() {
-    showScreen('recap');
-    recapTasks.innerHTML = '';
+    const closeBtn = document.createElement('button');
+    closeBtn.type = 'button';
+    closeBtn.className = 'sticky-note__close';
+    closeBtn.setAttribute('aria-label', 'Unpin note');
+    closeBtn.textContent = '×';
 
-    recapIntro.textContent = `${state.name}, here\'s your glitter trail:`;
+    const textEl = document.createElement('p');
+    textEl.className = 'sticky-note__text';
+    textEl.textContent = text;
 
-    state.selectedTasks.forEach((task, index) => {
-        const item = document.createElement('li');
-        const icon = document.createElement('span');
-        icon.className = 'task-icon';
-        icon.textContent = HEART;
-        const label = document.createElement('span');
-        label.className = 'task-label';
-        label.textContent = `${index + 1}. ${task}`;
-        item.append(icon, label);
-        recapTasks.appendChild(item);
+    note.append(closeBtn, textEl);
+    stickyBoard.prepend(note);
+    updateStickyEmptyState();
+    playChime('pin');
+
+    note.addEventListener('animationend', (event) => {
+        if (event.animationName === 'pinPop') {
+            note.classList.remove('sticky-note--enter');
+        }
+        if (event.animationName === 'noteFall' && note.classList.contains('sticky-note--leaving')) {
+            note.remove();
+            updateStickyEmptyState();
+        }
     });
 
-    const vibe = state.sparkle >= 10 ? 'Effortlessly Elegant' : state.sparkle >= 7 ? 'Sweetly Focused' : 'Soft Start';
-    recapVibe.textContent = `${state.name}, your study aura today is ${vibe}. Keep pairing gorgeous aesthetics with mindful breaks, and every subject becomes part of your personal catwalk.`;
+    closeBtn.addEventListener('click', () => dismissStickyNote(note));
+    note.addEventListener('keyup', (event) => {
+        if (event.key === 'Delete' || event.key === 'Backspace') {
+            dismissStickyNote(note);
+        }
+    });
 }
 
-function resetForReplay() {
-    state.currentRound = 0;
-    state.sparkle = 0;
-    state.roundResolved = false;
-    if (state.selectedTasks.length === 0) {
-        state.selectedTasks = state.tasks.slice(0, ROUNDS.length);
+function dismissStickyNote(note) {
+    if (!note || note.classList.contains('sticky-note--leaving')) return;
+    const tilt = note.classList.contains('sticky-note--tilt-left') ? -8 : 8;
+    note.style.setProperty('--fall-tilt', `${tilt}deg`);
+    note.classList.add('sticky-note--leaving');
+    playChime('unpin');
+}
+
+function clearStickyBoard() {
+    if (!stickyBoard) return;
+    const notes = Array.from(stickyBoard.children);
+    notes.forEach((note, index) => {
+        setTimeout(() => dismissStickyNote(note), index * 90);
+    });
+}
+
+function playChime(type = 'pin') {
+    try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        if (!audioContext) {
+            audioContext = new AudioCtx();
+        }
+        if (audioContext.state === 'suspended') {
+            audioContext.resume();
+        }
+
+        const now = audioContext.currentTime;
+        const oscillator = audioContext.createOscillator();
+        const gain = audioContext.createGain();
+
+        const baseFrequency = type === 'unpin' ? 360 : 520;
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(baseFrequency, now);
+        oscillator.frequency.exponentialRampToValueAtTime(
+            type === 'unpin' ? baseFrequency / 1.3 : baseFrequency * 1.18,
+            now + 0.32
+        );
+
+        gain.gain.setValueAtTime(0, now);
+        gain.gain.linearRampToValueAtTime(0.16, now + 0.025);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+
+        oscillator.connect(gain).connect(audioContext.destination);
+        oscillator.start(now);
+        oscillator.stop(now + 0.65);
+    } catch (error) {
+        // Audio may be blocked; ignore politely.
     }
-    state.totalRounds = state.selectedTasks.length || 1;
-    renderRound();
-    showScreen('game');
 }
 
-introForm.addEventListener('submit', (event) => {
+introForm?.addEventListener('submit', (event) => {
     event.preventDefault();
-    const rawName = nameInput.value.trim();
-    state.name = rawName || 'Emilija';
+    const rawName = nameInput?.value?.trim();
+    const rawKey = introApiKeyInput?.value?.trim();
+
+    if (!rawName) {
+        nameInput?.focus();
+        return;
+    }
+    if (!rawKey) {
+        introApiKeyInput?.focus();
+        return;
+    }
+
+    state.name = rawName;
+    state.apiKey = rawKey;
+    persistApiKey(state.apiKey, introRememberKeyCheckbox ? introRememberKeyCheckbox.checked : false);
+    updateGreetingNames();
+    scheduleSplashHide(600);
     showScreen('tasks');
-    setTimeout(() => taskInput.focus(), 120);
 });
 
-addTaskBtn.addEventListener('click', () => {
-    const value = taskInput.value.trim();
-    if (!value) {
-        taskInput.focus();
-        return;
-    }
-    if (state.tasks.length >= 3) {
-        return;
-    }
-    state.tasks.push(value);
-    taskInput.value = '';
-    updateTaskList();
-    taskInput.focus();
+introToggleKeyBtn?.addEventListener('click', () => {
+    if (!introApiKeyInput) return;
+    const reveal = introApiKeyInput.type === 'password';
+    introApiKeyInput.type = reveal ? 'text' : 'password';
+    introToggleKeyBtn.textContent = reveal ? 'Hide' : 'Show';
+    introToggleKeyBtn.setAttribute('aria-pressed', reveal ? 'true' : 'false');
+    introApiKeyInput.focus();
 });
 
-taskInput.addEventListener('keydown', (event) => {
-    if (event.key === 'Enter') {
+editSetupBtn?.addEventListener('click', () => {
+    if (nameInput) {
+        nameInput.value = state.name;
+    }
+    if (introApiKeyInput) {
+        introApiKeyInput.value = state.apiKey;
+    }
+    updateGreetingNames();
+    showScreen('intro');
+});
+
+if (window.pdfjsLib && pdfjsLib.GlobalWorkerOptions) {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.6.172/pdf.worker.min.js';
+}
+
+flashcardCard?.addEventListener('click', toggleFlashcardFace);
+flashcardCard?.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter' || event.key === ' ') {
         event.preventDefault();
-        addTaskBtn.click();
+        toggleFlashcardFace();
     }
 });
 
-startGameBtn.addEventListener('click', () => {
-    if (state.tasks.length === 0) {
-        taskInput.focus();
+flashcardPrevBtn?.addEventListener('click', () => {
+    showFlashcardByIndex(flashcardState.index - 1);
+});
+
+flashcardNextBtn?.addEventListener('click', () => {
+    showFlashcardByIndex(flashcardState.index + 1);
+});
+
+flashcardForm?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    if (!pdfInput) return;
+
+    if (!state.apiKey) {
+        setFlashcardStatus('Add your OpenAI key on the setup screen first.', 'error');
+        showScreen('intro');
+        introApiKeyInput?.focus();
         return;
     }
-    prepareGame();
+
+    const file = pdfInput.files && pdfInput.files[0];
+    if (!file) {
+        setFlashcardStatus('Please choose a PDF to glam up.', 'error');
+        pdfInput.focus();
+        return;
+    }
+    if (file.size > MAX_PDF_SIZE) {
+        setFlashcardStatus('Please pick a PDF under 8 MB so we can work quickly.', 'error');
+        return;
+    }
+
+    clearFlashcardWidget();
+    setFlashcardStatus('Extracting key notes from your PDF...', 'pending');
+    flashcardForm.setAttribute('aria-busy', 'true');
+    if (generateFlashcardsBtn) generateFlashcardsBtn.disabled = true;
+
+    try {
+        const text = await extractTextFromPdf(file);
+        if (!text) {
+            throw new Error('Could not read any text. Try a selectable-text PDF.');
+        }
+
+        setFlashcardStatus('Summoning flashcards from the API cauldron...', 'pending');
+        const cards = await fetchFlashcardsFromApi(text, state.apiKey);
+        if (!cards.length) {
+            throw new Error('No flashcards returned. Try a clearer PDF or tweak the content.');
+        }
+
+        flashcardState.cards = cards;
+        flashcardState.index = 0;
+        flashcardState.flipped = false;
+        renderFlashcard();
+        setFlashcardStatus('Flashcards ready! Flip and sparkle.', 'success');
+        flashcardCard?.focus({ preventScroll: true });
+    } catch (error) {
+        console.error(error);
+        setFlashcardStatus(error.message || 'Something went wrong while generating flashcards.', 'error');
+    } finally {
+        flashcardForm.removeAttribute('aria-busy');
+        if (generateFlashcardsBtn) generateFlashcardsBtn.disabled = false;
+    }
 });
 
-nextRoundBtn.addEventListener('click', handleNextRound);
-playAgainBtn.addEventListener('click', resetForReplay);
-editQuestsBtn.addEventListener('click', () => {
-    showScreen('tasks');
-    updateTaskList();
-    setTimeout(() => taskInput.focus(), 120);
+notepadForm?.addEventListener('submit', (event) => {
+    event.preventDefault();
+    if (!notepadInput) return;
+    const value = notepadInput.value.trim();
+    if (!value) {
+        notepadInput.focus();
+        return;
+    }
+
+    const item = createNotepadItem(value);
+    if (item && notepadList) {
+        notepadList.prepend(item);
+        notepadInput.value = '';
+        updateNotepadEmptyState();
+        playChime('pin');
+    }
+    notepadInput.focus();
 });
 
-// Initialize view
-updateTaskList();
+notepadInput?.addEventListener('blur', () => {
+    if (notepadInput.value.trim().length === 0) {
+        ensureNotepadPlaceholder(true);
+    }
+});
+
+clearStickiesBtn?.addEventListener('click', () => {
+    clearStickyBoard();
+    setTimeout(updateStickyEmptyState, 500);
+});
+
+loadStoredApiKey();
+if (nameInput) {
+    nameInput.value = state.name;
+}
+updateGreetingNames();
+
+setFlashcardStatus('');
+
+updateNotepadEmptyState();
+updateStickyEmptyState();
 showScreen('intro');
+scheduleSplashHide();
+ensureNotepadPlaceholder(true);
