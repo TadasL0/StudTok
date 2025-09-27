@@ -737,12 +737,14 @@ body, h1, h2, h3, h4, h5, h6, p, span, label, li {
     justify-content: center;
     position: relative;
     overflow: visible;
+    transform: translateY(0);
+    will-change: transform, box-shadow;
 }
 
 .flashcard-form__file-button:hover,
 .flashcard-form__file-button:focus-visible {
-    transform: scale(1.035);
-    box-shadow: 0 16px 28px rgba(255, 79, 161, 0.28);
+    transform: translateY(-3px);
+    box-shadow: 0 18px 32px rgba(255, 79, 161, 0.3);
 }
 
 .flashcard-form__file-button:focus-visible {
