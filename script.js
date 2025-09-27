@@ -24,6 +24,7 @@ const editSetupBtn = document.getElementById('edit-setup');
 
 const splash = document.querySelector('.welcome-splash');
 const splashName = document.getElementById('splash-name');
+const splashRunner = document.querySelector('.welcome-splash__runner');
 
 const notepadForm = document.getElementById('notepad-form');
 const notepadInput = document.getElementById('notepad-input');
@@ -54,13 +55,22 @@ const MAX_PDF_CHARACTERS = 9000;
 const MAX_PDF_SIZE = 8 * 1024 * 1024; // 8 MB
 
 const NOTEPAD_PROMPTS = [
-    { text: 'Pasiruošti medžiagų mokslui', weight: 3 },
-    { text: 'Pasiruošti matematikai', weight: 3 },
-    { text: 'Pasiruošti braižybai', weight: 3 },
-    { text: 'Pasiruošti medžiagų mechanikai', weight: 3 },
-    { text: 'Atsipalaiduoti ir parūkyti', weight: 1 },
-    { text: 'Palepinti save šokoladu', weight: 1 },
+
+    { text: 'Pasiruo\u0161ti med\u017eiag\u0173 mokslui', weight: 3 },
+
+    { text: 'Pasiruo\u0161ti matematikai', weight: 3 },
+
+    { text: 'Pasiruo\u0161ti brai\u017eybai', weight: 3 },
+
+    { text: 'Pasiruo\u0161ti med\u017eiag\u0173 mechanikai', weight: 3 },
+
+    { text: 'Atsipalaiduoti ir para\u0161yti', weight: 1 },
+
+    { text: 'Palepinti save \u0161okoladu', weight: 1 },
+
 ];
+
+
 
 const STICKY_PALETTES = [
     {
@@ -133,16 +143,23 @@ function scheduleSplashHide(delay = 2600) {
     if (!splash) return;
     clearTimeout(splashTimeout);
     splashTimeout = setTimeout(() => {
-        splash.classList.add('welcome-splash--hide');
+        if (splashRunner) {
+            splashRunner.classList.add('welcome-splash__runner--jump');
+        }
         setTimeout(() => {
-            splash?.remove();
-        }, 800);
+            splash.classList.add('welcome-splash--hide');
+            setTimeout(() => {
+                splash?.remove();
+            }, 800);
+        }, 260);
     }, delay);
 }
 
+
+
 async function extractTextFromPdf(file) {
     if (!window.pdfjsLib) {
-        throw new Error('PDF helper failed to load. Check your connection and reload.');
+        throw new Error('Nepavyko įkelti PDF pagalbinės bibliotekos. Patikrink ryšį ir įkelk puslapį iš naujo.');
     }
 
     const arrayBuffer = await file.arrayBuffer();
@@ -433,7 +450,7 @@ function createNotepadItem(text) {
     const pinBtn = document.createElement('button');
     pinBtn.type = 'button';
     pinBtn.className = 'notepad-item__pin';
-    pinBtn.textContent = 'Pin it';
+    pinBtn.textContent = 'Prisegti';
 
     checkbox.addEventListener('change', () => {
         label.classList.toggle('notepad-item__label--done', checkbox.checked);
@@ -441,10 +458,10 @@ function createNotepadItem(text) {
 
     pinBtn.addEventListener('click', () => {
         createStickyNote(text);
-        pinBtn.textContent = 'Pinned!';
+        pinBtn.textContent = 'Prisegta!';
         pinBtn.disabled = true;
         setTimeout(() => {
-            pinBtn.textContent = 'Pin it';
+            pinBtn.textContent = 'Prisegti';
             pinBtn.disabled = false;
         }, 1400);
     });
@@ -500,7 +517,7 @@ function createStickyNote(text, options = {}) {
     const closeBtn = document.createElement('button');
     closeBtn.type = 'button';
     closeBtn.className = 'sticky-note__close';
-    closeBtn.setAttribute('aria-label', 'Unpin note');
+    closeBtn.setAttribute('aria-label', 'Atsegti lapelį');
     closeBtn.textContent = '\u00D7';
 
     const textEl = document.createElement('p');
@@ -638,19 +655,14 @@ function playChime(type = 'pin') {
 
 introForm?.addEventListener('submit', (event) => {
     event.preventDefault();
-    const rawName = nameInput?.value?.trim();
     const rawKey = introApiKeyInput?.value?.trim();
 
-    if (!rawName) {
-        nameInput?.focus();
-        return;
-    }
     if (!rawKey) {
         introApiKeyInput?.focus();
         return;
     }
 
-    state.name = rawName;
+    state.name = 'Emilija';
     state.apiKey = rawKey;
     persistApiKey(state.apiKey, introRememberKeyCheckbox ? introRememberKeyCheckbox.checked : false);
     updateGreetingNames();
@@ -662,7 +674,7 @@ introToggleKeyBtn?.addEventListener('click', () => {
     if (!introApiKeyInput) return;
     const reveal = introApiKeyInput.type === 'password';
     introApiKeyInput.type = reveal ? 'text' : 'password';
-    introToggleKeyBtn.textContent = reveal ? 'Hide' : 'Show';
+    introToggleKeyBtn.textContent = reveal ? 'Slėpti' : 'Rodyti';
     introToggleKeyBtn.setAttribute('aria-pressed', reveal ? 'true' : 'false');
     introApiKeyInput.focus();
 });
@@ -703,7 +715,7 @@ flashcardForm?.addEventListener('submit', async (event) => {
     if (!pdfInput) return;
 
     if (!state.apiKey) {
-        setFlashcardStatus('Add your OpenAI key on the setup screen first.', 'error');
+        setFlashcardStatus('Pirmiausia pradiniame ekrane įrašyk OpenAI API raktą.', 'error');
         showScreen('intro');
         introApiKeyInput?.focus();
         return;
@@ -711,41 +723,41 @@ flashcardForm?.addEventListener('submit', async (event) => {
 
     const file = pdfInput.files && pdfInput.files[0];
     if (!file) {
-        setFlashcardStatus('Please choose a PDF to glam up.', 'error');
+        setFlashcardStatus('Pasirink PDF failą.', 'error');
         pdfInput.focus();
         return;
     }
     if (file.size > MAX_PDF_SIZE) {
-        setFlashcardStatus('Please pick a PDF under 8 MB so we can work quickly.', 'error');
+        setFlashcardStatus('Pasirink PDF, mažesnį nei 8 MB, kad veiktume greitai.', 'error');
         return;
     }
 
     clearFlashcardWidget();
-    setFlashcardStatus('Extracting key notes from your PDF...', 'pending');
+    setFlashcardStatus('Ištraukiame svarbiausias pastabas iš PDF...', 'pending');
     flashcardForm.setAttribute('aria-busy', 'true');
     if (generateFlashcardsBtn) generateFlashcardsBtn.disabled = true;
 
     try {
         const text = await extractTextFromPdf(file);
         if (!text) {
-            throw new Error('Could not read any text. Try a selectable-text PDF.');
+            throw new Error('Nepavyko nuskaityti teksto. Pabandyk PDF, kuriame tekstas yra pažymimas.');
         }
 
-        setFlashcardStatus('Summoning flashcards from the API cauldron...', 'pending');
+        setFlashcardStatus('Kuriame korteles per OpenAI...', 'pending');
         const cards = await fetchFlashcardsFromApi(text, state.apiKey);
         if (!cards.length) {
-            throw new Error('No flashcards returned. Try a clearer PDF or tweak the content.');
+            throw new Error('Kortelių negavome. Pabandyk aiškesnį PDF arba pakoreguok turinį.');
         }
 
         flashcardState.cards = cards;
         flashcardState.index = 0;
         flashcardState.flipped = false;
         renderFlashcard();
-        setFlashcardStatus('Flashcards ready! Flip and sparkle.', 'success');
+        setFlashcardStatus('Kortelės paruoštos! Apversk ir blizgėk.', 'success');
         flashcardCard?.focus({ preventScroll: true });
     } catch (error) {
         console.error(error);
-        setFlashcardStatus(error.message || 'Something went wrong while generating flashcards.', 'error');
+        setFlashcardStatus(error.message || 'Kuriant korteles įvyko klaida.', 'error');
     } finally {
         flashcardForm.removeAttribute('aria-busy');
         if (generateFlashcardsBtn) generateFlashcardsBtn.disabled = false;
