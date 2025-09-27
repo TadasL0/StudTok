@@ -42,9 +42,12 @@ const splashName = document.getElementById('splash-name');
 const splashRunner = document.querySelector('.welcome-splash__runner');
 
 const SPLASH_RUNNER_FRAMES = [
-    'assets/emilija1.png',
-    'assets/emilija2.png',
-    'assets/emilija3.png',
+    'assets/emilijawalk2/emilija1.png',
+    'assets/emilijawalk2/emilija2.png',
+    'assets/emilijawalk2/emilija3.png',
+    'assets/emilijawalk2/emilija4.png',
+    'assets/emilijawalk2/emilija5.png',
+    'assets/emilijawalk2/emilija6.png',
 ];
 
 if (splashRunner) {
