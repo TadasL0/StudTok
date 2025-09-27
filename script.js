@@ -159,7 +159,7 @@ function scheduleSplashHide(delay = 2600) {
 
 async function extractTextFromPdf(file) {
     if (!window.pdfjsLib) {
-        throw new Error('Nepavyko įkelti PDF pagalbinės bibliotekos. Patikrink ryšį ir įkelk puslapį iš naujo.');
+        throw new Error('Nepavyko \u012fkelti PDF pagalbin\u0117s bibliotekos. Patikrink ry\u0161\u012f ir \u012fkelk puslap\u012f i\u0161 naujo.');
     }
 
     const arrayBuffer = await file.arrayBuffer();
@@ -517,7 +517,7 @@ function createStickyNote(text, options = {}) {
     const closeBtn = document.createElement('button');
     closeBtn.type = 'button';
     closeBtn.className = 'sticky-note__close';
-    closeBtn.setAttribute('aria-label', 'Atsegti lapelį');
+    closeBtn.setAttribute('aria-label', 'Atsegti lapel\u012f');
     closeBtn.textContent = '\u00D7';
 
     const textEl = document.createElement('p');
@@ -674,7 +674,7 @@ introToggleKeyBtn?.addEventListener('click', () => {
     if (!introApiKeyInput) return;
     const reveal = introApiKeyInput.type === 'password';
     introApiKeyInput.type = reveal ? 'text' : 'password';
-    introToggleKeyBtn.textContent = reveal ? 'Slėpti' : 'Rodyti';
+    introToggleKeyBtn.textContent = reveal ? 'Sl\u0117pti' : 'Rodyti';
     introToggleKeyBtn.setAttribute('aria-pressed', reveal ? 'true' : 'false');
     introApiKeyInput.focus();
 });
@@ -715,7 +715,7 @@ flashcardForm?.addEventListener('submit', async (event) => {
     if (!pdfInput) return;
 
     if (!state.apiKey) {
-        setFlashcardStatus('Pirmiausia pradiniame ekrane įrašyk OpenAI API raktą.', 'error');
+        setFlashcardStatus('Pirmiausia pradiniame ekrane \u012fra\u0161yk OpenAI API rakt\u0105.', 'error');
         showScreen('intro');
         introApiKeyInput?.focus();
         return;
@@ -723,41 +723,41 @@ flashcardForm?.addEventListener('submit', async (event) => {
 
     const file = pdfInput.files && pdfInput.files[0];
     if (!file) {
-        setFlashcardStatus('Pasirink PDF failą.', 'error');
+        setFlashcardStatus('Pasirink PDF fail\u0105.', 'error');
         pdfInput.focus();
         return;
     }
     if (file.size > MAX_PDF_SIZE) {
-        setFlashcardStatus('Pasirink PDF, mažesnį nei 8 MB, kad veiktume greitai.', 'error');
+        setFlashcardStatus('Pasirink PDF, ma\u017eesn\u012f nei 8 MB, kad veiktume greitai.', 'error');
         return;
     }
 
     clearFlashcardWidget();
-    setFlashcardStatus('Ištraukiame svarbiausias pastabas iš PDF...', 'pending');
+    setFlashcardStatus('I\u0161traukiame svarbiausias pastabas i\u0161 PDF...', 'pending');
     flashcardForm.setAttribute('aria-busy', 'true');
     if (generateFlashcardsBtn) generateFlashcardsBtn.disabled = true;
 
     try {
         const text = await extractTextFromPdf(file);
         if (!text) {
-            throw new Error('Nepavyko nuskaityti teksto. Pabandyk PDF, kuriame tekstas yra pažymimas.');
+            throw new Error('Nepavyko nuskaityti teksto. Pabandyk PDF, kuriame tekstas yra pa\u017eymimas.');
         }
 
         setFlashcardStatus('Kuriame korteles per OpenAI...', 'pending');
         const cards = await fetchFlashcardsFromApi(text, state.apiKey);
         if (!cards.length) {
-            throw new Error('Kortelių negavome. Pabandyk aiškesnį PDF arba pakoreguok turinį.');
+            throw new Error('Korteli\u0173 negavome. Pabandyk ai\u0161kesn\u012f PDF arba pakoreguok turin\u012f.');
         }
 
         flashcardState.cards = cards;
         flashcardState.index = 0;
         flashcardState.flipped = false;
         renderFlashcard();
-        setFlashcardStatus('Kortelės paruoštos! Apversk ir blizgėk.', 'success');
+        setFlashcardStatus('Kortel\u0117s paruo\u0161tos! Apversk ir blizg\u0117k.', 'success');
         flashcardCard?.focus({ preventScroll: true });
     } catch (error) {
         console.error(error);
-        setFlashcardStatus(error.message || 'Kuriant korteles įvyko klaida.', 'error');
+        setFlashcardStatus(error.message || 'Kuriant korteles \u012fvyko klaida.', 'error');
     } finally {
         flashcardForm.removeAttribute('aria-busy');
         if (generateFlashcardsBtn) generateFlashcardsBtn.disabled = false;
