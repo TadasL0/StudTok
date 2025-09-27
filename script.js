@@ -26,6 +26,19 @@ const splash = document.querySelector('.welcome-splash');
 const splashName = document.getElementById('splash-name');
 const splashRunner = document.querySelector('.welcome-splash__runner');
 
+const SPLASH_RUNNER_FRAMES = [
+    'assets/emilija1.png',
+    'assets/emilija2.png',
+    'assets/emilija3.png',
+];
+
+if (splashRunner) {
+    SPLASH_RUNNER_FRAMES.forEach((src) => {
+        const img = new Image();
+        img.src = src;
+    });
+}
+
 const notepadForm = document.getElementById('notepad-form');
 const notepadInput = document.getElementById('notepad-input');
 const notepadList = document.getElementById('notepad-list');

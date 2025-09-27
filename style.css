@@ -113,10 +113,10 @@ body, h1, h2, h3, h4, h5, h6, p, span, label, li {
     height: clamp(90px, 15vw, 180px);
     z-index: 3;
     pointer-events: none;
-    background-image: url('assets/4emilijos.png');
+    background-image: url('assets/emilija1.png');
     background-repeat: no-repeat;
-    background-size: 200% 200%;
-    background-position: 0% 0%;
+    background-size: contain;
+    background-position: center bottom;
     transform: translate3d(-120%, -6%, 0) scale(0.9);
     transform-origin: bottom center;
     filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.18));
@@ -158,10 +158,9 @@ body, h1, h2, h3, h4, h5, h6, p, span, label, li {
 }
 
 @keyframes welcome-runner-frames {
-    0%, 24.99% { background-position: 0% 0%; }
-    25%, 49.99% { background-position: 50% 0%; }
-    50%, 74.99% { background-position: 0% 50%; }
-    75%, 100% { background-position: 50% 50%; }
+    0%, 32% { background-image: url('assets/emilija1.png'); }
+    33%, 65% { background-image: url('assets/emilija2.png'); }
+    66%, 100% { background-image: url('assets/emilija3.png'); }
 }
 
 .welcome-splash__particles {
