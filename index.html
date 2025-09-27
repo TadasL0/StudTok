@@ -73,6 +73,7 @@
         <section class="screen" data-screen="tasks" aria-labelledby="studio-title">
             <h2 id="studio-title">Emilijos studijos erdv&#279;</h2>
             <div class="studio-actions">
+                <p class="studio-actions__note">Reikia pakeisti API rakt&#261;?</p>
                 <button id="edit-setup" type="button" class="btn btn--secondary btn--tiny">Gr&#303;&#382;ti &#303; nustatymus</button>
             </div>
 
@@ -85,12 +86,8 @@
 
                     <form id="flashcard-form" class="flashcard-form" aria-labelledby="flashcard-title">
                         <label class="flashcard-form__field" for="pdf-input">
-                            <span class="flashcard-form__label">Pasirinkti PDF fail&#261;</span>
-                            <div class="flashcard-form__file-picker">
-                                <input id="pdf-input" class="flashcard-form__file-input" name="pdf" type="file" accept="application/pdf" required />
-                                <button id="pdf-trigger" type="button" class="flashcard-form__file-button">Pasirinkti PDF fail&#261;</button>
-                                <span id="pdf-file-name" class="flashcard-form__file-name" aria-live="polite" data-empty="Failas nepasirinktas">Failas nepasirinktas</span>
-                            </div>
+                            <span class="flashcard-form__label">Pasirink PDF</span>
+                            <input id="pdf-input" name="pdf" type="file" accept="application/pdf" required />
                         </label>
                         <button id="generate-flashcards" class="btn btn--primary" type="submit">Sukurti korteles</button>
                         <p id="flashcard-status" class="flashcard-status" role="status" aria-live="polite"></p>
@@ -122,7 +119,7 @@
                 <div class="card notepad-card" aria-live="polite">
                     <div class="notepad-card__header">
                         <h3 class="card__title" id="notepad-title">Blizgus u&#382;ra&#353;&#371; bloknotas</h3>
-                        <p class="notepad-card__tagline">&#268;ia galima pasi&#382;ym&#279;ti u&#382;duotis, ar prisegti jas kaip svarbiausias lentel&#279;je</p>
+                        <p class="notepad-card__tagline">U&#382;sira&#353;yk u&#382;duotis, pa&#382;ym&#279;k, kai jos bus atl .</p>
                     </div>
                     <form id="notepad-form" class="notepad-form" aria-labelledby="notepad-title">
                         <input id="notepad-input" class="input notepad-input" type="text" maxlength="160" placeholder="" autocomplete="off" required />
