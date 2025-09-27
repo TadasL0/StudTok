@@ -226,11 +226,11 @@ async function fetchFlashcardsFromApi(text, apiKey) {
         {
             role: 'system',
             content:
-                'You are a bubbly study coach who only responds with compact JSON. Return an array under "flashcards", each item with "question", "answer", and optional "tags" (array). Keep questions friendly, answers concise, no markdown.',
+                'Tu esi nuotaikinga mokymosi trener\u0117, kuri atsako tik kompakti\u0161ka JSON strukt\u016Br\u0105. Gr\u0105\u017Eink masyv\u0105 pavadinimu "flashcards", kur kiekvienas elementas turi "question", "answer" ir neprivalom\u0105 "tags" masyv\u0105. Klausimus ir atsakymus pateik draugi\u0161kai, glaustai, be Markdown, VISK\u0104 RA\u0160YK LIETUVI\u0160KAI.',
         },
         {
             role: 'user',
-            content: `Create 8 flashcards from this study material. Focus on key facts, definitions, or processes. ${text}`,
+            content: `Sukurk 8 klausim\u0173-atsakym\u0173 korteles i\u0161 \u0161ios mokomosios med\u017Eiagos. Koncentruokis \u012F \u012Fsimintiniausius faktus, s\u0105vokas ir procesus. Visus laukus ra\u0161yk lietuvi\u0161kai. ${text}`,
         },
     ];
 
