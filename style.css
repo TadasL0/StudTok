@@ -812,8 +812,11 @@ body, h1, h2, h3, h4, h5, h6, p, span, label, li {
 }
 
 .notepad-card {
-    background: linear-gradient(160deg, rgba(255, 255, 255, 0.85), rgba(255, 245, 251, 0.9));
     position: relative;
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.92), rgba(255, 241, 249, 0.95));
+    border: 1px solid rgba(255, 79, 161, 0.14);
+    box-shadow: 0 26px 48px rgba(255, 79, 161, 0.12);
+    overflow: hidden;
 }
 
 .notepad-card::after {
@@ -828,34 +831,55 @@ body, h1, h2, h3, h4, h5, h6, p, span, label, li {
 .notepad-card__header {
     display: grid;
     gap: 6px;
-    margin-bottom: 16px;
+    margin-bottom: 18px;
 }
 
 .notepad-card__tagline {
     margin: 0;
     font-size: 15px;
-    color: var(--text-muted);
+    line-height: 1.5;
+    color: rgba(68, 38, 63, 0.78);
+    max-width: 34ch;
 }
 
 .notepad-form {
     display: flex;
+    flex-wrap: wrap;
+    align-items: center;
     gap: 12px;
-    margin-bottom: 18px;
+    margin-bottom: 20px;
 }
 
 .notepad-input {
     flex: 1;
-    border-radius: 10%;
+    border: 1px solid rgba(255, 79, 161, 0.3);
+    border-radius: 18px;
+    padding: 14px 18px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(255, 238, 247, 0.95));
+    box-shadow: inset 0 2px 6px rgba(255, 79, 161, 0.08), 0 14px 26px rgba(255, 79, 161, 0.12);
+    font-size: 16px;
+    transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+
+.notepad-input:focus {
+    border-color: rgba(255, 79, 161, 0.6);
+    box-shadow: inset 0 3px 8px rgba(255, 79, 161, 0.12), 0 18px 32px rgba(255, 79, 161, 0.18);
+    outline: none;
+    transform: translateY(-1px);
+}
+
+.notepad-input:hover {
+    border-color: rgba(255, 79, 161, 0.45);
 }
 
 .notepad-input::placeholder {
-    color: rgba(68, 38, 63, 0.45);
-    opacity: 0;
-    animation: placeholderGlow 5.8s ease-in-out infinite alternate;
+    color: rgba(68, 38, 63, 0.55);
+    opacity: 0.75;
+    transition: opacity 160ms ease;
 }
 
 .notepad-input:focus::placeholder {
-    opacity: 0.25;
+    opacity: 0.45;
 }
 
 @keyframes placeholderGlow {
@@ -945,35 +969,80 @@ body, h1, h2, h3, h4, h5, h6, p, span, label, li {
 }
 
 .sticky-card {
-    background: linear-gradient(150deg, rgba(255, 239, 247, 0.9), rgba(255, 245, 251, 0.88));
+    position: relative;
+    background: linear-gradient(150deg, rgba(255, 241, 249, 0.92), rgba(255, 248, 253, 0.88));
+    border: 1px solid rgba(255, 79, 161, 0.12);
+    box-shadow: 0 26px 46px rgba(255, 79, 161, 0.12);
+    overflow: hidden;
 }
 
 .sticky-card__header {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 16px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: flex-start;
+    gap: 6px 20px;
+    padding-bottom: 14px;
+    margin-bottom: 18px;
+    border-bottom: 1px solid rgba(255, 79, 161, 0.18);
 }
 
 .sticky-card__tagline {
-    flex: 1 1 200px;
+    grid-column: 1;
     margin: 0;
     font-size: 15px;
-    color: var(--text-muted);
+    line-height: 1.5;
+    color: rgba(68, 38, 63, 0.78);
+    max-width: 32ch;
+}
+
+#clear-stickies {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    align-self: flex-start;
+    padding: 10px 18px;
+    border-radius: 999px;
+    box-shadow: 0 12px 20px rgba(255, 79, 161, 0.18);
+}
+
+#clear-stickies:hover {
+    box-shadow: 0 16px 28px rgba(255, 79, 161, 0.22);
+}
+
+.sticky-card__header .card__title {
+    margin: 0;
 }
 
 .sticky-board {
     position: relative;
-    min-height: 220px;
-    padding: 20px;
-    border-radius: 20px;
-    background: repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0px, rgba(255, 255, 255, 0.4) 26px, rgba(255, 232, 244, 0.82) 26px, rgba(255, 232, 244, 0.82) 52px);
-    box-shadow: inset 0 0 0 1px rgba(255, 157, 208, 0.18);
+    min-height: 240px;
+    padding: 26px;
+    border-radius: 24px;
+    background: linear-gradient(150deg, rgba(255, 255, 255, 0.95), rgba(255, 236, 247, 0.92));
+    border: 1px solid rgba(255, 79, 161, 0.16);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 24px 48px rgba(255, 79, 161, 0.12);
+    overflow: hidden;
     display: grid;
-    gap: 18px;
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 20px;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
 }
+
+.sticky-board::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(135deg, rgba(255, 210, 232, 0.32) 0px, rgba(255, 210, 232, 0.32) 28px, rgba(255, 242, 249, 0.42) 28px, rgba(255, 242, 249, 0.42) 56px);
+    opacity: 0.7;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.sticky-board > * {
+    position: relative;
+    z-index: 1;
+}
+
+
+
 
 .sticky-empty {
     margin: 18px 0 0;
