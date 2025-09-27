@@ -107,15 +107,16 @@ body, h1, h2, h3, h4, h5, h6, p, span, label, li {
 
 .welcome-splash__runner {
     position: absolute;
-    top: -34%;
-    left: -48%;
-    width: clamp(110px, 18vw, 210px);
-    max-width: 220px;
+    top: -32%;
+    left: -40%;
+    width: clamp(80px, 14vw, 170px);
+    max-width: 180px;
     z-index: 3;
     pointer-events: none;
-    transform: translate3d(-155%, -10%, 0) scale(0.92);
+    transform: translate3d(-140%, -6%, 0) scale(0.9);
     animation: welcome-runner-dash 2.2s ease-out forwards;
     transform-origin: bottom center;
+    filter: drop-shadow(0 12px 18px rgba(0, 0, 0, 0.18));
 }
 
 .welcome-splash__runner--jump {

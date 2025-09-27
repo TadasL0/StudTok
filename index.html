@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="lt">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Emilijos rožinė studija</title>
+    <title>Emilijos roÅ¾inÄ— studija</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -42,46 +42,46 @@
     <div class="sparkle-overlay" aria-hidden="true"></div>
     <main class="app" role="main">
         <header class="hero">
-            <div class="hero__badge">Studijuok saldžiai!</div>
-            <h1 class="hero__title">Ar pasiruošusi pasinerti į mokslus?</h1>
-            <p class="hero__tagline">Paversk kiekvieną mokymosi sesiją žaidimu su rožine energija ir saldumynais.</p>
+            <div class="hero__badge">Studijuok saldÅ¾iai!</div>
+            <h1 class="hero__title">Ar pasiruoÅusi pasinerti ÄÆ mokslus?</h1>
+            <p class="hero__tagline">Paversk kiekvienÄ… mokymosi sesijÄ… Å¾aidimu su roÅ¾ine energija ir saldumynais.</p>
         </header>
 
         <section class="screen screen--active" data-screen="intro" aria-labelledby="intro-title">
-            <h2 id="intro-title">Paruošk API raktą</h2>
+            <h2 id="intro-title">ParuoÅk API raktÄ…</h2>
             <form id="intro-form" class="card intro-card" aria-describedby="intro-helper" aria-busy="false">
-                <p id="intro-helper" class="intro-card__helper">Įvesk savo OpenAI API raktą ir neriamės į nuotykius.</p>
+                <p id="intro-helper" class="intro-card__helper">Ä®vesk savo OpenAI API raktÄ… ir neriamÄ—s ÄÆ nuotykius.</p>
 
                 <div class="intro-card__field intro-card__field--inline">
                     <label class="form__label" for="intro-api-key">OpenAI API raktas</label>
                     <div class="intro-card__key">
                         <input id="intro-api-key" class="input intro-card__input" name="apiKey" type="password" placeholder="sk-..." autocomplete="off" required />
-                        <button id="intro-toggle-key" type="button" class="btn btn--secondary btn--tiny" aria-label="Perjungti API rakto rodymą">Rodyti</button>
+                        <button id="intro-toggle-key" type="button" class="btn btn--secondary btn--tiny" aria-label="Perjungti API rakto rodymÄ…">Rodyti</button>
                     </div>
-                    <p class="flashcard-form__hint">Raktą saugome tik šiame įrenginyje, jei pažymėsi „Prisiminti“.</p>
+                    <p class="flashcard-form__hint">RaktÄ… saugome tik Åiame ÄÆrenginyje, jei paÅ¾ymÄ—si ā€˛Prisimintiā€.</p>
                 </div>
 
                 <label class="flashcard-form__remember intro-card__remember">
                     <input id="intro-remember-key" type="checkbox" />
-                    <span>Prisiminti šį raktą šiame įrenginyje</span>
+                    <span>Prisiminti ÅÄÆ raktÄ… Åiame ÄÆrenginyje</span>
                 </label>
 
-                <button type="submit" class="btn btn--primary intro-card__submit">Į studiją</button>
+                <button type="submit" class="btn btn--primary intro-card__submit">Ä® studijÄ…</button>
             </form>
         </section>
 
         <section class="screen" data-screen="tasks" aria-labelledby="studio-title">
-            <h2 id="studio-title">Emilijos studijos erdvė</h2>
+            <h2 id="studio-title">Emilijos studijos erdvÄ—</h2>
             <div class="studio-actions">
-                <p class="studio-actions__note">Reikia pakeisti API raktą?</p>
-                <button id="edit-setup" type="button" class="btn btn--secondary btn--tiny">Grįžti į nustatymus</button>
+                <p class="studio-actions__note">Reikia pakeisti API raktÄ…?</p>
+                <button id="edit-setup" type="button" class="btn btn--secondary btn--tiny">GrÄÆÅ¾ti ÄÆ nustatymus</button>
             </div>
 
             <div class="studio-grid">
                 <div class="card flashcard-card" aria-live="polite">
                     <div class="flashcard-card__header">
-                        <h3 class="card__title" id="flashcard-title">Rožinis PDF kortelių maišytuvas</h3>
-                        <p class="flashcard-card__tagline">Įkelk PDF, sušnabždėk API raktą ir sukursime svajonių mokymosi korteles.</p>
+                        <h3 class="card__title" id="flashcard-title">RoÅ¾inis PDF korteliÅ³ maiÅytuvas</h3>
+                        <p class="flashcard-card__tagline">Ä®kelk PDF, suÅnabÅ¾dÄ—k API raktÄ… ir sukursime svajoniÅ³ mokymosi korteles.</p>
                     </div>
 
                     <form id="flashcard-form" class="flashcard-form" aria-labelledby="flashcard-title">
@@ -95,12 +95,12 @@
 
                     <div id="flashcard-widget" class="flashcard-widget" hidden aria-labelledby="flashcard-title">
                         <div class="flashcard-widget__controls">
-                            <button id="flashcard-prev" type="button" class="btn btn--pill" aria-label="Ankstesnė kortelė">Atgal</button>
+                            <button id="flashcard-prev" type="button" class="btn btn--pill" aria-label="AnkstesnÄ— kortelÄ—">Atgal</button>
                             <span id="flashcard-counter" class="flashcard-widget__counter">0 / 0</span>
-                            <button id="flashcard-next" type="button" class="btn btn--pill" aria-label="Kita kortelė">Pirmyn</button>
+                            <button id="flashcard-next" type="button" class="btn btn--pill" aria-label="Kita kortelÄ—">Pirmyn</button>
                         </div>
                         <div class="flashcard-widget__stage">
-                            <button id="flashcard-card" type="button" class="flashcard-widget__card" aria-live="polite" aria-label="Apversti kortelę">
+                            <button id="flashcard-card" type="button" class="flashcard-widget__card" aria-live="polite" aria-label="Apversti kortelÄ™">
                                 <div class="flashcard-widget__side flashcard-widget__side--front">
                                     <h4 class="flashcard-widget__heading">Prompt</h4>
                                     <p id="flashcard-front" class="flashcard-widget__text"></p>
@@ -112,31 +112,31 @@
                             </button>
                         </div>
                         <div id="flashcard-tags" class="flashcard-widget__tags" aria-live="polite"></div>
-                        <p class="flashcard-widget__hint">Bakstelėk arba spausk tarpo ar Enter klavišą ir apversk kortelę. Naudok rožinius mygtukus naršymui.</p>
+                        <p class="flashcard-widget__hint">BakstelÄ—k arba spausk tarpo ar Enter klaviÅÄ… ir apversk kortelÄ™. Naudok roÅ¾inius mygtukus narÅymui.</p>
                     </div>
                 </div>
 
                 <div class="card notepad-card" aria-live="polite">
                     <div class="notepad-card__header">
-                        <h3 class="card__title" id="notepad-title">Blizgus užrašų bloknotas</h3>
-                        <p class="notepad-card__tagline">Užrašyk žvilgančias užduotis, pažymėk atliktas ir prisegk svarbiausias.</p>
+                        <h3 class="card__title" id="notepad-title">Blizgus uÅ¾raÅÅ³ bloknotas</h3>
+                        <p class="notepad-card__tagline">UÅ¾raÅyk Å¾vilganÄ¨ias uÅ¾duotis, paÅ¾ymÄ—k atliktas ir prisegk svarbiausias.</p>
                     </div>
                     <form id="notepad-form" class="notepad-form" aria-labelledby="notepad-title">
                         <input id="notepad-input" class="input notepad-input" type="text" maxlength="160" placeholder="" autocomplete="off" required />
-                        <button class="btn btn--primary btn--tiny" type="submit">Pridėti įrašą</button>
+                        <button class="btn btn--primary btn--tiny" type="submit">PridÄ—ti ÄÆraÅÄ…</button>
                     </form>
                     <ul id="notepad-list" class="notepad-list"></ul>
-                    <p class="notepad-empty" hidden>Dar nėra užrašų. Sukurk pirmą užduotį!</p>
+                    <p class="notepad-empty" hidden>Dar nÄ—ra uÅ¾raÅÅ³. Sukurk pirmÄ… uÅ¾duotÄÆ!</p>
                 </div>
 
                 <div class="card sticky-card" aria-live="polite">
                     <div class="sticky-card__header">
-                        <h3 class="card__title" id="sticky-title">Prisegtų pastelių lenta</h3>
-                        <p class="sticky-card__tagline">Prisegk mėgstamas idėjas kaip pastelinius lapelius. Atsegk, kai jos nebėra reikalingos.</p>
-                        <button id="clear-stickies" type="button" class="btn btn--secondary btn--tiny">Išvalyti lentą</button>
+                        <h3 class="card__title" id="sticky-title">PrisegtÅ³ pasteliÅ³ lenta</h3>
+                        <p class="sticky-card__tagline">Prisegk mÄ—gstamas idÄ—jas kaip pastelinius lapelius. Atsegk, kai jos nebÄ—ra reikalingos.</p>
+                        <button id="clear-stickies" type="button" class="btn btn--secondary btn--tiny">IÅvalyti lentÄ…</button>
                     </div>
                     <div id="sticky-board" class="sticky-board" aria-labelledby="sticky-title"></div>
-                    <p id="sticky-empty" class="sticky-empty">Dar nėra prisegtų lapelių. Prisegk ką nors smagaus!</p>
+                    <p id="sticky-empty" class="sticky-empty">Dar nÄ—ra prisegtÅ³ lapeliÅ³. Prisegk kÄ… nors smagaus!</p>
                 </div>
             </div>
         </section>
@@ -147,8 +147,9 @@
     </main>
 
     <footer class="footer">
-        <span>Sukurta su &hearts; ir cukrine drąsa.</span>
+        <span>Sukurta su &hearts; ir cukrine drÄ…sa.</span>
     </footer>
     <script src="script.js"></script>
 </body>
 </html>
+
