@@ -6,6 +6,8 @@ const introForm = document.getElementById('intro-form');
 
 const flashcardForm = document.getElementById('flashcard-form');
 const pdfInput = document.getElementById('pdf-input');
+const pdfTrigger = document.getElementById('pdf-trigger');
+const pdfFileName = document.getElementById('pdf-file-name');
 const flashcardStatus = document.getElementById('flashcard-status');
 const flashcardWidget = document.getElementById('flashcard-widget');
 const flashcardCard = document.getElementById('flashcard-card');
@@ -39,6 +41,19 @@ if (splashRunner) {
     });
 }
 
+if (pdfTrigger && pdfInput) {
+    pdfTrigger.addEventListener('click', () => {
+        pdfInput.click();
+    });
+}
+
+pdfInput?.addEventListener('change', () => {
+    const file = pdfInput.files && pdfInput.files[0];
+    updatePdfSelectionLabel(file || null);
+});
+
+updatePdfSelectionLabel(pdfInput?.files && pdfInput.files[0]);
+
 const notepadForm = document.getElementById('notepad-form');
 const notepadInput = document.getElementById('notepad-input');
 const notepadList = document.getElementById('notepad-list');
@@ -60,6 +75,19 @@ const flashcardState = {
     flipped: false,
 };
 
+const pdfFileNameEmptyText = pdfFileName?.dataset?.empty || 'Failas nepasirinktas';
+
+function updatePdfSelectionLabel(file) {
+    if (!pdfFileName) return;
+    if (file) {
+        pdfFileName.textContent = file.name;
+        pdfFileName.classList.add('flashcard-form__file-name--has-file');
+    } else {
+        pdfFileName.textContent = pdfFileNameEmptyText;
+        pdfFileName.classList.remove('flashcard-form__file-name--has-file');
+    }
+}
+
 const FLASHCARD_STORAGE_KEY = 'pinkStudy.apiKey';
 const STICKY_STORAGE_KEY = 'pinkStudy.stickies';
 const FLASHCARD_MODEL = 'gpt-4.1-mini';
@@ -77,7 +105,7 @@ const NOTEPAD_PROMPTS = [
 
     { text: 'Pasiruo\u0161ti med\u017eiag\u0173 mechanikai', weight: 3 },
 
-    { text: 'Atsipalaiduoti ir para\u0161yti', weight: 1 },
+    { text: 'Atsipalaiduoti ir par\u016Bkyti', weight: 1 },
 
     { text: 'Palepinti save \u0161okoladu', weight: 1 },
 
@@ -736,8 +764,12 @@ flashcardForm?.addEventListener('submit', async (event) => {
 
     const file = pdfInput.files && pdfInput.files[0];
     if (!file) {
-        setFlashcardStatus('Pasirink PDF fail\u0105.', 'error');
-        pdfInput.focus();
+        setFlashcardStatus('Pasirinkti PDF fail\u0105.', 'error');
+        if (pdfTrigger) {
+            pdfTrigger.focus();
+        } else {
+            pdfInput?.focus();
+        }
         return;
     }
     if (file.size > MAX_PDF_SIZE) {

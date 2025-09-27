@@ -698,16 +698,28 @@ body, h1, h2, h3, h4, h5, h6, p, span, label, li {
     gap: 6px;
 }
 
-.flashcard-form__field input[type='file'] {
-    border: none;
-    padding: 0;
-    background: transparent;
-    font-size: 14px;
-    color: var(--text-muted);
+.flashcard-form__file-picker {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    overflow: visible;
 }
 
-.flashcard-form__field input[type='file']::file-selector-button,
-.flashcard-form__field input[type='file']::-webkit-file-upload-button {
+.flashcard-form__file-input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    border: 0;
+    clip: rect(0, 0, 0, 0);
+    clip-path: inset(50%);
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.flashcard-form__file-button {
     border: none;
     border-radius: 999px;
     padding: 12px 24px;
@@ -715,24 +727,39 @@ body, h1, h2, h3, h4, h5, h6, p, span, label, li {
     font-weight: 700;
     letter-spacing: 0.02em;
     cursor: pointer;
-    color: white;
+    color: #fff;
     background: linear-gradient(135deg, rgba(255, 157, 208, 0.95), rgba(255, 79, 161, 0.95));
-    box-shadow: 0 12px 24px rgba(255, 79, 161, 0.25);
-    position: relative;
+    box-shadow: 0 12px 24px rgba(255, 79, 161, 0.26);
     transition: transform 180ms ease, box-shadow 180ms ease;
     animation: sparkleOrbit 3.2s ease-in-out infinite;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: visible;
 }
 
-.flashcard-form__field input[type='file']:hover::file-selector-button,
-.flashcard-form__field input[type='file']:hover::-webkit-file-upload-button {
+.flashcard-form__file-button:hover,
+.flashcard-form__file-button:focus-visible {
     transform: scale(1.035);
     box-shadow: 0 16px 28px rgba(255, 79, 161, 0.28);
 }
 
-.flashcard-form__field input[type='file']:focus-visible::file-selector-button,
-.flashcard-form__field input[type='file']:focus-visible::-webkit-file-upload-button {
+.flashcard-form__file-button:focus-visible {
     outline: 3px solid rgba(184, 240, 227, 0.8);
     outline-offset: 4px;
+}
+
+.flashcard-form__file-name {
+    font-size: 14px;
+    color: var(--text-muted);
+    min-width: 180px;
+    opacity: 0.65;
+}
+
+.flashcard-form__file-name--has-file {
+    opacity: 1;
+    color: var(--text-dark);
 }
 
 @keyframes sparkleOrbit {
