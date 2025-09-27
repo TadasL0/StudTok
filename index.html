@@ -84,8 +84,12 @@
 
                     <form id="flashcard-form" class="flashcard-form" aria-labelledby="flashcard-title">
                         <label class="flashcard-form__field" for="pdf-input">
-                            <span class="flashcard-form__label">Pasirink PDF</span>
-                            <input id="pdf-input" name="pdf" type="file" accept="application/pdf" required />
+                            <span class="flashcard-form__label">Pasirinkti PDF</span>
+                            <div class="flashcard-form__file-picker">
+                                <input id="pdf-input" class="flashcard-form__file-input" name="pdf" type="file" accept="application/pdf" required />
+                                <button id="pdf-trigger" type="button" class="flashcard-form__file-button">Pasirinkti PDF</button>
+                                <span id="pdf-file-name" class="flashcard-form__file-name" aria-live="polite" data-empty="Failas nepasirinktas">Failas nepasirinktas</span>
+                            </div>
                         </label>
                         <button id="generate-flashcards" class="btn btn--primary" type="submit">Sukurti korteles</button>
                         <p id="flashcard-status" class="flashcard-status" role="status" aria-live="polite"></p>
