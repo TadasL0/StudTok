@@ -19,6 +19,19 @@ const flashcardCounter = document.getElementById('flashcard-counter');
 const flashcardTags = document.getElementById('flashcard-tags');
 const generateFlashcardsBtn = document.getElementById('generate-flashcards');
 
+const pdfFileNameEmptyText = pdfFileName?.dataset?.empty || 'Failas nepasirinktas';
+
+function updatePdfSelectionLabel(file) {
+    if (!pdfFileName) return;
+    if (file) {
+        pdfFileName.textContent = file.name;
+        pdfFileName.classList.add('flashcard-form__file-name--has-file');
+    } else {
+        pdfFileName.textContent = pdfFileNameEmptyText;
+        pdfFileName.classList.remove('flashcard-form__file-name--has-file');
+    }
+}
+
 const introApiKeyInput = document.getElementById('intro-api-key');
 const introToggleKeyBtn = document.getElementById('intro-toggle-key');
 const introRememberKeyCheckbox = document.getElementById('intro-remember-key');
@@ -74,19 +87,6 @@ const flashcardState = {
     index: 0,
     flipped: false,
 };
-
-const pdfFileNameEmptyText = pdfFileName?.dataset?.empty || 'Failas nepasirinktas';
-
-function updatePdfSelectionLabel(file) {
-    if (!pdfFileName) return;
-    if (file) {
-        pdfFileName.textContent = file.name;
-        pdfFileName.classList.add('flashcard-form__file-name--has-file');
-    } else {
-        pdfFileName.textContent = pdfFileNameEmptyText;
-        pdfFileName.classList.remove('flashcard-form__file-name--has-file');
-    }
-}
 
 const FLASHCARD_STORAGE_KEY = 'pinkStudy.apiKey';
 const STICKY_STORAGE_KEY = 'pinkStudy.stickies';
