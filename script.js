@@ -47,6 +47,7 @@ const flashcardState = {
 };
 
 const FLASHCARD_STORAGE_KEY = 'pinkStudy.apiKey';
+const STICKY_STORAGE_KEY = 'pinkStudy.stickies';
 const FLASHCARD_MODEL = 'gpt-4.1-mini';
 const OPENAI_ENDPOINT = 'https://api.openai.com/v1/chat/completions';
 const MAX_PDF_CHARACTERS = 9000;
@@ -100,6 +101,7 @@ const STICKY_PALETTES = [
 ];
 
 let audioContext;
+let stickyNotesState = [];
 let splashTimeout;
 
 function showScreen(id) {
@@ -319,6 +321,56 @@ function persistApiKey(value, shouldRemember) {
     }
 }
 
+function loadStoredStickies() {
+    try {
+        const stored = localStorage.getItem(STICKY_STORAGE_KEY);
+        if (!stored) {
+            stickyNotesState = [];
+            return;
+        }
+
+        const parsed = JSON.parse(stored);
+        if (!Array.isArray(parsed)) {
+            stickyNotesState = [];
+            return;
+        }
+
+        const sanitised = parsed
+            .map((item) => {
+                const textValue = typeof item?.text === 'string' ? item.text.trim() : '';
+                const idValue = typeof item?.id === 'string' ? item.id.trim() : '';
+                const paletteIdx =
+                    Number.isInteger(item?.paletteIndex) && STICKY_PALETTES[item.paletteIndex]
+                        ? item.paletteIndex
+                        : 0;
+                const tiltValue = item?.tilt === 'left' ? 'left' : 'right';
+                if (!textValue || !idValue) return null;
+                return {
+                    id: idValue,
+                    text: textValue,
+                    paletteIndex: paletteIdx,
+                    tilt: tiltValue,
+                };
+            })
+            .filter(Boolean);
+
+        stickyNotesState = sanitised;
+        sanitised
+            .slice()
+            .reverse()
+            .forEach((item) => {
+                createStickyNote(item.text, {
+                    paletteIndex: item.paletteIndex,
+                    tilt: item.tilt,
+                    id: item.id,
+                    skipPersist: true,
+                });
+            });
+    } catch (error) {
+        stickyNotesState = [];
+    }
+}
+
 function pickWeightedNotepadPrompt() {
     const totalWeight = NOTEPAD_PROMPTS.reduce((sum, prompt) => sum + prompt.weight, 0);
     let ticket = Math.random() * totalWeight;
@@ -407,20 +459,39 @@ function updateStickyEmptyState() {
     stickyEmpty.hidden = hasNotes;
 }
 
-function createStickyNote(text) {
+function createStickyNote(text, options = {}) {
     if (!stickyBoard) return;
-    const palette = STICKY_PALETTES[Math.floor(Math.random() * STICKY_PALETTES.length)];
+    const safeText = typeof text === 'string' ? text.trim() : '';
+    if (!safeText) return;
+
+    const { paletteIndex, tilt, id, skipPersist } = options;
+    const paletteIdx =
+        typeof paletteIndex === 'number' && STICKY_PALETTES[paletteIndex]
+            ? paletteIndex
+            : Math.floor(Math.random() * STICKY_PALETTES.length);
+    const palette = STICKY_PALETTES[paletteIdx] || STICKY_PALETTES[0];
+    if (!palette) return;
+
+    const tiltDirection =
+        tilt === 'left' || tilt === 'right'
+            ? tilt
+            : Math.random() > 0.5
+            ? 'left'
+            : 'right';
+    const noteId = id || `sticky-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+
     const note = document.createElement('article');
     note.className = 'sticky-note sticky-note--enter';
     note.setAttribute('role', 'note');
     note.setAttribute('tabindex', '0');
+    note.dataset.stickyId = noteId;
     note.style.setProperty('--note-bg1', palette.bg1);
     note.style.setProperty('--note-bg2', palette.bg2);
     note.style.setProperty('--pin-color-strong', palette.pinStrong);
     note.style.setProperty('--pin-color-soft', palette.pinSoft);
     note.style.color = palette.text;
 
-    if (Math.random() > 0.5) {
+    if (tiltDirection === 'left') {
         note.classList.add('sticky-note--tilt-left');
     } else {
         note.classList.add('sticky-note--tilt-right');
@@ -430,16 +501,24 @@ function createStickyNote(text) {
     closeBtn.type = 'button';
     closeBtn.className = 'sticky-note__close';
     closeBtn.setAttribute('aria-label', 'Unpin note');
-    closeBtn.textContent = '×';
+    closeBtn.textContent = '\u00D7';
 
     const textEl = document.createElement('p');
     textEl.className = 'sticky-note__text';
-    textEl.textContent = text;
+    textEl.textContent = safeText;
 
     note.append(closeBtn, textEl);
     stickyBoard.prepend(note);
     updateStickyEmptyState();
-    playChime('pin');
+    if (!skipPersist) {
+        saveStickyNote({
+            id: noteId,
+            text: safeText,
+            paletteIndex: paletteIdx,
+            tilt: tiltDirection,
+        });
+        playChime('pin');
+    }
 
     note.addEventListener('animationend', (event) => {
         if (event.animationName === 'pinPop') {
@@ -459,13 +538,60 @@ function createStickyNote(text) {
     });
 }
 
+function saveStickyNote(noteData) {
+    if (!noteData) return;
+    const id = typeof noteData.id === 'string' ? noteData.id.trim() : '';
+    const textValue = typeof noteData.text === 'string' ? noteData.text.trim() : '';
+    if (!id || !textValue) return;
+
+    const paletteIdx =
+        typeof noteData.paletteIndex === 'number' && STICKY_PALETTES[noteData.paletteIndex]
+            ? noteData.paletteIndex
+            : 0;
+    const entry = {
+        id,
+        text: textValue,
+        paletteIndex: paletteIdx,
+        tilt: noteData.tilt === 'left' ? 'left' : 'right',
+    };
+
+    stickyNotesState = stickyNotesState.filter((item) => item.id !== entry.id);
+    stickyNotesState.unshift(entry);
+    persistStickies();
+}
+
+function removeStickyNoteFromState(id) {
+    if (!id) return;
+    const next = stickyNotesState.filter((item) => item.id !== id);
+    if (next.length !== stickyNotesState.length) {
+        stickyNotesState = next;
+        persistStickies();
+    }
+}
+
+function persistStickies() {
+    try {
+        localStorage.setItem(STICKY_STORAGE_KEY, JSON.stringify(stickyNotesState));
+    } catch (error) {
+        // Storage may be unavailable; ignore politely.
+    }
+}
+
 function dismissStickyNote(note) {
     if (!note || note.classList.contains('sticky-note--leaving')) return;
+
+    const noteId = note.dataset.stickyId;
+    if (noteId) {
+        removeStickyNoteFromState(noteId);
+    }
+
     const tilt = note.classList.contains('sticky-note--tilt-left') ? -8 : 8;
     note.style.setProperty('--fall-tilt', `${tilt}deg`);
     note.classList.add('sticky-note--leaving');
     playChime('unpin');
 }
+
+
 
 function clearStickyBoard() {
     if (!stickyBoard) return;
@@ -657,6 +783,7 @@ clearStickiesBtn?.addEventListener('click', () => {
 });
 
 loadStoredApiKey();
+loadStoredStickies();
 if (nameInput) {
     nameInput.value = state.name;
 }
