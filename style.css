@@ -141,7 +141,6 @@ body, h1, h2, h3, h4, h5, h6, p, span, label, li {
     100% {
         transform: translate3d(24%, -18%, 0) scale(0.94);
     }
-}
 
 @keyframes welcome-runner-jump {
     0% {
@@ -162,6 +161,33 @@ body, h1, h2, h3, h4, h5, h6, p, span, label, li {
     33%, 65% { background-image: url('assets/emilija2.png'); }
     66%, 100% { background-image: url('assets/emilija3.png'); }
 }
+
+@media (max-width: 640px) {
+    .welcome-splash__runner {
+        top: -24%;
+        left: -12%;
+        width: clamp(110px, 36vw, 160px);
+        height: clamp(110px, 36vw, 160px);
+    }
+
+    .welcome-splash__content {
+        gap: clamp(6px, 5vw, 16px);
+        align-items: flex-end;
+    }
+
+    .welcome-splash__salute,
+    .welcome-splash__name {
+        font-size: clamp(26px, 10vw, 48px);
+    }
+
+    .flashcard-widget__counter {
+        font-size: 13px;
+    }
+
+    .footer {
+        text-align: center;
+        align-self: center;
+    }
 }
 
 .welcome-splash__particles {
@@ -1246,7 +1272,10 @@ body, h1, h2, h3, h4, h5, h6, p, span, label, li {
 .flashcard-widget__counter {
     font-weight: 600;
     color: var(--text-muted);
+    font-size: 15px;
+    white-space: nowrap;
 }
+
 
 .flashcard-widget__stage {
     perspective: 1200px;
