@@ -164,20 +164,24 @@ body, h1, h2, h3, h4, h5, h6, p, span, label, li {
 
 @media (max-width: 640px) {
     .welcome-splash__runner {
-        top: -24%;
-        left: -12%;
-        width: clamp(110px, 36vw, 160px);
-        height: clamp(110px, 36vw, 160px);
+        top: -28%;
+        left: -18%;
+        width: clamp(96px, 30vw, 140px);
+        height: clamp(96px, 30vw, 140px);
     }
 
     .welcome-splash__content {
-        gap: clamp(6px, 5vw, 16px);
+        gap: clamp(4px, 4vw, 12px);
         align-items: flex-end;
+        text-align: left;
+        max-width: 75vw;
     }
 
     .welcome-splash__salute,
     .welcome-splash__name {
-        font-size: clamp(26px, 10vw, 48px);
+        font-size: clamp(20px, 8vw, 36px);
+        line-height: 1.1;
+        display: block;
     }
 
     .flashcard-widget__counter {
@@ -1511,6 +1515,12 @@ body, h1, h2, h3, h4, h5, h6, p, span, label, li {
     margin-top: 48px;
     font-size: 14px;
     color: rgba(68, 38, 63, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    text-align: center;
+    width: 100%;
 }
 
 @media (max-width: 520px) {
