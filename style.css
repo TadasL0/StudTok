@@ -164,24 +164,24 @@ body, h1, h2, h3, h4, h5, h6, p, span, label, li {
 
 @media (max-width: 640px) {
     .welcome-splash__runner {
-        top: -28%;
-        left: -18%;
-        width: clamp(96px, 30vw, 140px);
-        height: clamp(96px, 30vw, 140px);
+        top: -24%;
+        left: -8%;
+        width: clamp(100px, 28vw, 140px);
+        height: clamp(100px, 28vw, 140px);
     }
 
     .welcome-splash__content {
-        gap: clamp(4px, 4vw, 12px);
-        align-items: flex-end;
-        text-align: left;
-        max-width: 75vw;
+        gap: clamp(6px, 5vw, 14px);
+        align-items: center;
+        text-align: center;
+        max-width: min(82vw, 520px);
     }
 
     .welcome-splash__salute,
     .welcome-splash__name {
-        font-size: clamp(20px, 8vw, 36px);
-        line-height: 1.1;
-        display: block;
+        font-size: clamp(24px, 7vw, 38px);
+        line-height: 1.05;
+        display: inline-block;
     }
 
     .flashcard-widget__counter {
