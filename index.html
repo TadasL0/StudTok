@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-        href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:wght@400;500;600;700;900&family=Quicksand:wght@400;600;700&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:wght@400;500;600;700;900&family=Caveat:wght@400;600;700&family=Quicksand:wght@400;600;700&display=swap"
         rel="stylesheet"
     />
     <link rel="stylesheet" href="style.css" />
@@ -80,17 +80,23 @@
             <div class="card timetable-card" aria-labelledby="timetable-title" aria-live="polite">
                 <div class="timetable-card__header">
                     <h3 class="card__title" id="timetable-title">Studij&#371; tvarkara&#353;tis</h3>
-                    <p class="timetable-card__tagline">Tiesiogiai i&#353; Google Sheets.</p>
                 </div>
                 <div class="timetable-card__body">
-                    <iframe
-                        title="Studij&#371; tvarkara&#353;tis"
-                        src="https://docs.google.com/spreadsheets/d/1C5jA_g72_84hS5gtqDZ4w3usCFrpc0aCDb6sWKImW-Y/pubhtml?gid=1977665068&amp;single=true&amp;widget=true&amp;headers=false"
-                        loading="lazy"
-                        referrerpolicy="no-referrer"
-                        class="timetable-card__iframe"
-                    ></iframe>
-                    <p class="timetable-card__hint">Jei lentel&#279; nepasirodo, atidaryk dokument&#261; ir pasirink <strong>File &rarr; Share &rarr; Publish to the web</strong>.</p>
+                    <details class="timetable-card__details">
+                        <summary class="timetable-card__summary">
+                            <span class="timetable-card__summary-label">Svarbios datos</span>
+                            <span class="timetable-card__summary-icon" aria-hidden="true"></span>
+                        </summary>
+                        <div class="timetable-card__panel">
+                            <iframe
+                                title="Studij&#371; tvarkara&#353;tis"
+                                src="https://docs.google.com/spreadsheets/d/e/2PACX-1vSXYC-ZQPMy3ViRMeLZXHDIkOJx1e6dfVmqWyWkCtWWBuhD06XFycAhdjIKIVA7_L-REJh-qKL1qnS4/pubhtml?widget=true&amp;headers=false"
+                                loading="lazy"
+                                referrerpolicy="no-referrer"
+                                class="timetable-card__iframe"
+                            ></iframe>
+                        </div>
+                    </details>
                 </div>
             </div>
             <div class="studio-grid">
@@ -171,3 +177,4 @@
     <script src="script.js"></script>
 </body>
 </html>
+
