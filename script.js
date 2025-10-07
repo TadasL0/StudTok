@@ -18,6 +18,20 @@ const flashcardNextBtn = document.getElementById('flashcard-next');
 const flashcardCounter = document.getElementById('flashcard-counter');
 const flashcardTags = document.getElementById('flashcard-tags');
 const generateFlashcardsBtn = document.getElementById('generate-flashcards');
+const flashcardLengthInputs = document.querySelectorAll('input[name="flashcard-length"]');
+const generateFlashcardsToggle = document.getElementById('mode-flashcards');
+const generateQuizToggle = document.getElementById('mode-quiz');
+
+const quizWidget = document.getElementById('quiz-widget');
+const quizEmpty = document.getElementById('quiz-empty');
+const quizQuestion = document.getElementById('quiz-question');
+const quizOptions = document.getElementById('quiz-options');
+const quizProgress = document.getElementById('quiz-progress');
+const quizFeedback = document.getElementById('quiz-feedback');
+const quizNextButton = document.getElementById('quiz-next');
+const quizRestartButton = document.getElementById('quiz-restart');
+const quizEmptyDefaultText = quizEmpty?.textContent || '';
+const quizNotSelectedText = 'Testas nebuvo pasirinktas. Pa\u017Eym\u0117k "ABCD test\u0105", jei jo reikia.';
 
 const pdfFileNameEmptyText = pdfFileName?.dataset?.empty || 'Failas nepasirinktas';
 
@@ -30,6 +44,36 @@ function updatePdfSelectionLabel(file) {
         pdfFileName.textContent = pdfFileNameEmptyText;
         pdfFileName.classList.remove('flashcard-form__file-name--has-file');
     }
+}
+
+function updateGenerationModeStyles() {
+    [generateFlashcardsToggle, generateQuizToggle].forEach((input) => {
+        if (!input) return;
+        const wrapper = input.closest('.flashcard-form__toggle');
+        if (!wrapper) return;
+        wrapper.classList.toggle('flashcard-form__toggle--active', Boolean(input.checked));
+        wrapper.classList.toggle('flashcard-form__toggle--muted', !input.checked);
+    });
+}
+
+function updateQuizPlaceholderOnMode() {
+    if (!quizEmpty) return;
+    if (generateQuizToggle?.checked) {
+        quizEmpty.textContent = quizEmptyDefaultText;
+    } else {
+        quizEmpty.textContent = quizNotSelectedText;
+    }
+}
+
+function handleGenerationToggleChange(changed, counterpart) {
+    if (!changed) return;
+    if (changed.checked) {
+        if (counterpart) counterpart.checked = false;
+    } else if (counterpart && !counterpart.checked) {
+        changed.checked = true;
+    }
+    updateGenerationModeStyles();
+    updateQuizPlaceholderOnMode();
 }
 
 const introApiKeyInput = document.getElementById('intro-api-key');
@@ -66,6 +110,13 @@ pdfInput?.addEventListener('change', () => {
 });
 
 updatePdfSelectionLabel(pdfInput?.files && pdfInput.files[0]);
+handleGenerationToggleChange(generateFlashcardsToggle, generateQuizToggle);
+generateFlashcardsToggle?.addEventListener('change', () => {
+    handleGenerationToggleChange(generateFlashcardsToggle, generateQuizToggle);
+});
+generateQuizToggle?.addEventListener('change', () => {
+    handleGenerationToggleChange(generateQuizToggle, generateFlashcardsToggle);
+});
 
 const notepadForm = document.getElementById('notepad-form');
 const notepadInput = document.getElementById('notepad-input');
@@ -86,6 +137,13 @@ const flashcardState = {
     cards: [],
     index: 0,
     flipped: false,
+};
+
+const quizState = {
+    questions: [],
+    index: 0,
+    score: 0,
+    answered: false,
 };
 
 const FLASHCARD_STORAGE_KEY = 'pinkStudy.apiKey';
@@ -180,7 +238,7 @@ function setFlashcardStatus(message, mood = 'info') {
     }
 }
 
-function scheduleSplashHide(delay = 2600) {
+function scheduleSplashHide(delay = 1950) {
     if (!splash) return;
     clearTimeout(splashTimeout);
     splashTimeout = setTimeout(() => {
@@ -192,7 +250,7 @@ function scheduleSplashHide(delay = 2600) {
             setTimeout(() => {
                 splash?.remove();
             }, 800);
-        }, 260);
+        }, 200);
     }, delay);
 }
 
@@ -221,16 +279,47 @@ async function extractTextFromPdf(file) {
     return gathered.trim();
 }
 
-async function fetchFlashcardsFromApi(text, apiKey) {
+async function fetchStudyBundleFromApi(text, apiKey, generationPlan) {
+    const plan = generationPlan && typeof generationPlan === 'object' ? generationPlan : {};
+    const {
+        includeFlashcards = true,
+        flashcardCount = 25,
+        includeQuiz = false,
+        quizCount = 0,
+    } = plan;
+    const instructionParts = [];
+
+    if (includeFlashcards) {
+        instructionParts.push(
+            `I\u0161 pateiktos mokomosios med\u017Eiagos paruo\u0161k ${flashcardCount} klausim\u0173-atsakym\u0173 korteles. Koncentruokis \u012F esm\u0119 ir pateik draugi\u0161kus klausimus bei atsakymus.`
+        );
+    } else {
+        instructionParts.push(
+            'I\u0161 pateiktos mokomosios med\u017Eiagos korteli\u0173 neformuok - laukas "flashcards" turi b\u016Bti tu\u0161\u010Dias masyv\u0105.'
+        );
+    }
+
+    if (includeQuiz) {
+        instructionParts.push(
+            `Sudaryk ${quizCount} testinius klausimus, kuri\u0173 kiekvienas turi keturis atsakymo variantus. Variantus pateik lauke "options" (be raid\u017Ei\u0173), o teising\u0105 raid\u0119 (A, B, C arba D) \u012Fra\u0161yk lauke "correctOption". Jei gali, prid\u0117k trump\u0105 paai\u0161kinim\u0105 lauke "explanation".`
+        );
+    } else {
+        instructionParts.push(
+            'ABCD testo \u0161\u012Fkart neformuok - laukas "quizQuestions" turi b\u016Bti tu\u0161\u010Dias masyvas.'
+        );
+    }
+
+    instructionParts.push('Visus laukus ra\u0161yk lietuvi\u0161kai ir gr\u0105\u017Eink tik valid\u0173 JSON objekt\u0105.');
+
     const prompt = [
         {
             role: 'system',
             content:
-                'Tu esi nuotaikinga mokymosi trener\u0117, kuri atsako tik kompakti\u0161ka JSON strukt\u016Br\u0105. Gr\u0105\u017Eink masyv\u0105 pavadinimu "flashcards", kur kiekvienas elementas turi "question", "answer" ir neprivalom\u0105 "tags" masyv\u0105. Klausimus ir atsakymus pateik draugi\u0161kai, glaustai, be Markdown, VISK\u0104 RA\u0160YK LIETUVI\u0160KAI.',
+                'Tu esi nuotaikinga mokymosi trener\u0117, kuri atsako tik kompakti\u0161k\u0105 JSON objekt\u0105. Visada gr\u0105\u017Eink du laukus: "flashcards" ir "quizQuestions". "flashcards" yra masyvas su objektais, turin\u010Diais "question", "answer" ir neprivalom\u0105 "tags" masyv\u0105. "quizQuestions" yra masyvas su objektais, turin\u010Diais "question", "options" (keturi \u012Fra\u0161ai) ir "correctOption" (raid\u0117 A, B, C arba D). Galima prid\u0117ti neprivalom\u0105 "explanation". Jei kurio nors turinio nereikia, atitinkam\u0105 masyv\u0105 palik tu\u0161\u010Di\u0105. Visk\u0105 ra\u0161yk lietuvi\u0161kai, be Markdown.',
         },
         {
             role: 'user',
-            content: `Sukurk 8 klausim\u0173-atsakym\u0173 korteles i\u0161 \u0161ios mokomosios med\u017Eiagos. Koncentruokis \u012F \u012Fsimintiniausius faktus, s\u0105vokas ir procesus. Visus laukus ra\u0161yk lietuvi\u0161kai. ${text}`,
+            content: `${instructionParts.join(' ')}\n\n${text}`,
         },
     ];
 
@@ -261,24 +350,34 @@ async function fetchFlashcardsFromApi(text, apiKey) {
 
     const data = await response.json();
     const rawContent = data?.choices?.[0]?.message?.content?.trim();
-    return normaliseFlashcards(rawContent);
+    return parseStudyBundle(rawContent);
 }
 
-function normaliseFlashcards(rawContent) {
-    if (!rawContent) return [];
+function parseStudyBundle(rawContent) {
+    if (!rawContent) {
+        return {
+            flashcards: [],
+            quizQuestions: [],
+        };
+    }
     const cleaned = rawContent.replace(/```json|```/gi, '').trim();
     let parsed;
 
     try {
         parsed = JSON.parse(cleaned);
     } catch (error) {
-        return [];
+        return {
+            flashcards: [],
+            quizQuestions: [],
+        };
     }
 
-    const items = Array.isArray(parsed) ? parsed : parsed.flashcards;
-    if (!Array.isArray(items)) return [];
-
-    return items
+    const flashcardItems = Array.isArray(parsed)
+        ? parsed
+        : Array.isArray(parsed.flashcards)
+        ? parsed.flashcards
+        : [];
+    const flashcards = flashcardItems
         .map((item) => ({
             question: String(item.question || '').trim(),
             answer: String(item.answer || '').trim(),
@@ -287,6 +386,60 @@ function normaliseFlashcards(rawContent) {
                 : [],
         }))
         .filter((card) => card.question && card.answer);
+
+    const quizItems = Array.isArray(parsed.quizQuestions)
+        ? parsed.quizQuestions
+        : Array.isArray(parsed.quiz)
+        ? parsed.quiz
+        : [];
+    const quizQuestions = quizItems
+        .map((item) => {
+            const question = String(item.question || '').trim();
+            const options = Array.isArray(item.options)
+                ? item.options.map((option) => String(option || '').trim()).filter(Boolean)
+                : [];
+            let correctIndex = -1;
+            if (Number.isInteger(item.correctIndex) && item.correctIndex >= 0 && item.correctIndex < options.length) {
+                correctIndex = item.correctIndex;
+            } else if (typeof item.correctOption === 'string') {
+                const letter = item.correctOption.trim().toUpperCase();
+                const index = 'ABCD'.indexOf(letter);
+                if (index >= 0) {
+                    correctIndex = index;
+                }
+            } else if (typeof item.answer === 'string') {
+                const answerText = item.answer.trim();
+                const letterGuess = answerText.toUpperCase();
+                const letterIndex = 'ABCD'.indexOf(letterGuess);
+                if (letterIndex >= 0) {
+                    correctIndex = letterIndex;
+                } else {
+                    const optionIndex = options.findIndex((option) => option.toLowerCase() === answerText.toLowerCase());
+                    if (optionIndex >= 0) {
+                        correctIndex = optionIndex;
+                    }
+                }
+            }
+
+            const explanation = typeof item.explanation === 'string' ? item.explanation.trim() : '';
+
+            if (!question || options.length !== 4 || correctIndex < 0 || correctIndex > 3) {
+                return null;
+            }
+
+            return {
+                question,
+                options,
+                correctIndex,
+                explanation,
+            };
+        })
+        .filter(Boolean);
+
+    return {
+        flashcards,
+        quizQuestions,
+    };
 }
 
 function renderFlashcard() {
@@ -463,6 +616,206 @@ function clearFlashcardWidget() {
     if (flashcardCounter) flashcardCounter.textContent = '0 / 0';
     if (flashcardTags) flashcardTags.innerHTML = '';
     if (flashcardCard) flashcardCard.dataset.flipped = 'false';
+}
+
+function clearQuizWidget() {
+    quizState.questions = [];
+    quizState.index = 0;
+    quizState.score = 0;
+    quizState.answered = false;
+    if (quizWidget) {
+        quizWidget.hidden = true;
+    }
+    if (quizEmpty) {
+        quizEmpty.hidden = false;
+        quizEmpty.textContent = quizEmptyDefaultText;
+    }
+    if (quizQuestion) {
+        quizQuestion.textContent = '';
+    }
+    if (quizOptions) {
+        quizOptions.innerHTML = '';
+    }
+    if (quizProgress) {
+        quizProgress.textContent = '0 / 0';
+    }
+    if (quizFeedback) {
+        quizFeedback.textContent = '';
+    }
+    if (quizNextButton) {
+        quizNextButton.disabled = true;
+        quizNextButton.textContent = 'Kitas klausimas';
+    }
+    if (quizRestartButton) {
+        quizRestartButton.disabled = true;
+    }
+    updateQuizPlaceholderOnMode();
+}
+
+function getSelectedFlashcardPreferences() {
+    const defaultFlashcardCount = 25;
+    let selectedInput = null;
+
+    flashcardLengthInputs.forEach((input) => {
+        if (input.checked) {
+            selectedInput = input;
+        }
+    });
+
+    const parsedFlashcardValue = selectedInput ? parseInt(selectedInput.value, 10) : Number.NaN;
+    const flashcardCount = Number.isFinite(parsedFlashcardValue) && parsedFlashcardValue > 0 ? parsedFlashcardValue : defaultFlashcardCount;
+
+    const quizAttr = selectedInput?.dataset?.quizCount;
+    const parsedQuizValue = quizAttr ? parseInt(quizAttr, 10) : Number.NaN;
+    const computedQuizCount = Math.max(5, Math.round(flashcardCount / 3));
+    const inferredQuizCount = Number.isFinite(parsedQuizValue) && parsedQuizValue > 0 ? parsedQuizValue : computedQuizCount;
+
+    const includeFlashcards = generateFlashcardsToggle ? generateFlashcardsToggle.checked : true;
+    const includeQuiz = generateQuizToggle ? generateQuizToggle.checked : false;
+
+    return {
+        includeFlashcards,
+        flashcardCount,
+        includeQuiz,
+        quizCount: includeQuiz ? inferredQuizCount : 0,
+    };
+}
+
+function loadQuizQuestions(questions) {
+    if (!Array.isArray(questions) || questions.length === 0) {
+        clearQuizWidget();
+        return;
+    }
+
+    quizState.questions = questions;
+    quizState.index = 0;
+    quizState.score = 0;
+    quizState.answered = false;
+
+    if (quizEmpty) {
+        quizEmpty.hidden = true;
+    }
+    if (quizWidget) {
+        quizWidget.hidden = false;
+    }
+    if (quizRestartButton) {
+        quizRestartButton.disabled = false;
+    }
+    renderQuizQuestion();
+}
+
+function renderQuizQuestion() {
+    if (!quizWidget || quizState.questions.length === 0) {
+        clearQuizWidget();
+        return;
+    }
+
+    const total = quizState.questions.length;
+    const current = quizState.questions[quizState.index];
+
+    if (quizQuestion) {
+        quizQuestion.textContent = current.question;
+    }
+
+    if (quizOptions) {
+        quizOptions.innerHTML = '';
+        current.options.forEach((optionText, index) => {
+            const letter = String.fromCharCode(65 + index);
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'quiz-option';
+            button.dataset.optionIndex = String(index);
+            button.setAttribute('aria-label', `${letter}. ${optionText}`);
+
+            const letterSpan = document.createElement('span');
+            letterSpan.className = 'quiz-option__letter';
+            letterSpan.textContent = letter;
+
+            const textSpan = document.createElement('span');
+            textSpan.className = 'quiz-option__text';
+            textSpan.textContent = optionText;
+
+            button.append(letterSpan, textSpan);
+            button.addEventListener('click', () => handleQuizOptionSelect(index));
+            quizOptions.appendChild(button);
+        });
+    }
+
+    if (quizProgress) {
+        quizProgress.textContent = `${quizState.index + 1} / ${total}`;
+    }
+    if (quizFeedback) {
+        quizFeedback.textContent = '';
+    }
+    if (quizNextButton) {
+        quizNextButton.disabled = true;
+        quizNextButton.textContent = quizState.index < total - 1 ? 'Kitas klausimas' : 'Baigti test\u0105';
+    }
+
+    quizState.answered = false;
+}
+
+function handleQuizOptionSelect(optionIndex) {
+    if (!quizOptions || quizState.questions.length === 0 || quizState.answered) {
+        return;
+    }
+
+    const current = quizState.questions[quizState.index];
+    const correctIndex = current.correctIndex;
+    const buttons = quizOptions.querySelectorAll('.quiz-option');
+
+    buttons.forEach((button) => {
+        button.disabled = true;
+        button.classList.add('quiz-option--disabled');
+    });
+
+    if (optionIndex === correctIndex) {
+        quizState.score += 1;
+        buttons[optionIndex]?.classList.add('quiz-option--correct');
+        if (quizFeedback) {
+            quizFeedback.textContent = current.explanation
+                ? `Teisingai! ${current.explanation}`
+                : 'Teisingai!';
+        }
+    } else {
+        buttons[optionIndex]?.classList.add('quiz-option--wrong');
+        buttons[correctIndex]?.classList.add('quiz-option--correct');
+        if (quizFeedback) {
+            quizFeedback.textContent = current.explanation
+                ? `Teisingas atsakymas: ${String.fromCharCode(65 + correctIndex)}. ${current.explanation}`
+                : `Teisingas atsakymas: ${String.fromCharCode(65 + correctIndex)}.`;
+        }
+    }
+
+    quizState.answered = true;
+    if (quizNextButton) {
+        quizNextButton.disabled = false;
+    }
+}
+
+function showQuizSummary() {
+    if (!quizWidget) {
+        return;
+    }
+    const total = quizState.questions.length;
+    if (quizQuestion) {
+        quizQuestion.textContent = 'Testas baigtas!';
+    }
+    if (quizOptions) {
+        quizOptions.innerHTML = '';
+    }
+    if (quizProgress) {
+        quizProgress.textContent = `${total} / ${total}`;
+    }
+    if (quizFeedback) {
+        quizFeedback.textContent = `Surinkai ${quizState.score} i\u0161 ${total}.`;
+    }
+    if (quizNextButton) {
+        quizNextButton.disabled = true;
+        quizNextButton.textContent = 'Pabaiga';
+    }
+
+    quizState.answered = true;
 }
 
 function updateNotepadEmptyState() {
@@ -751,6 +1104,29 @@ flashcardNextBtn?.addEventListener('click', () => {
     showFlashcardByIndex(flashcardState.index + 1);
 });
 
+quizNextButton?.addEventListener('click', () => {
+    if (quizState.questions.length === 0 || !quizState.answered) {
+        return;
+    }
+    if (quizState.index < quizState.questions.length - 1) {
+        quizState.index += 1;
+        quizState.answered = false;
+        renderQuizQuestion();
+    } else {
+        showQuizSummary();
+    }
+});
+
+quizRestartButton?.addEventListener('click', () => {
+    if (quizState.questions.length === 0) {
+        return;
+    }
+    quizState.index = 0;
+    quizState.score = 0;
+    quizState.answered = false;
+    renderQuizQuestion();
+});
+
 flashcardForm?.addEventListener('submit', async (event) => {
     event.preventDefault();
     if (!pdfInput) return;
@@ -778,6 +1154,7 @@ flashcardForm?.addEventListener('submit', async (event) => {
     }
 
     clearFlashcardWidget();
+    clearQuizWidget();
     setFlashcardStatus('I\u0161traukiame svarbiausias pastabas i\u0161 PDF...', 'pending');
     flashcardForm.setAttribute('aria-busy', 'true');
     if (generateFlashcardsBtn) generateFlashcardsBtn.disabled = true;
@@ -788,18 +1165,57 @@ flashcardForm?.addEventListener('submit', async (event) => {
             throw new Error('Nepavyko nuskaityti teksto. Pabandyk PDF, kuriame tekstas yra pa\u017eymimas.');
         }
 
-        setFlashcardStatus('Kuriame korteles per OpenAI...', 'pending');
-        const cards = await fetchFlashcardsFromApi(text, state.apiKey);
-        if (!cards.length) {
-            throw new Error('Korteli\u0173 negavome. Pabandyk ai\u0161kesn\u012f PDF arba pakoreguok turin\u012f.');
+        const plan = getSelectedFlashcardPreferences();
+        const { includeFlashcards, includeQuiz } = plan;
+        const actionLabel = includeFlashcards && includeQuiz
+            ? 'Kuriame korteles ir test\u0105 per OpenAI...'
+            : includeFlashcards
+            ? 'Kuriame korteles per OpenAI...'
+            : 'Kuriame test\u0105 per OpenAI...';
+        setFlashcardStatus(actionLabel, 'pending');
+
+        const bundle = await fetchStudyBundleFromApi(text, state.apiKey, plan);
+        const cards = includeFlashcards ? bundle.flashcards : [];
+        const quizQuestions = includeQuiz ? bundle.quizQuestions : [];
+        let statusMessage = '';
+
+        if (includeFlashcards) {
+            if (!cards.length) {
+                throw new Error('Korteli\u0173 negavome. Pabandyk ai\u0161kesn\u012f PDF arba pakoreguok turin\u012f.');
+            }
+            flashcardState.cards = cards;
+            flashcardState.index = 0;
+            flashcardState.flipped = false;
+            renderFlashcard();
+            statusMessage = 'Kortel\u0117s paruo\u0161tos!';
+        } else {
+            clearFlashcardWidget();
         }
 
-        flashcardState.cards = cards;
-        flashcardState.index = 0;
-        flashcardState.flipped = false;
-        renderFlashcard();
-        setFlashcardStatus('Kortel\u0117s paruo\u0161tos! Apversk ir blizg\u0117k.', 'success');
-        flashcardCard?.focus({ preventScroll: true });
+        if (includeQuiz) {
+            if (quizQuestions.length === 0) {
+                if (quizEmpty) {
+                    quizEmpty.hidden = false;
+                    quizEmpty.textContent = 'Testo suformuoti nepavyko. Pabandyk dar kart\u0105 su ai\u0161kesniu PDF.';
+                }
+                throw new Error('Testo suformuoti nepavyko. Pabandyk dar kart\u0105 su ai\u0161kesniu PDF.');
+            }
+            loadQuizQuestions(quizQuestions);
+            statusMessage = includeFlashcards
+                ? 'Kortel\u0117s ir testas paruo\u0161ti! Apversk ir pasitikrink save.'
+                : 'Testas paruo\u0161tas! Pasitikrink save.';
+        } else {
+            clearQuizWidget();
+            if (quizEmpty) {
+                quizEmpty.hidden = false;
+                quizEmpty.textContent = quizNotSelectedText;
+            }
+        }
+
+        setFlashcardStatus(statusMessage || 'Viskas paruo\u0161ta!', 'success');
+        if (includeFlashcards) {
+            flashcardCard?.focus({ preventScroll: true });
+        }
     } catch (error) {
         console.error(error);
         setFlashcardStatus(error.message || 'Kuriant korteles \u012fvyko klaida.', 'error');

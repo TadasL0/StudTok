@@ -117,6 +117,37 @@
                                 <span id="pdf-file-name" class="flashcard-form__file-name" aria-live="polite" data-empty="Failas nepasirinktas">Failas nepasirinktas</span>
                             </div>
                         </label>
+                        <div class="flashcard-form__field">
+                            <span class="flashcard-form__label">Pasirink korteli&#371; kiek&#303;</span>
+                            <div class="flashcard-form__choices" role="radiogroup" aria-label="Pasirink korteli&#371; kiek&#303;">
+                                <label class="flashcard-form__choice">
+                                    <input type="radio" name="flashcard-length" value="15" data-quiz-count="5" />
+                                    <span class="flashcard-form__choice-label">Trumpas (15 korteli&#371;)</span>
+                                </label>
+                                <label class="flashcard-form__choice">
+                                    <input type="radio" name="flashcard-length" value="25" data-quiz-count="8" checked />
+                                    <span class="flashcard-form__choice-label">Vidutinis (25 kortel&#279;s)</span>
+                                </label>
+                                <label class="flashcard-form__choice">
+                                    <input type="radio" name="flashcard-length" value="35" data-quiz-count="10" />
+                                    <span class="flashcard-form__choice-label">Ilgas (35 korteli&#371;)</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="flashcard-form__field">
+                            <span class="flashcard-form__label">K&#261; generuosime?</span>
+                            <div class="flashcard-form__toggles">
+                                <label class="flashcard-form__toggle">
+                                    <input id="mode-flashcards" type="checkbox" name="mode-flashcards" checked />
+                                    <span class="flashcard-form__toggle-label">Korteles</span>
+                                </label>
+                                <label class="flashcard-form__toggle">
+                                    <input id="mode-quiz" type="checkbox" name="mode-quiz" />
+                                    <span class="flashcard-form__toggle-label">ABCD test&#261;</span>
+                                </label>
+                            </div>
+                            <p class="flashcard-form__hint flashcard-form__hint--inline">Pasirink vien&#261; parinkt&#303;, kad Emilija nepervargt&#371;.</p>
+                        </div>
                         <button id="generate-flashcards" class="btn btn--primary" type="submit">Sukurti korteles</button>
                         <p id="flashcard-status" class="flashcard-status" role="status" aria-live="polite"></p>
                     </form>
@@ -141,6 +172,26 @@
                         </div>
                         <div id="flashcard-tags" class="flashcard-widget__tags" aria-live="polite"></div>
                         <p class="flashcard-widget__hint">Bakstel&#279;k arba spausk tarpo ar Enter klavi&#353;&#261; ir apversk kortel&#281;. Naudok ro&#382;inius mygtukus nar&#353;ymui.</p>
+                    </div>
+                </div>
+
+                <div class="card quiz-card" aria-live="polite">
+                    <div class="quiz-card__header">
+                        <h3 class="card__title" id="quiz-title">Ro&#382;inis ABCD testas</h3>
+                        <p class="quiz-card__tagline">Pasitikrink &#382;inias i&#353; to paties PDF su keturiais atsakymo variantais.</p>
+                    </div>
+                    <p id="quiz-empty" class="quiz-empty">Sukurk korteles ir &#269;ia atsiras testas.</p>
+                    <div id="quiz-widget" class="quiz-widget" hidden aria-labelledby="quiz-title">
+                        <p id="quiz-question" class="quiz-widget__question"></p>
+                        <div id="quiz-options" class="quiz-widget__options" role="radiogroup" aria-labelledby="quiz-question"></div>
+                        <div class="quiz-widget__footer">
+                            <span id="quiz-progress" class="quiz-widget__progress">0 / 0</span>
+                            <button id="quiz-next" type="button" class="btn btn--pill" disabled>Kitas klausimas</button>
+                        </div>
+                        <p id="quiz-feedback" class="quiz-widget__feedback" role="status"></p>
+                        <div class="quiz-widget__actions">
+                            <button id="quiz-restart" type="button" class="btn btn--secondary btn--tiny" disabled>Prad&#279;ti i&#353; naujo</button>
+                        </div>
                     </div>
                 </div>
 
