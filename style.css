@@ -2041,3 +2041,10 @@ body, h1, h2, h3, h4, h5, h6, p, span, label, li {
         align-items: flex-start;
     }
 }
+
+@media (max-width: 768px) {
+    body {
+        /* Avoid background-attachment issues that create a white strip on mobile browsers */
+        background-attachment: scroll, scroll;
+    }
+}
