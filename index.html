@@ -148,6 +148,23 @@
                             </div>
                             <p class="flashcard-form__hint flashcard-form__hint--inline">Pasirink vien&#261; parinkt&#303;, kad Emilija nepervargt&#371;.</p>
                         </div>
+                        <div id="quiz-length-field" class="flashcard-form__field" hidden aria-hidden="true">
+                            <span class="flashcard-form__label">Pasirink testo apimt&#303;</span>
+                            <div class="flashcard-form__choices" role="radiogroup" aria-label="Pasirink testo apimt&#303;">
+                                <label class="flashcard-form__choice">
+                                    <input type="radio" name="quiz-length" value="10" />
+                                    <span class="flashcard-form__choice-label">Trumpas (10 klausim&#371;)</span>
+                                </label>
+                                <label class="flashcard-form__choice">
+                                    <input type="radio" name="quiz-length" value="20" data-default="true" checked />
+                                    <span class="flashcard-form__choice-label">Vidutinis (20 klausim&#371;)</span>
+                                </label>
+                                <label class="flashcard-form__choice">
+                                    <input type="radio" name="quiz-length" value="30" />
+                                    <span class="flashcard-form__choice-label">Ilgas (30 klausim&#371;)</span>
+                                </label>
+                            </div>
+                        </div>
                         <button id="generate-flashcards" class="btn btn--primary" type="submit">Sukurti korteles</button>
                         <p id="flashcard-status" class="flashcard-status" role="status" aria-live="polite"></p>
                     </form>
@@ -172,6 +189,9 @@
                         </div>
                         <div id="flashcard-tags" class="flashcard-widget__tags" aria-live="polite"></div>
                         <p class="flashcard-widget__hint">Bakstel&#279;k arba spausk tarpo ar Enter klavi&#353;&#261; ir apversk kortel&#281;. Naudok ro&#382;inius mygtukus nar&#353;ymui.</p>
+                        <div class="flashcard-widget__actions">
+                            <button id="flashcard-regenerate" type="button" class="btn btn--secondary btn--tiny" disabled>Sukurti naujas korteles</button>
+                        </div>
                     </div>
                 </div>
 
@@ -191,6 +211,8 @@
                         <p id="quiz-feedback" class="quiz-widget__feedback" role="status"></p>
                         <div class="quiz-widget__actions">
                             <button id="quiz-restart" type="button" class="btn btn--secondary btn--tiny" disabled>Prad&#279;ti i&#353; naujo</button>
+                            <button id="quiz-shuffle" type="button" class="btn btn--secondary btn--tiny" disabled>I&#353;mai&#353;yti klausimus</button>
+                            <button id="quiz-regenerate" type="button" class="btn btn--secondary btn--tiny" disabled>Sukurti nauj&#261; test&#261;</button>
                         </div>
                     </div>
                 </div>

@@ -1744,6 +1744,14 @@ body, h1, h2, h3, h4, h5, h6, p, span, label, li {
     color: var(--text-muted);
 }
 
+.flashcard-widget__actions {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 16px;
+}
+
 .quiz-card__header {
     display: grid;
     gap: 8px;

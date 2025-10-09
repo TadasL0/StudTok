@@ -21,6 +21,11 @@ const generateFlashcardsBtn = document.getElementById('generate-flashcards');
 const flashcardLengthInputs = document.querySelectorAll('input[name="flashcard-length"]');
 const generateFlashcardsToggle = document.getElementById('mode-flashcards');
 const generateQuizToggle = document.getElementById('mode-quiz');
+const quizLengthField = document.getElementById('quiz-length-field');
+const quizLengthInputs = document.querySelectorAll('input[name="quiz-length"]');
+const regenerateFlashcardsBtn = document.getElementById('flashcard-regenerate');
+const regenerateQuizBtn = document.getElementById('quiz-regenerate');
+const shuffleQuizBtn = document.getElementById('quiz-shuffle');
 
 const quizWidget = document.getElementById('quiz-widget');
 const quizEmpty = document.getElementById('quiz-empty');
@@ -34,6 +39,35 @@ const quizEmptyDefaultText = quizEmpty?.textContent || '';
 const quizNotSelectedText = 'Testas nebuvo pasirinktas. Pa\u017Eym\u0117k "ABCD test\u0105", jei jo reikia.';
 
 const pdfFileNameEmptyText = pdfFileName?.dataset?.empty || 'Failas nepasirinktas';
+
+const state = {
+    name: 'Emilija',
+    apiKey: '',
+    notepadPrompt: '',
+};
+
+const flashcardState = {
+    cards: [],
+    index: 0,
+    flipped: false,
+};
+
+const quizState = {
+    baseQuestions: [],
+    questions: [],
+    index: 0,
+    score: 0,
+    answered: false,
+};
+
+const generationState = {
+    pdfText: '',
+    lastPlan: null,
+    lastFileName: '',
+    modeTouched: false,
+};
+
+let generationBusy = false;
 
 function updatePdfSelectionLabel(file) {
     if (!pdfFileName) return;
@@ -52,8 +86,16 @@ function updateGenerationModeStyles() {
         const wrapper = input.closest('.flashcard-form__toggle');
         if (!wrapper) return;
         wrapper.classList.toggle('flashcard-form__toggle--active', Boolean(input.checked));
-        wrapper.classList.toggle('flashcard-form__toggle--muted', !input.checked);
+        const shouldMute = !input.checked && Boolean(generationState.modeTouched);
+        wrapper.classList.toggle('flashcard-form__toggle--muted', shouldMute);
     });
+    updateGenerateButtonText();
+}
+
+function updateGenerateButtonText() {
+    if (!generateFlashcardsBtn) return;
+    const quizActive = Boolean(generateQuizToggle?.checked) && !Boolean(generateFlashcardsToggle?.checked);
+    generateFlashcardsBtn.textContent = quizActive ? 'Sukurti test\u0105' : 'Sukurti korteles';
 }
 
 function updateQuizPlaceholderOnMode() {
@@ -74,6 +116,71 @@ function handleGenerationToggleChange(changed, counterpart) {
     }
     updateGenerationModeStyles();
     updateQuizPlaceholderOnMode();
+    updateQuizLengthVisibility();
+}
+
+function ensureQuizLengthDefault() {
+    if (!quizLengthInputs || typeof quizLengthInputs.length !== 'number' || quizLengthInputs.length === 0) {
+        return;
+    }
+    const inputs = Array.from(quizLengthInputs);
+    const anyChecked = inputs.some((input) => input.checked);
+    if (!anyChecked) {
+        const fallback = inputs.find((input) => input.dataset?.default === 'true') || inputs[0];
+        if (fallback) {
+            fallback.checked = true;
+        }
+    }
+}
+
+function updateQuizLengthVisibility() {
+    const active = Boolean(generateQuizToggle?.checked);
+    if (quizLengthField) {
+        quizLengthField.hidden = !active;
+        if (active) {
+            quizLengthField.removeAttribute('aria-hidden');
+        } else {
+            quizLengthField.setAttribute('aria-hidden', 'true');
+        }
+    }
+    quizLengthInputs.forEach((input) => {
+        input.disabled = !active;
+    });
+    if (active) {
+        ensureQuizLengthDefault();
+    }
+}
+
+function updateRegenerateButtonsAvailability() {
+    const hasStoredText = Boolean(generationState.pdfText);
+    const hasApiKey = Boolean(state.apiKey);
+    if (regenerateFlashcardsBtn) {
+        const hasCards = flashcardState.cards.length > 0;
+        regenerateFlashcardsBtn.disabled = generationBusy || !hasStoredText || !hasApiKey || !hasCards;
+    }
+    if (regenerateQuizBtn) {
+        const hasQuestions = quizState.questions.length > 0;
+        regenerateQuizBtn.disabled = generationBusy || !hasStoredText || !hasApiKey || !hasQuestions;
+    }
+    if (shuffleQuizBtn) {
+        const canShuffle = quizState.baseQuestions.length > 1;
+        shuffleQuizBtn.disabled = generationBusy || !canShuffle;
+    }
+}
+
+function setGenerationBusy(isBusy) {
+    generationBusy = Boolean(isBusy);
+    if (flashcardForm) {
+        if (generationBusy) {
+            flashcardForm.setAttribute('aria-busy', 'true');
+        } else {
+            flashcardForm.removeAttribute('aria-busy');
+        }
+    }
+    if (generateFlashcardsBtn) {
+        generateFlashcardsBtn.disabled = generationBusy;
+    }
+    updateRegenerateButtonsAvailability();
 }
 
 const introApiKeyInput = document.getElementById('intro-api-key');
@@ -107,14 +214,20 @@ if (pdfTrigger && pdfInput) {
 pdfInput?.addEventListener('change', () => {
     const file = pdfInput.files && pdfInput.files[0];
     updatePdfSelectionLabel(file || null);
+    generationState.pdfText = '';
+    generationState.lastPlan = null;
+    generationState.lastFileName = file ? file.name : '';
+    updateRegenerateButtonsAvailability();
 });
 
 updatePdfSelectionLabel(pdfInput?.files && pdfInput.files[0]);
 handleGenerationToggleChange(generateFlashcardsToggle, generateQuizToggle);
 generateFlashcardsToggle?.addEventListener('change', () => {
+    generationState.modeTouched = true;
     handleGenerationToggleChange(generateFlashcardsToggle, generateQuizToggle);
 });
 generateQuizToggle?.addEventListener('change', () => {
+    generationState.modeTouched = true;
     handleGenerationToggleChange(generateQuizToggle, generateFlashcardsToggle);
 });
 
@@ -126,25 +239,6 @@ const notepadEmpty = document.querySelector('.notepad-empty');
 const stickyBoard = document.getElementById('sticky-board');
 const stickyEmpty = document.getElementById('sticky-empty');
 const clearStickiesBtn = document.getElementById('clear-stickies');
-
-const state = {
-    name: 'Emilija',
-    apiKey: '',
-    notepadPrompt: '',
-};
-
-const flashcardState = {
-    cards: [],
-    index: 0,
-    flipped: false,
-};
-
-const quizState = {
-    questions: [],
-    index: 0,
-    score: 0,
-    answered: false,
-};
 
 const FLASHCARD_STORAGE_KEY = 'pinkStudy.apiKey';
 const STICKY_STORAGE_KEY = 'pinkStudy.stickies';
@@ -616,9 +710,11 @@ function clearFlashcardWidget() {
     if (flashcardCounter) flashcardCounter.textContent = '0 / 0';
     if (flashcardTags) flashcardTags.innerHTML = '';
     if (flashcardCard) flashcardCard.dataset.flipped = 'false';
+    updateRegenerateButtonsAvailability();
 }
 
 function clearQuizWidget() {
+    quizState.baseQuestions = [];
     quizState.questions = [];
     quizState.index = 0;
     quizState.score = 0;
@@ -650,25 +746,31 @@ function clearQuizWidget() {
         quizRestartButton.disabled = true;
     }
     updateQuizPlaceholderOnMode();
+    updateRegenerateButtonsAvailability();
 }
 
 function getSelectedFlashcardPreferences() {
     const defaultFlashcardCount = 25;
-    let selectedInput = null;
+    const defaultQuizCount = 20;
+    let selectedFlashcardInput = null;
 
     flashcardLengthInputs.forEach((input) => {
         if (input.checked) {
-            selectedInput = input;
+            selectedFlashcardInput = input;
         }
     });
 
-    const parsedFlashcardValue = selectedInput ? parseInt(selectedInput.value, 10) : Number.NaN;
+    const parsedFlashcardValue = selectedFlashcardInput ? parseInt(selectedFlashcardInput.value, 10) : Number.NaN;
     const flashcardCount = Number.isFinite(parsedFlashcardValue) && parsedFlashcardValue > 0 ? parsedFlashcardValue : defaultFlashcardCount;
 
-    const quizAttr = selectedInput?.dataset?.quizCount;
-    const parsedQuizValue = quizAttr ? parseInt(quizAttr, 10) : Number.NaN;
-    const computedQuizCount = Math.max(5, Math.round(flashcardCount / 3));
-    const inferredQuizCount = Number.isFinite(parsedQuizValue) && parsedQuizValue > 0 ? parsedQuizValue : computedQuizCount;
+    let selectedQuizInput = null;
+    quizLengthInputs.forEach((input) => {
+        if (input.checked) {
+            selectedQuizInput = input;
+        }
+    });
+    const parsedQuizValue = selectedQuizInput ? parseInt(selectedQuizInput.value, 10) : Number.NaN;
+    const quizPreference = Number.isFinite(parsedQuizValue) && parsedQuizValue > 0 ? parsedQuizValue : defaultQuizCount;
 
     const includeFlashcards = generateFlashcardsToggle ? generateFlashcardsToggle.checked : true;
     const includeQuiz = generateQuizToggle ? generateQuizToggle.checked : false;
@@ -677,8 +779,59 @@ function getSelectedFlashcardPreferences() {
         includeFlashcards,
         flashcardCount,
         includeQuiz,
-        quizCount: includeQuiz ? inferredQuizCount : 0,
+        quizCount: includeQuiz ? Math.max(3, quizPreference) : 0,
     };
+}
+
+function shuffleArray(items) {
+    const array = Array.isArray(items) ? items.slice() : [];
+    for (let i = array.length - 1; i > 0; i -= 1) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const temp = array[i];
+        array[i] = array[j];
+        array[j] = temp;
+    }
+    return array;
+}
+
+function prepareBaseQuizQuestions(questions) {
+    return questions
+        .map((item) => {
+            if (!item) return null;
+            const options = Array.isArray(item.options) ? item.options.slice() : [];
+            if (typeof item.question !== 'string' || options.length !== 4) {
+                return null;
+            }
+            const correctIndex = Number.isInteger(item.correctIndex) ? item.correctIndex : -1;
+            if (correctIndex < 0 || correctIndex >= options.length) {
+                return null;
+            }
+            return {
+                question: item.question,
+                options,
+                correctIndex,
+                explanation: typeof item.explanation === 'string' ? item.explanation : '',
+            };
+        })
+        .filter(Boolean);
+}
+
+function buildShuffledQuizQuestions(baseQuestions) {
+    const randomizedQuestions = shuffleArray(baseQuestions);
+    return randomizedQuestions.map((item) => {
+        const optionEntries = item.options.map((option, index) => ({
+            text: option,
+            isCorrect: index === item.correctIndex,
+        }));
+        const shuffledOptions = shuffleArray(optionEntries);
+        const nextCorrectIndex = shuffledOptions.findIndex((entry) => entry.isCorrect);
+        return {
+            question: item.question,
+            options: shuffledOptions.map((entry) => entry.text),
+            correctIndex: nextCorrectIndex >= 0 ? nextCorrectIndex : 0,
+            explanation: item.explanation,
+        };
+    });
 }
 
 function loadQuizQuestions(questions) {
@@ -687,7 +840,14 @@ function loadQuizQuestions(questions) {
         return;
     }
 
-    quizState.questions = questions;
+    const baseQuestions = prepareBaseQuizQuestions(questions);
+    if (baseQuestions.length === 0) {
+        clearQuizWidget();
+        return;
+    }
+
+    quizState.baseQuestions = baseQuestions;
+    quizState.questions = buildShuffledQuizQuestions(baseQuestions);
     quizState.index = 0;
     quizState.score = 0;
     quizState.answered = false;
@@ -702,6 +862,73 @@ function loadQuizQuestions(questions) {
         quizRestartButton.disabled = false;
     }
     renderQuizQuestion();
+    updateRegenerateButtonsAvailability();
+}
+
+function reshuffleQuizQuestions() {
+    if (quizState.baseQuestions.length === 0) {
+        return;
+    }
+    quizState.questions = buildShuffledQuizQuestions(quizState.baseQuestions);
+    quizState.index = 0;
+    quizState.score = 0;
+    quizState.answered = false;
+    renderQuizQuestion();
+    updateRegenerateButtonsAvailability();
+}
+
+async function regenerateQuizQuestions() {
+    if (generationBusy) {
+        return;
+    }
+    if (!state.apiKey) {
+        setFlashcardStatus('Pirmiausia pradiniame ekrane \u012fra\u0161yk OpenAI API rakt\u0105.', 'error');
+        showScreen('intro');
+        introApiKeyInput?.focus();
+        return;
+    }
+    if (!generationState.pdfText) {
+        setFlashcardStatus('Pirmiausia sukurk turin\u012f i\u0161 PDF failo.', 'error');
+        return;
+    }
+
+    const currentPlan = getSelectedFlashcardPreferences();
+    const fallbackPlan = generationState.lastPlan || {};
+    const desiredQuizCount = Math.max(
+        3,
+        currentPlan.quizCount || fallbackPlan.quizCount || 20
+    );
+    const regenPlan = {
+        includeFlashcards: currentPlan.includeFlashcards,
+        flashcardCount: currentPlan.flashcardCount,
+        includeQuiz: true,
+        quizCount: desiredQuizCount,
+    };
+
+    setGenerationBusy(true);
+    setFlashcardStatus('Kuriame nauj\u0105 test\u0105 per OpenAI...', 'pending');
+
+    try {
+        const bundle = await fetchStudyBundleFromApi(generationState.pdfText, state.apiKey, {
+            ...regenPlan,
+            includeFlashcards: false,
+        });
+        const questions = Array.isArray(bundle.quizQuestions) ? bundle.quizQuestions : [];
+        if (questions.length === 0) {
+            throw new Error('Testo suformuoti nepavyko. Pabandyk dar kart\u0105 su ai\u0161kesniu PDF.');
+        }
+        loadQuizQuestions(questions);
+        setFlashcardStatus('Naujas testas paruo\u0161tas! Pasitikrink save.', 'success');
+        generationState.lastPlan = {
+            ...regenPlan,
+            includeFlashcards: currentPlan.includeFlashcards,
+        };
+    } catch (error) {
+        console.error(error);
+        setFlashcardStatus(error.message || 'Nepavyko atnaujinti testo.', 'error');
+    } finally {
+        setGenerationBusy(false);
+    }
 }
 
 function renderQuizQuestion() {
@@ -1127,6 +1354,14 @@ quizRestartButton?.addEventListener('click', () => {
     renderQuizQuestion();
 });
 
+shuffleQuizBtn?.addEventListener('click', () => {
+    reshuffleQuizQuestions();
+});
+
+regenerateQuizBtn?.addEventListener('click', () => {
+    void regenerateQuizQuestions();
+});
+
 flashcardForm?.addEventListener('submit', async (event) => {
     event.preventDefault();
     if (!pdfInput) return;
@@ -1153,11 +1388,10 @@ flashcardForm?.addEventListener('submit', async (event) => {
         return;
     }
 
+    setGenerationBusy(true);
     clearFlashcardWidget();
     clearQuizWidget();
     setFlashcardStatus('I\u0161traukiame svarbiausias pastabas i\u0161 PDF...', 'pending');
-    flashcardForm.setAttribute('aria-busy', 'true');
-    if (generateFlashcardsBtn) generateFlashcardsBtn.disabled = true;
 
     try {
         const text = await extractTextFromPdf(file);
@@ -1166,6 +1400,10 @@ flashcardForm?.addEventListener('submit', async (event) => {
         }
 
         const plan = getSelectedFlashcardPreferences();
+        generationState.pdfText = text;
+        generationState.lastPlan = plan;
+        generationState.lastFileName = file && file.name ? file.name : generationState.lastFileName;
+        updateRegenerateButtonsAvailability();
         const { includeFlashcards, includeQuiz } = plan;
         const actionLabel = includeFlashcards && includeQuiz
             ? 'Kuriame korteles ir test\u0105 per OpenAI...'
@@ -1220,8 +1458,7 @@ flashcardForm?.addEventListener('submit', async (event) => {
         console.error(error);
         setFlashcardStatus(error.message || 'Kuriant korteles \u012fvyko klaida.', 'error');
     } finally {
-        flashcardForm.removeAttribute('aria-busy');
-        if (generateFlashcardsBtn) generateFlashcardsBtn.disabled = false;
+        setGenerationBusy(false);
     }
 });
 
