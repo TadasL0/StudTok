@@ -27,6 +27,10 @@ const regenerateFlashcardsBtn = document.getElementById('flashcard-regenerate');
 const regenerateQuizBtn = document.getElementById('quiz-regenerate');
 const shuffleQuizBtn = document.getElementById('quiz-shuffle');
 
+const weekIndicator = document.querySelector('.week-indicator');
+const weekIndicatorValue = document.getElementById('week-indicator-value');
+const weekIndicatorRange = document.getElementById('week-indicator-range');
+
 const quizWidget = document.getElementById('quiz-widget');
 const quizEmpty = document.getElementById('quiz-empty');
 const quizQuestion = document.getElementById('quiz-question');
@@ -181,6 +185,98 @@ function setGenerationBusy(isBusy) {
         generateFlashcardsBtn.disabled = generationBusy;
     }
     updateRegenerateButtonsAvailability();
+}
+
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+const WEEK_LENGTH_DAYS = 7;
+const WEEK_ROTATION_LENGTH = 2;
+let weekIndicatorTimeoutId = null;
+
+function startOfDay(date) {
+    const copy = new Date(date);
+    copy.setHours(0, 0, 0, 0);
+    return copy;
+}
+
+function getWeekStart(date) {
+    const reference = new Date(date);
+    const day = reference.getDay();
+    const diff = day === 0 ? -6 : 1 - day;
+    reference.setDate(reference.getDate() + diff);
+    reference.setHours(0, 0, 0, 0);
+    return reference;
+}
+
+function getCurrentSemesterStart(date) {
+    const year = date.getFullYear();
+    const febStart = new Date(year, 1, 1);
+    const septStart = new Date(year, 8, 1);
+    febStart.setHours(0, 0, 0, 0);
+    septStart.setHours(0, 0, 0, 0);
+    if (date >= septStart) {
+        return septStart;
+    }
+    if (date >= febStart) {
+        return febStart;
+    }
+    const prevSept = new Date(year - 1, 8, 1);
+    prevSept.setHours(0, 0, 0, 0);
+    return prevSept;
+}
+
+function getWeekRotationIndex(date) {
+    const semesterStart = getCurrentSemesterStart(date);
+    const elapsedDays = Math.floor((startOfDay(date) - semesterStart) / MS_PER_DAY);
+    const fullWeeksSinceStart = Math.floor(elapsedDays / WEEK_LENGTH_DAYS);
+    const rotationIndex = ((fullWeeksSinceStart % WEEK_ROTATION_LENGTH) + WEEK_ROTATION_LENGTH) % WEEK_ROTATION_LENGTH;
+    return rotationIndex;
+}
+
+function formatMonthDay(date) {
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return month + '-' + day;
+}
+
+function updateWeekIndicator(now = new Date()) {
+    if (!weekIndicatorValue) {
+        return;
+    }
+    const rotationIndex = getWeekRotationIndex(now);
+    const weekNumber = rotationIndex + 1;
+    weekIndicatorValue.textContent = weekNumber + ' savait\u0117';
+
+    if (weekIndicatorRange) {
+        const weekStart = getWeekStart(now);
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekEnd.getDate() + WEEK_LENGTH_DAYS - 1);
+        weekIndicatorRange.textContent = formatMonthDay(weekStart) + ' \u2013 ' + formatMonthDay(weekEnd);
+    }
+    if (weekIndicator) {
+        weekIndicator.hidden = false;
+        weekIndicator.dataset.week = String(weekNumber);
+    }
+}
+
+function scheduleWeekIndicatorUpdate() {
+    if (!weekIndicatorValue) {
+        return;
+    }
+    if (weekIndicatorTimeoutId) {
+        clearTimeout(weekIndicatorTimeoutId);
+    }
+    const now = new Date();
+    const nextUpdate = new Date(now);
+    nextUpdate.setHours(0, 0, 0, 0);
+    nextUpdate.setDate(nextUpdate.getDate() + 1);
+    let delay = nextUpdate.getTime() - now.getTime();
+    if (delay < 0) {
+        delay = 0;
+    }
+    weekIndicatorTimeoutId = setTimeout(() => {
+        updateWeekIndicator();
+        scheduleWeekIndicatorUpdate();
+    }, Math.max(delay + 1000, 1000));
 }
 
 const introApiKeyInput = document.getElementById('intro-api-key');
@@ -1503,6 +1599,13 @@ setFlashcardStatus('');
 
 updateNotepadEmptyState();
 updateStickyEmptyState();
+updateWeekIndicator();
+scheduleWeekIndicatorUpdate();
+document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+        updateWeekIndicator();
+    }
+});
 showScreen('intro');
 scheduleSplashHide();
 ensureNotepadPlaceholder(true);
