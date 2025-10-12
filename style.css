@@ -13,8 +13,8 @@
     --text-dark: #44263f;
     --text-muted: rgba(68, 38, 63, 0.7);
     --card-shadow: 0 25px 55px rgba(255, 79, 161, 0.15);
-    --week-banner-height: clamp(52px, 8vw, 72px);
-    --week-banner-collapsed-height: clamp(34px, 6vw, 46px);
+    --week-banner-height: clamp(32px, 6vw, 48px);
+    --week-banner-collapsed-height: clamp(20px, 4.5vw, 32px);
     font-family: "Bodoni Moda", "Didot", "Georgia", serif;
 }
 
@@ -52,8 +52,8 @@ body.week-indicator-collapsed {
     align-items: center;
     justify-content: center;
     flex-wrap: wrap;
-    gap: 12px;
-    padding: clamp(12px, 3vw, 20px) clamp(20px, 5vw, 44px);
+    gap: 8px;
+    padding: clamp(8px, 2.4vw, 14px) clamp(14px, 4vw, 32px);
     min-height: var(--week-banner-height);
     border-radius: 0 0 32px 32px;
     background: linear-gradient(135deg, rgba(255, 246, 252, 0.95), rgba(255, 224, 243, 0.9));
@@ -72,7 +72,7 @@ body.week-indicator-collapsed {
 
 .week-indicator__label {
     font-family: 'Quicksand', 'Century Gothic', 'Segoe UI', sans-serif;
-    font-size: 0.85rem;
+    font-size: 0.68rem;
     letter-spacing: 0.12em;
     text-transform: uppercase;
     color: var(--text-muted);
@@ -82,24 +82,24 @@ body.week-indicator-collapsed {
 
 .week-indicator__value {
     font-family: 'Bodoni Moda', 'Didot', 'Georgia', serif;
-    font-size: 1.05rem;
+    font-size: 0.9rem;
     font-weight: 600;
     transition: transform 220ms ease;
 }
 
 .week-indicator__range {
     font-family: 'Quicksand', 'Century Gothic', 'Segoe UI', sans-serif;
-    font-size: 0.8rem;
+    font-size: 0.7rem;
     letter-spacing: 0.06em;
     color: var(--text-muted);
     transition: opacity 220ms ease, transform 220ms ease, max-height 220ms ease;
 }
 
 .week-indicator__chevron {
-    width: 16px;
-    height: 16px;
-    border-right: 2px solid rgba(68, 38, 63, 0.32);
-    border-bottom: 2px solid rgba(68, 38, 63, 0.32);
+    width: 12px;
+    height: 12px;
+    border-right: 2px solid rgba(68, 38, 63, 0.28);
+    border-bottom: 2px solid rgba(68, 38, 63, 0.28);
     transform: rotate(45deg);
     margin-left: 4px;
     transition: transform 220ms ease, border-color 220ms ease;
@@ -109,31 +109,31 @@ body.week-indicator-collapsed {
     .week-indicator {
         flex-direction: column;
         align-items: center;
-        gap: 4px;
-        padding: clamp(14px, 5vw, 20px) clamp(18px, 8vw, 28px);
+        gap: 2px;
+        padding: clamp(10px, 4vw, 16px) clamp(12px, 7vw, 24px);
         border-radius: 0 0 24px 24px;
     }
 
     .week-indicator__label {
-        font-size: 0.75rem;
+        font-size: 0.62rem;
     }
 
     .week-indicator__value {
-        font-size: 0.95rem;
+        font-size: 0.78rem;
     }
 
     .week-indicator__range {
-        font-size: 0.75rem;
+        font-size: 0.68rem;
     }
 
     .week-indicator__chevron {
-        width: 14px;
-        height: 14px;
+        width: 11px;
+        height: 11px;
     }
 }
 
 .week-indicator--collapsed {
-    padding: clamp(8px, 3vw, 14px) clamp(18px, 5vw, 28px);
+    padding: clamp(6px, 2vw, 10px) clamp(12px, 4vw, 22px);
     min-height: var(--week-banner-collapsed-height);
     gap: 8px;
     box-shadow: 0 12px 28px rgba(255, 79, 161, 0.14);
