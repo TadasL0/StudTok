@@ -13,7 +13,8 @@
     --text-dark: #44263f;
     --text-muted: rgba(68, 38, 63, 0.7);
     --card-shadow: 0 25px 55px rgba(255, 79, 161, 0.15);
-    --week-banner-height: clamp(58px, 9vw, 82px);
+    --week-banner-height: clamp(52px, 8vw, 72px);
+    --week-banner-collapsed-height: clamp(34px, 6vw, 46px);
     font-family: "Bodoni Moda", "Didot", "Georgia", serif;
 }
 
@@ -34,6 +35,11 @@ body {
     padding: calc(var(--week-banner-height) + 24px) clamp(16px, 5vw, 48px) 96px;
     position: relative;
     overflow-x: hidden;
+    transition: padding-top 220ms ease;
+}
+
+body.week-indicator-collapsed {
+    padding-top: calc(var(--week-banner-collapsed-height) + 24px);
 }
 
 .week-indicator {
@@ -43,17 +49,25 @@ body {
     width: 100%;
     z-index: 1200;
     display: flex;
-    align-items: baseline;
+    align-items: center;
     justify-content: center;
     flex-wrap: wrap;
-    gap: 16px;
-    padding: clamp(16px, 4vw, 28px) clamp(24px, 6vw, 64px);
-    border-radius: 0 0 36px 36px;
-    background: linear-gradient(135deg, rgba(255, 246, 252, 0.95), rgba(255, 224, 243, 0.92));
-    box-shadow: 0 18px 42px rgba(255, 79, 161, 0.18);
+    gap: 12px;
+    padding: clamp(12px, 3vw, 20px) clamp(20px, 5vw, 44px);
+    min-height: var(--week-banner-height);
+    border-radius: 0 0 32px 32px;
+    background: linear-gradient(135deg, rgba(255, 246, 252, 0.95), rgba(255, 224, 243, 0.9));
+    box-shadow: 0 16px 36px rgba(255, 79, 161, 0.16);
     backdrop-filter: blur(10px);
     text-align: center;
-    transition: transform 200ms ease;
+    cursor: pointer;
+    user-select: none;
+    transition: transform 200ms ease, box-shadow 200ms ease, padding 220ms ease;
+}
+
+.week-indicator:focus-visible {
+    outline: 3px solid rgba(255, 79, 161, 0.45);
+    outline-offset: 4px;
 }
 
 .week-indicator__label {
@@ -63,28 +77,41 @@ body {
     text-transform: uppercase;
     color: var(--text-muted);
     font-weight: 600;
+    transition: transform 220ms ease;
 }
 
 .week-indicator__value {
     font-family: 'Bodoni Moda', 'Didot', 'Georgia', serif;
-    font-size: 1.2rem;
+    font-size: 1.05rem;
     font-weight: 600;
+    transition: transform 220ms ease;
 }
 
 .week-indicator__range {
     font-family: 'Quicksand', 'Century Gothic', 'Segoe UI', sans-serif;
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     letter-spacing: 0.06em;
     color: var(--text-muted);
+    transition: opacity 220ms ease, transform 220ms ease, max-height 220ms ease;
+}
+
+.week-indicator__chevron {
+    width: 16px;
+    height: 16px;
+    border-right: 2px solid rgba(68, 38, 63, 0.32);
+    border-bottom: 2px solid rgba(68, 38, 63, 0.32);
+    transform: rotate(45deg);
+    margin-left: 4px;
+    transition: transform 220ms ease, border-color 220ms ease;
 }
 
 @media (max-width: 640px) {
     .week-indicator {
         flex-direction: column;
         align-items: center;
-        gap: 6px;
-        padding: clamp(18px, 6vw, 26px) clamp(18px, 8vw, 32px);
-        border-radius: 0 0 28px 28px;
+        gap: 4px;
+        padding: clamp(14px, 5vw, 20px) clamp(18px, 8vw, 28px);
+        border-radius: 0 0 24px 24px;
     }
 
     .week-indicator__label {
@@ -92,12 +119,46 @@ body {
     }
 
     .week-indicator__value {
-        font-size: 1rem;
+        font-size: 0.95rem;
     }
 
     .week-indicator__range {
-        font-size: 0.78rem;
+        font-size: 0.75rem;
     }
+
+    .week-indicator__chevron {
+        width: 14px;
+        height: 14px;
+    }
+}
+
+.week-indicator--collapsed {
+    padding: clamp(8px, 3vw, 14px) clamp(18px, 5vw, 28px);
+    min-height: var(--week-banner-collapsed-height);
+    gap: 8px;
+    box-shadow: 0 12px 28px rgba(255, 79, 161, 0.14);
+}
+
+.week-indicator--collapsed .week-indicator__range {
+    opacity: 0;
+    transform: translateY(-6px);
+    pointer-events: none;
+    max-height: 0;
+    overflow: hidden;
+}
+
+.week-indicator--collapsed .week-indicator__chevron {
+    transform: rotate(-135deg) translateY(-2px);
+}
+
+.week-indicator--collapsed .week-indicator__label,
+.week-indicator--collapsed .week-indicator__value {
+    transition: transform 220ms ease;
+}
+
+.week-indicator--collapsed .week-indicator__label,
+.week-indicator--collapsed .week-indicator__value {
+    transform: translateY(2px);
 }
 
 button, input {

@@ -279,6 +279,23 @@ function scheduleWeekIndicatorUpdate() {
     }, Math.max(delay + 1000, 1000));
 }
 
+function setWeekIndicatorCollapsed(collapsed) {
+    if (!weekIndicator) {
+        return;
+    }
+    weekIndicator.classList.toggle('week-indicator--collapsed', collapsed);
+    document.body.classList.toggle('week-indicator-collapsed', collapsed);
+    weekIndicator.setAttribute('aria-expanded', String(!collapsed));
+}
+
+function toggleWeekIndicatorCollapsed() {
+    if (!weekIndicator) {
+        return;
+    }
+    const collapsed = !weekIndicator.classList.contains('week-indicator--collapsed');
+    setWeekIndicatorCollapsed(collapsed);
+}
+
 const introApiKeyInput = document.getElementById('intro-api-key');
 const introToggleKeyBtn = document.getElementById('intro-toggle-key');
 const introRememberKeyCheckbox = document.getElementById('intro-remember-key');
@@ -1599,6 +1616,18 @@ setFlashcardStatus('');
 
 updateNotepadEmptyState();
 updateStickyEmptyState();
+if (weekIndicator) {
+    setWeekIndicatorCollapsed(false);
+    weekIndicator.addEventListener('click', () => {
+        toggleWeekIndicatorCollapsed();
+    });
+    weekIndicator.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            toggleWeekIndicatorCollapsed();
+        }
+    });
+}
 updateWeekIndicator();
 scheduleWeekIndicatorUpdate();
 document.addEventListener('visibilitychange', () => {
