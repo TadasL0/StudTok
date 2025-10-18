@@ -833,12 +833,12 @@ function renderTimetableSection() {
 }
 
 function updateWeekIndicator(now = new Date()) {
-    if (!weekIndicatorValue) {
-        return;
-    }
     const rotationIndex = getWeekRotationIndex(now);
     const weekNumber = rotationIndex + 1;
-    weekIndicatorValue.textContent = weekNumber + ' savait\u0117';
+
+    if (weekIndicatorValue) {
+        weekIndicatorValue.textContent = weekNumber + ' savait\u0117';
+    }
 
     const weekStart = getWeekStart(now);
     const weekEnd = new Date(weekStart);
@@ -864,7 +864,7 @@ function updateWeekIndicator(now = new Date()) {
 }
 
 function scheduleWeekIndicatorUpdate() {
-    if (!weekIndicatorValue) {
+    if (!weekIndicator && !timetableWeekContent) {
         return;
     }
     if (weekIndicatorTimeoutId) {
