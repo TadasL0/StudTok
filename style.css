@@ -74,14 +74,13 @@ body.week-indicator-collapsed {
     left: 0;
     width: 100%;
     z-index: 1200;
-    display: grid;
-    grid-template-columns: 1fr auto;
-    grid-auto-rows: auto;
-    column-gap: clamp(14px, 6vw, 32px);
-    row-gap: 2px;
+    display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-items: center;
+    justify-content: center;
+    gap: 8px;
     padding: clamp(8px, 2.4vw, 14px) clamp(18px, 5.5vw, 40px);
+    padding-top: clamp(32px, 12vw, 58px);
     min-height: var(--week-banner-height);
     border-radius: 0 0 32px 32px;
     background: linear-gradient(135deg, rgba(255, 246, 252, 0.95), rgba(255, 224, 243, 0.9));
@@ -99,7 +98,6 @@ body.week-indicator-collapsed {
 }
 
 .week-indicator__label {
-    grid-column: 1 / 2;
     font-family: 'Quicksand', 'Century Gothic', 'Segoe UI', sans-serif;
     font-size: 0.68rem;
     letter-spacing: 0.12em;
@@ -110,7 +108,6 @@ body.week-indicator-collapsed {
 }
 
 .week-indicator__value {
-    grid-column: 1 / 2;
     font-family: 'Bodoni Moda', 'Didot', 'Georgia', serif;
     font-size: 0.9rem;
     font-weight: 600;
@@ -118,7 +115,6 @@ body.week-indicator-collapsed {
 }
 
 .week-indicator__range {
-    grid-column: 1 / 2;
     font-family: 'Quicksand', 'Century Gothic', 'Segoe UI', sans-serif;
     font-size: 0.7rem;
     letter-spacing: 0.06em;
@@ -127,7 +123,6 @@ body.week-indicator-collapsed {
 }
 
 .week-indicator__chevron {
-    grid-column: 1 / 2;
     width: 12px;
     height: 12px;
     border-right: 2px solid rgba(68, 38, 63, 0.28);
@@ -142,6 +137,7 @@ body.week-indicator-collapsed {
         column-gap: clamp(10px, 5vw, 20px);
         row-gap: 2px;
         padding: clamp(10px, 4vw, 16px) clamp(16px, 7vw, 28px);
+        padding-top: clamp(32px, 15vw, 54px);
         border-radius: 0 0 24px 24px;
     }
 
@@ -165,6 +161,7 @@ body.week-indicator-collapsed {
 
 .week-indicator--collapsed {
     padding: clamp(6px, 2vw, 10px) clamp(12px, 4vw, 22px);
+    padding-top: clamp(18px, 8vw, 30px);
     min-height: var(--week-banner-collapsed-height);
     gap: 8px;
     box-shadow: 0 12px 28px rgba(255, 79, 161, 0.14);
@@ -193,11 +190,9 @@ body.week-indicator-collapsed {
 }
 
 .reward-meter {
-    grid-column: 2 / 3;
-    grid-row: 1 / span 4;
-    justify-self: end;
-    align-self: start;
-    position: relative;
+    position: absolute;
+    top: clamp(10px, 3vw, 18px);
+    right: clamp(18px, 5.5vw, 40px);
     display: inline-flex;
     align-items: center;
     gap: 6px;
@@ -208,7 +203,6 @@ body.week-indicator-collapsed {
     box-shadow: 0 12px 26px rgba(255, 157, 208, 0.18);
     backdrop-filter: blur(10px);
     min-width: 0;
-    max-width: min(42vw, 160px);
 }
 
 .reward-meter__icon {
@@ -245,7 +239,8 @@ body.week-indicator-collapsed {
 }
 
 .week-indicator--collapsed .reward-meter {
-    align-self: center;
+    top: clamp(6px, 2vw, 12px);
+    right: clamp(16px, 5vw, 32px);
 }
 
 @keyframes rewardBounce {
@@ -267,7 +262,8 @@ body.week-indicator-collapsed {
     .reward-meter {
         padding: 5px 9px;
         gap: 5px;
-        max-width: min(48vw, 140px);
+        right: clamp(12px, 6vw, 24px);
+        top: clamp(8px, 3vw, 14px);
     }
     .reward-meter__icon {
         width: 26px;
