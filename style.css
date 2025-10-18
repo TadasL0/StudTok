@@ -13,8 +13,8 @@
     --text-dark: #44263f;
     --text-muted: rgba(68, 38, 63, 0.7);
     --card-shadow: 0 25px 55px rgba(255, 79, 161, 0.15);
-    --week-banner-height: clamp(32px, 6vw, 48px);
-    --week-banner-collapsed-height: clamp(20px, 4.5vw, 32px);
+    --week-banner-height: clamp(48px, 16vw, 92px);
+    --week-banner-collapsed-height: clamp(28px, 9vw, 44px);
     font-family: "Bodoni Moda", "Didot", "Georgia", serif;
 }
 
@@ -49,22 +49,22 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: flex-start;
-    padding: calc(var(--week-banner-height) + 24px) clamp(16px, 5vw, 48px) 96px;
+    padding: calc(var(--week-banner-height) + 36px) clamp(16px, 5vw, 48px) 96px;
     position: relative;
     overflow-x: hidden;
     transition: padding-top 220ms ease;
 }
 
 body.week-indicator-collapsed {
-    padding-top: calc(var(--week-banner-collapsed-height) + 24px);
+    padding-top: calc(var(--week-banner-collapsed-height) + 28px);
 }
 
 @media (max-width: 420px) {
     body {
-        padding: calc(var(--week-banner-height) + 18px) clamp(12px, 6vw, 24px) 84px;
+        padding: calc(var(--week-banner-height) + 26px) clamp(12px, 6vw, 24px) 84px;
     }
     body.week-indicator-collapsed {
-        padding-top: calc(var(--week-banner-collapsed-height) + 18px);
+        padding-top: calc(var(--week-banner-collapsed-height) + 22px);
     }
 }
 
@@ -74,13 +74,14 @@ body.week-indicator-collapsed {
     left: 0;
     width: 100%;
     z-index: 1200;
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-auto-rows: auto;
+    column-gap: clamp(14px, 6vw, 32px);
+    row-gap: 2px;
     align-items: center;
-    justify-content: center;
-    gap: 8px;
+    justify-items: center;
     padding: clamp(8px, 2.4vw, 14px) clamp(18px, 5.5vw, 40px);
-    padding-top: clamp(32px, 12vw, 58px);
     min-height: var(--week-banner-height);
     border-radius: 0 0 32px 32px;
     background: linear-gradient(135deg, rgba(255, 246, 252, 0.95), rgba(255, 224, 243, 0.9));
@@ -98,6 +99,7 @@ body.week-indicator-collapsed {
 }
 
 .week-indicator__label {
+    grid-column: 1 / 2;
     font-family: 'Quicksand', 'Century Gothic', 'Segoe UI', sans-serif;
     font-size: 0.68rem;
     letter-spacing: 0.12em;
@@ -108,6 +110,7 @@ body.week-indicator-collapsed {
 }
 
 .week-indicator__value {
+    grid-column: 1 / 2;
     font-family: 'Bodoni Moda', 'Didot', 'Georgia', serif;
     font-size: 0.9rem;
     font-weight: 600;
@@ -115,6 +118,7 @@ body.week-indicator-collapsed {
 }
 
 .week-indicator__range {
+    grid-column: 1 / 2;
     font-family: 'Quicksand', 'Century Gothic', 'Segoe UI', sans-serif;
     font-size: 0.7rem;
     letter-spacing: 0.06em;
@@ -123,6 +127,7 @@ body.week-indicator-collapsed {
 }
 
 .week-indicator__chevron {
+    grid-column: 1 / 2;
     width: 12px;
     height: 12px;
     border-right: 2px solid rgba(68, 38, 63, 0.28);
@@ -137,7 +142,6 @@ body.week-indicator-collapsed {
         column-gap: clamp(10px, 5vw, 20px);
         row-gap: 2px;
         padding: clamp(10px, 4vw, 16px) clamp(16px, 7vw, 28px);
-        padding-top: clamp(32px, 15vw, 54px);
         border-radius: 0 0 24px 24px;
     }
 
@@ -161,7 +165,6 @@ body.week-indicator-collapsed {
 
 .week-indicator--collapsed {
     padding: clamp(6px, 2vw, 10px) clamp(12px, 4vw, 22px);
-    padding-top: clamp(18px, 8vw, 30px);
     min-height: var(--week-banner-collapsed-height);
     gap: 8px;
     box-shadow: 0 12px 28px rgba(255, 79, 161, 0.14);
@@ -190,9 +193,11 @@ body.week-indicator-collapsed {
 }
 
 .reward-meter {
-    position: absolute;
-    top: clamp(10px, 3vw, 18px);
-    right: clamp(18px, 5.5vw, 40px);
+    grid-column: 2 / 3;
+    grid-row: 1 / span 4;
+    justify-self: end;
+    align-self: start;
+    position: relative;
     display: inline-flex;
     align-items: center;
     gap: 6px;
@@ -203,6 +208,7 @@ body.week-indicator-collapsed {
     box-shadow: 0 12px 26px rgba(255, 157, 208, 0.18);
     backdrop-filter: blur(10px);
     min-width: 0;
+    max-width: min(44vw, 160px);
 }
 
 .reward-meter__icon {
@@ -239,8 +245,7 @@ body.week-indicator-collapsed {
 }
 
 .week-indicator--collapsed .reward-meter {
-    top: clamp(6px, 2vw, 12px);
-    right: clamp(16px, 5vw, 32px);
+    align-self: start;
 }
 
 @keyframes rewardBounce {
@@ -262,8 +267,8 @@ body.week-indicator-collapsed {
     .reward-meter {
         padding: 5px 9px;
         gap: 5px;
-        right: clamp(12px, 6vw, 24px);
-        top: clamp(8px, 3vw, 14px);
+        justify-self: center;
+        max-width: min(60vw, 160px);
     }
     .reward-meter__icon {
         width: 26px;
