@@ -1,5 +1,6 @@
 'use strict';
 
+const rootElement = document.documentElement;
 const screens = document.querySelectorAll('.screen');
 const hero = document.querySelector('.hero');
 const nameInput = document.getElementById('name-input');
@@ -40,6 +41,7 @@ const timetableWeekEmpty = document.getElementById('timetable-week-empty');
 const timetableToggleWeekBtn = document.getElementById('timetable-toggle-week');
 const rewardMeter = document.querySelector('.reward-meter');
 const rewardCount = document.getElementById('reward-count');
+let layoutTopSyncFrameId = null;
 
 const quizWidget = document.getElementById('quiz-widget');
 const quizEmpty = document.getElementById('quiz-empty');
@@ -222,6 +224,22 @@ function renderRewardState() {
                 : `${count} balt\u0173 \u0161okolado plyteli\u0173`;
         rewardMeter.setAttribute('aria-label', `Baltas \u0161okoladas: ${accessibleCount}`);
     }
+    scheduleLayoutTopSync();
+}
+
+function scheduleLayoutTopSync() {
+    if (!weekIndicator || !rootElement) {
+        return;
+    }
+    if (layoutTopSyncFrameId !== null) {
+        cancelAnimationFrame(layoutTopSyncFrameId);
+    }
+    layoutTopSyncFrameId = requestAnimationFrame(() => {
+        const indicatorHeight = weekIndicator.offsetHeight || 0;
+        const safePadding = Math.max(Math.ceil(indicatorHeight + 28), 140);
+        rootElement.style.setProperty('--layout-top-offset', `${safePadding}px`);
+        layoutTopSyncFrameId = null;
+    });
 }
 
 function persistRewardState() {
@@ -836,6 +854,7 @@ function updateWeekIndicator(now = new Date()) {
     latestWeekContext.rotationIndex = rotationIndex;
     latestWeekContext.weekStart = new Date(weekStart);
     renderTimetableSection();
+    scheduleLayoutTopSync();
 }
 
 function scheduleWeekIndicatorUpdate() {
@@ -866,6 +885,7 @@ function setWeekIndicatorCollapsed(collapsed) {
     weekIndicator.classList.toggle('week-indicator--collapsed', collapsed);
     document.body.classList.toggle('week-indicator-collapsed', collapsed);
     weekIndicator.setAttribute('aria-expanded', String(!collapsed));
+    scheduleLayoutTopSync();
 }
 
 function toggleWeekIndicatorCollapsed() {
@@ -2315,6 +2335,7 @@ timetableToggleWeekBtn?.addEventListener('click', () => {
 });
 updateWeekIndicator();
 scheduleWeekIndicatorUpdate();
+window.addEventListener('resize', scheduleLayoutTopSync);
 document.addEventListener('visibilitychange', () => {
     if (!document.hidden) {
         updateWeekIndicator();
@@ -2323,3 +2344,4 @@ document.addEventListener('visibilitychange', () => {
 showScreen('intro');
 scheduleSplashHide();
 ensureNotepadPlaceholder(true);
+scheduleLayoutTopSync();

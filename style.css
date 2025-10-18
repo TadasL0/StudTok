@@ -15,6 +15,7 @@
     --card-shadow: 0 25px 55px rgba(255, 79, 161, 0.15);
     --week-banner-height: clamp(48px, 16vw, 92px);
     --week-banner-collapsed-height: clamp(28px, 9vw, 44px);
+    --layout-top-offset: 168px;
     font-family: "Bodoni Moda", "Didot", "Georgia", serif;
 }
 
@@ -49,22 +50,22 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: flex-start;
-    padding: calc(var(--week-banner-height) + 36px) clamp(16px, 5vw, 48px) 96px;
+    padding: var(--layout-top-offset) clamp(16px, 5vw, 48px) 96px;
     position: relative;
     overflow-x: hidden;
     transition: padding-top 220ms ease;
 }
 
 body.week-indicator-collapsed {
-    padding-top: calc(var(--week-banner-collapsed-height) + 28px);
+    padding-top: var(--layout-top-offset);
 }
 
 @media (max-width: 420px) {
     body {
-        padding: calc(var(--week-banner-height) + 26px) clamp(12px, 6vw, 24px) 84px;
+        padding: var(--layout-top-offset) clamp(12px, 6vw, 24px) 84px;
     }
     body.week-indicator-collapsed {
-        padding-top: calc(var(--week-banner-collapsed-height) + 22px);
+        padding-top: var(--layout-top-offset);
     }
 }
 
