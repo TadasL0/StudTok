@@ -22,6 +22,19 @@
     box-sizing: border-box;
 }
 
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+}
+
 body {
     margin: 0;
     min-height: 100vh;
@@ -165,20 +178,21 @@ body.week-indicator-collapsed {
     --reward-meter-translate: 0;
     position: fixed;
     top: calc(var(--week-banner-height) + 18px);
-    right: clamp(16px, 5vw, 40px);
+    right: clamp(12px, 5vw, 32px);
     display: inline-flex;
     align-items: center;
-    gap: 10px;
-    padding: 12px 16px;
+    gap: 8px;
+    padding: 10px 14px;
     border-radius: 999px;
-    background: rgba(255, 255, 255, 0.88);
-    border: 1px solid rgba(255, 157, 208, 0.28);
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid rgba(255, 157, 208, 0.24);
     box-shadow: 0 18px 38px rgba(255, 157, 208, 0.18);
     z-index: 1300;
     backdrop-filter: blur(10px);
     transform: translateX(var(--reward-meter-translate));
     transform-origin: center;
     transition: top 220ms ease, transform 220ms ease, box-shadow 220ms ease;
+    max-width: calc(100vw - clamp(24px, 8vw, 64px));
 }
 
 body.week-indicator-collapsed .reward-meter {
@@ -186,13 +200,23 @@ body.week-indicator-collapsed .reward-meter {
     box-shadow: 0 14px 28px rgba(255, 157, 208, 0.16);
 }
 
-.reward-meter__label {
-    font-family: 'Quicksand', 'Century Gothic', 'Segoe UI', sans-serif;
-    font-size: 0.72rem;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: rgba(68, 38, 63, 0.6);
+.reward-meter__icon {
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 234, 247, 0.92));
+    box-shadow: 0 8px 16px rgba(255, 157, 208, 0.2);
+}
+
+.reward-meter__icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
 }
 
 .reward-meter__count {
@@ -200,85 +224,27 @@ body.week-indicator-collapsed .reward-meter {
     font-size: 1rem;
     font-weight: 600;
     color: var(--text-dark);
+    min-width: 1.5ch;
+    text-align: center;
 }
 
-.reward-meter__tiles {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    max-width: min(360px, 40vw);
-    overflow: hidden;
+.reward-meter--pulse .reward-meter__icon,
+.reward-meter--pulse .reward-meter__count {
+    animation: rewardBounce 420ms ease;
 }
 
-.reward-tile {
-    width: 26px;
-    height: 20px;
-    border-radius: 6px;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 237, 237, 0.92));
-    border: 1px solid rgba(255, 176, 220, 0.4);
-    box-shadow:
-        inset 0 0 0 1px rgba(255, 255, 255, 0.8),
-        0 6px 14px rgba(255, 157, 208, 0.25);
-    position: relative;
-}
-
-.reward-tile::before,
-.reward-tile::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 70%;
-    height: 70%;
-    border-radius: 4px;
-    transform: translate(-50%, -50%);
-    box-shadow:
-        0 -5px 0 rgba(255, 255, 255, 0.45) inset,
-        0 5px 0 rgba(255, 209, 224, 0.32) inset;
-}
-
-.reward-tile::after {
-    width: 30%;
-    height: 30%;
-    border-radius: 2px;
-    box-shadow:
-        0 -2px 0 rgba(255, 255, 255, 0.9) inset,
-        0 2px 0 rgba(255, 206, 225, 0.6) inset;
-}
-
-.reward-tile--overflow {
-    background: rgba(255, 255, 255, 0.96);
-    border: 1px dashed rgba(255, 79, 161, 0.4);
-    color: var(--pink-500);
-    font-family: 'Quicksand', 'Century Gothic', 'Segoe UI', sans-serif;
-    font-size: 0.68rem;
-    font-weight: 700;
-    display: grid;
-    place-items: center;
-    box-shadow: 0 6px 14px rgba(255, 157, 208, 0.18);
-}
-
-.reward-tile--overflow::before,
-.reward-tile--overflow::after {
-    display: none;
-}
-
-.reward-meter--pulse {
-    animation: rewardPop 480ms ease;
-}
-
-@keyframes rewardPop {
+@keyframes rewardBounce {
     0% {
-        transform: translateX(var(--reward-meter-translate)) scale(1);
+        transform: scale(1);
     }
     40% {
-        transform: translateX(var(--reward-meter-translate)) scale(1.08);
+        transform: scale(1.12);
     }
     70% {
-        transform: translateX(var(--reward-meter-translate)) scale(0.98);
+        transform: scale(0.92);
     }
     100% {
-        transform: translateX(var(--reward-meter-translate)) scale(1);
+        transform: scale(1);
     }
 }
 
@@ -287,10 +253,11 @@ body.week-indicator-collapsed .reward-meter {
         left: 50%;
         right: auto;
         --reward-meter-translate: -50%;
-        top: calc(var(--week-banner-height) + 60px);
+        top: calc(var(--week-banner-height) + 56px);
+        max-width: calc(100vw - 40px);
     }
     body.week-indicator-collapsed .reward-meter {
-        top: calc(var(--week-banner-collapsed-height) + 48px);
+        top: calc(var(--week-banner-collapsed-height) + 44px);
     }
 }
 

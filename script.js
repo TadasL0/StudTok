@@ -39,7 +39,6 @@ const timetableWeekContent = document.getElementById('timetable-week-content');
 const timetableWeekEmpty = document.getElementById('timetable-week-empty');
 const timetableToggleWeekBtn = document.getElementById('timetable-toggle-week');
 const rewardMeter = document.querySelector('.reward-meter');
-const rewardTiles = document.getElementById('reward-tiles');
 const rewardCount = document.getElementById('reward-count');
 
 const quizWidget = document.getElementById('quiz-widget');
@@ -89,7 +88,6 @@ const generationState = {
 let generationBusy = false;
 let flashcardForceFront = false;
 const REWARD_STORAGE_KEY = 'pinkStudy.rewards';
-const MAX_VISIBLE_REWARD_TILES = 28;
 const rewardState = {
     count: 0,
 };
@@ -217,35 +215,12 @@ function renderRewardState() {
     if (rewardCount) {
         rewardCount.textContent = String(count);
     }
-    if (rewardTiles) {
-        rewardTiles.innerHTML = '';
-        const fragment = document.createDocumentFragment();
-        const visible = Math.min(count, MAX_VISIBLE_REWARD_TILES);
-        for (let index = 0; index < visible; index += 1) {
-            const tile = document.createElement('span');
-            tile.className = 'reward-tile';
-            tile.setAttribute('role', 'listitem');
-            tile.setAttribute('aria-hidden', 'true');
-            fragment.appendChild(tile);
-        }
-        const remaining = count - visible;
-        if (remaining > 0) {
-            const overflow = document.createElement('span');
-            overflow.className = 'reward-tile reward-tile--overflow';
-            overflow.textContent = `+${remaining}`;
-            overflow.setAttribute('role', 'listitem');
-            fragment.appendChild(overflow);
-        }
-        rewardTiles.appendChild(fragment);
-        const label =
-            count === 1
-                ? 'I\u0161 viso 1 balto \u0161okolado plytel\u0117'
-                : `I\u0161 viso ${count} balt\u0173 \u0161okolado plyteli\u0173`;
-        rewardTiles.setAttribute('aria-label', label);
-        rewardTiles.setAttribute('title', label);
-    }
     if (rewardMeter) {
-        rewardMeter.setAttribute('aria-label', `Baltas \u0161okoladas: ${count}`);
+        const accessibleCount =
+            count === 1
+                ? '1 balto \u0161okolado plytel\u0117'
+                : `${count} balt\u0173 \u0161okolado plyteli\u0173`;
+        rewardMeter.setAttribute('aria-label', `Baltas \u0161okoladas: ${accessibleCount}`);
     }
 }
 
