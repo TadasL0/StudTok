@@ -1,6 +1,7 @@
 'use strict';
 
 const screens = document.querySelectorAll('.screen');
+const hero = document.querySelector('.hero');
 const nameInput = document.getElementById('name-input');
 const introForm = document.getElementById('intro-form');
 
@@ -15,6 +16,7 @@ const flashcardFront = document.getElementById('flashcard-front');
 const flashcardBack = document.getElementById('flashcard-back');
 const flashcardPrevBtn = document.getElementById('flashcard-prev');
 const flashcardNextBtn = document.getElementById('flashcard-next');
+const flashcardShuffleBtn = document.getElementById('flashcard-shuffle');
 const flashcardCounter = document.getElementById('flashcard-counter');
 const flashcardTags = document.getElementById('flashcard-tags');
 const generateFlashcardsBtn = document.getElementById('generate-flashcards');
@@ -30,6 +32,15 @@ const shuffleQuizBtn = document.getElementById('quiz-shuffle');
 const weekIndicator = document.querySelector('.week-indicator');
 const weekIndicatorValue = document.getElementById('week-indicator-value');
 const weekIndicatorRange = document.getElementById('week-indicator-range');
+const timetableWeekNumber = document.getElementById('timetable-week-number');
+const timetableWeekLabel = document.querySelector('.timetable-card__week-label');
+const timetableWeekRange = document.getElementById('timetable-week-range');
+const timetableWeekContent = document.getElementById('timetable-week-content');
+const timetableWeekEmpty = document.getElementById('timetable-week-empty');
+const timetableToggleWeekBtn = document.getElementById('timetable-toggle-week');
+const rewardMeter = document.querySelector('.reward-meter');
+const rewardTiles = document.getElementById('reward-tiles');
+const rewardCount = document.getElementById('reward-count');
 
 const quizWidget = document.getElementById('quiz-widget');
 const quizEmpty = document.getElementById('quiz-empty');
@@ -54,7 +65,10 @@ const flashcardState = {
     cards: [],
     index: 0,
     flipped: false,
+    visited: new Set(),
+    completedRun: false,
 };
+const flashcardHistory = new Set();
 
 const quizState = {
     baseQuestions: [],
@@ -62,6 +76,7 @@ const quizState = {
     index: 0,
     score: 0,
     answered: false,
+    completedRun: false,
 };
 
 const generationState = {
@@ -72,6 +87,12 @@ const generationState = {
 };
 
 let generationBusy = false;
+let flashcardForceFront = false;
+const REWARD_STORAGE_KEY = 'pinkStudy.rewards';
+const MAX_VISIBLE_REWARD_TILES = 28;
+const rewardState = {
+    count: 0,
+};
 
 function updatePdfSelectionLabel(file) {
     if (!pdfFileName) return;
@@ -166,6 +187,10 @@ function updateRegenerateButtonsAvailability() {
         const hasQuestions = quizState.questions.length > 0;
         regenerateQuizBtn.disabled = generationBusy || !hasStoredText || !hasApiKey || !hasQuestions;
     }
+    if (flashcardShuffleBtn) {
+        const canShuffleCards = flashcardState.cards.length > 1;
+        flashcardShuffleBtn.disabled = generationBusy || !canShuffleCards;
+    }
     if (shuffleQuizBtn) {
         const canShuffle = quizState.baseQuestions.length > 1;
         shuffleQuizBtn.disabled = generationBusy || !canShuffle;
@@ -187,10 +212,398 @@ function setGenerationBusy(isBusy) {
     updateRegenerateButtonsAvailability();
 }
 
+function renderRewardState() {
+    const count = Math.max(0, Number.isFinite(rewardState.count) ? rewardState.count : 0);
+    if (rewardCount) {
+        rewardCount.textContent = String(count);
+    }
+    if (rewardTiles) {
+        rewardTiles.innerHTML = '';
+        const fragment = document.createDocumentFragment();
+        const visible = Math.min(count, MAX_VISIBLE_REWARD_TILES);
+        for (let index = 0; index < visible; index += 1) {
+            const tile = document.createElement('span');
+            tile.className = 'reward-tile';
+            tile.setAttribute('role', 'listitem');
+            tile.setAttribute('aria-hidden', 'true');
+            fragment.appendChild(tile);
+        }
+        const remaining = count - visible;
+        if (remaining > 0) {
+            const overflow = document.createElement('span');
+            overflow.className = 'reward-tile reward-tile--overflow';
+            overflow.textContent = `+${remaining}`;
+            overflow.setAttribute('role', 'listitem');
+            fragment.appendChild(overflow);
+        }
+        rewardTiles.appendChild(fragment);
+        const label =
+            count === 1
+                ? 'I\u0161 viso 1 balto \u0161okolado plytel\u0117'
+                : `I\u0161 viso ${count} balt\u0173 \u0161okolado plyteli\u0173`;
+        rewardTiles.setAttribute('aria-label', label);
+        rewardTiles.setAttribute('title', label);
+    }
+    if (rewardMeter) {
+        rewardMeter.setAttribute('aria-label', `Baltas \u0161okoladas: ${count}`);
+    }
+}
+
+function persistRewardState() {
+    try {
+        localStorage.setItem(REWARD_STORAGE_KEY, String(rewardState.count || 0));
+    } catch (error) {
+        // Persistence is best effort only.
+    }
+}
+
+let rewardPulseTimeoutId = null;
+function pulseRewardMeter() {
+    if (!rewardMeter) {
+        return;
+    }
+    rewardMeter.classList.add('reward-meter--pulse');
+    if (rewardPulseTimeoutId) {
+        clearTimeout(rewardPulseTimeoutId);
+    }
+    rewardPulseTimeoutId = setTimeout(() => {
+        rewardMeter?.classList.remove('reward-meter--pulse');
+        rewardPulseTimeoutId = null;
+    }, 520);
+}
+
+function awardReward(kind = 'bonus') {
+    rewardState.count = Math.max(0, Number.isFinite(rewardState.count) ? rewardState.count : 0) + 1;
+    renderRewardState();
+    persistRewardState();
+    pulseRewardMeter();
+}
+
+function loadRewardState() {
+    try {
+        const stored = localStorage.getItem(REWARD_STORAGE_KEY);
+        if (stored) {
+            const parsed = Number.parseInt(stored, 10);
+            if (Number.isFinite(parsed) && parsed >= 0) {
+                rewardState.count = parsed;
+            }
+        }
+    } catch (error) {
+        rewardState.count = 0;
+    }
+    renderRewardState();
+}
+
+function normaliseFlashcardText(value) {
+    if (typeof value !== 'string') {
+        return '';
+    }
+    return value.trim();
+}
+
+function buildFlashcardKey(question, answer) {
+    const q = normaliseFlashcardText(question).toLowerCase();
+    const a = normaliseFlashcardText(answer).toLowerCase();
+    if (!q && !a) {
+        return null;
+    }
+    return `${q}|||${a}`;
+}
+
+function sanitiseFlashcardTags(tags) {
+    if (!Array.isArray(tags)) {
+        return [];
+    }
+    return tags
+        .map((tag) => (typeof tag === 'string' ? tag.trim() : ''))
+        .filter(Boolean);
+}
+
+function prepareFlashcardBatch(rawCards) {
+    const seenThisBatch = new Set();
+    const accepted = [];
+    const keys = [];
+    let duplicatesRemoved = 0;
+
+    if (!Array.isArray(rawCards)) {
+        return { cards: accepted, duplicatesRemoved, keys };
+    }
+
+    rawCards.forEach((card) => {
+        const question = normaliseFlashcardText(card?.question);
+        const answer = normaliseFlashcardText(card?.answer);
+        const key = buildFlashcardKey(question, answer);
+        if (!key || seenThisBatch.has(key) || flashcardHistory.has(key)) {
+            duplicatesRemoved += 1;
+            return;
+        }
+        seenThisBatch.add(key);
+        keys.push(key);
+        const base = card && typeof card === 'object' ? { ...card } : {};
+        base.question = question;
+        base.answer = answer;
+        base.tags = sanitiseFlashcardTags(card?.tags);
+        accepted.push(base);
+    });
+
+    return { cards: accepted, duplicatesRemoved, keys };
+}
+
+function persistFlashcardHistoryKeys(keys) {
+    keys.forEach((key) => {
+        if (typeof key === 'string' && key) {
+            flashcardHistory.add(key);
+        }
+    });
+}
+
+function requestFlashcardFrontReset() {
+    flashcardForceFront = true;
+}
+
+function resetFlashcardRunState() {
+    flashcardState.visited = new Set();
+    flashcardState.completedRun = false;
+}
+
+function registerFlashcardView(index) {
+    if (!flashcardState.cards.length) {
+        return;
+    }
+    if (!(flashcardState.visited instanceof Set)) {
+        flashcardState.visited = new Set();
+    }
+    flashcardState.visited.add(index);
+    if (!flashcardState.completedRun && flashcardState.visited.size === flashcardState.cards.length) {
+        flashcardState.completedRun = true;
+        awardReward('flashcards');
+        setFlashcardStatus('Visas korteles per\u0117jai! Baltas \u0161okoladas prizui.', 'success');
+    }
+}
+
+function resetQuizRunState() {
+    quizState.completedRun = false;
+}
+
+function registerQuizCompletion() {
+    if (!quizState.completedRun) {
+        quizState.completedRun = true;
+        awardReward('quiz');
+        if (quizFeedback) {
+            const base = quizFeedback.textContent || 'Testas baigtas!';
+            const rewardSuffix = ' (+1 baltas \u0161okoladas!)';
+            if (!base.includes('baltas \u0161okoladas')) {
+                quizFeedback.textContent = `${base}${rewardSuffix}`;
+            }
+        }
+    }
+}
+
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 const WEEK_LENGTH_DAYS = 7;
 const WEEK_ROTATION_LENGTH = 2;
 let weekIndicatorTimeoutId = null;
+const TIMETABLE_CURRENT_LABEL = '\u0160ios savait\u0117s paskaitos';
+const TIMETABLE_NEXT_LABEL = 'Ateinan\u010Dios savait\u0117s paskaitos';
+const TIMETABLE_WEEK_ORDER = ['Pirmadienis', 'Antradienis', 'Tre\u010diadienis', 'Ketvirtadienis', 'Penktadienis', '\u0160e\u0161tadienis'];
+const TIMETABLE_DATA = {
+    1: {
+        Pirmadienis: [
+            {
+                time: '12:10-13:45',
+                title: 'Matematika 3 (paskaitos)',
+                location: 'P2 154',
+                lecturer: 'Prof. Dr. Aleksandras Krylovas',
+                type: 'Paskaitos',
+            },
+            {
+                time: '14:30-16:05',
+                title: 'Matematika 3 (pratybos)',
+                location: 'P2 509',
+                lecturer: 'Prof. Dr. Aleksandras Krylovas',
+                type: 'Pratybos',
+            },
+        ],
+        Antradienis: [
+            {
+                time: '08:30-10:05',
+                title: 'Technin\u0117 brai\u017Eyba (laboratoriniai darbai)',
+                location: 'P2 505',
+                lecturer: 'Violeta Vilkevi\u010d',
+                type: 'Laboratoriniai darbai',
+            },
+            {
+                time: '10:20-11:55',
+                title: 'Technin\u0117 brai\u017Eyba (paskaitos)',
+                location: 'P2 154',
+                lecturer: 'Violeta Vilkevi\u010d',
+                type: 'Paskaitos',
+            },
+            {
+                time: '12:10-13:45',
+                title: 'Mechanizm\u0173 ir ma\u0161in\u0173 teorija (su kursiniu projektu)',
+                location: 'P2 154',
+                lecturer: 'Prof. Dr. Vytautas Turla',
+                type: 'Paskaitos',
+            },
+            {
+                time: '16:20-17:55',
+                title: 'Technin\u0117 brai\u017Eyba (pratybos)',
+                location: 'P2 510',
+                lecturer: 'Darius Ma\u010diulis',
+                type: 'Pratybos',
+            },
+        ],
+        Tre\u010diadienis: [
+            {
+                time: '12:10-13:45',
+                title: 'Mechanizm\u0173 ir ma\u0161in\u0173 teorija (su kursiniu projektu)',
+                location: 'P2 211',
+                lecturer: 'Doc. Dr. Nikolaj \u0160e\u0161ok',
+                type: 'Pratybos',
+            },
+            {
+                time: '14:30-16:05',
+                title: 'Mechanizm\u0173 ir ma\u0161in\u0173 teorija (su kursiniu projektu)',
+                location: 'P2 505',
+                lecturer: 'Doc. Dr. Nikolaj \u0160e\u0161ok',
+                type: 'Pratybos',
+            },
+            {
+                time: '16:20-17:55',
+                title: 'Med\u017Eiag\u0173 mokslas 2',
+                location: 'P1 246',
+                lecturer: 'Dr. Raimonda \u010cerna\u0161\u0117jien\u0117',
+                type: 'Laboratoriniai darbai',
+            },
+        ],
+        Ketvirtadienis: [
+            {
+                time: '8:30-10:05',
+                title: 'Med\u017Eiag\u0173 mechanika',
+                location: 'P2 510',
+                lecturer: 'Doc. Dr. Ona Luko\u0161evi\u010dien\u0117',
+                type: 'Pratybos',
+            },
+            {
+                time: '10:20-11:55',
+                title: 'Dalykinis ra\u0161ymas',
+                location: 'P2 154',
+                lecturer: 'Dr. Au\u0161ra \u017demien\u0117',
+                type: 'Pratybos',
+            },
+            {
+                time: '12:10-13:45',
+                title: 'Med\u017Eiag\u0173 mokslas',
+                location: 'P2 154',
+                lecturer: 'Prof. Dr. Olegas \u010cerna\u0161\u0117jus',
+                type: 'Paskaitos',
+            },
+        ],
+    },
+    2: {
+        Pirmadienis: [
+            {
+                time: '08:30-10:05',
+                title: 'Dalykinis ra\u0161ymas',
+                location: 'P2 154',
+                lecturer: 'Dr. Au\u0161ra \u017demien\u0117',
+                type: 'Paskaitos',
+            },
+            {
+                time: '10:20-11:55',
+                title: 'Matematika 3 (laboratoriniai darbai)',
+                location: 'P2 504',
+                lecturer: 'Jelena Deme\u0161ko',
+                type: 'Laboratoriniai darbai',
+            },
+            {
+                time: '12:10-13:45',
+                title: 'Matematika 3 (paskaitos)',
+                location: 'P2 154',
+                lecturer: 'Prof. Dr. Aleksandras Krylovas',
+                type: 'Paskaitos',
+            },
+        ],
+        Antradienis: [
+            {
+                time: '12:10-13:45',
+                title: 'Mechanizm\u0173 ir ma\u0161in\u0173 teorija (su kursiniu projektu)',
+                location: 'P2 154',
+                lecturer: 'Prof. Dr. Vytautas Turla',
+                type: 'Paskaitos',
+            },
+            {
+                time: '14:30-16:05',
+                title: 'Mechanizm\u0173 ir ma\u0161in\u0173 teorija (su kursiniu projektu)',
+                location: 'P2 154',
+                lecturer: 'Prof. Dr. Vytautas Turla',
+                type: 'Paskaitos',
+            },
+        ],
+        Tre\u010diadienis: [
+            {
+                time: '14:30-16:05',
+                title: 'Mechanizm\u0173 ir ma\u0161in\u0173 teorija (su kursiniu projektu)',
+                location: 'P2 505',
+                lecturer: 'Doc. Dr. Nikolaj \u0160e\u0161ok',
+                type: 'Pratybos',
+            },
+            {
+                time: '16:20-17:55',
+                title: 'Mechanizm\u0173 ir ma\u0161in\u0173 teorija (su kursiniu projektu)',
+                location: 'P1 211',
+                lecturer: 'Doc. Dr. Nikolaj \u0160e\u0161ok',
+                type: 'Laboratoriniai darbai',
+            },
+        ],
+        Ketvirtadienis: [
+            {
+                time: '08:30-10:05',
+                title: 'Med\u017Eiag\u0173 mechanika',
+                location: 'P2 510',
+                lecturer: 'Doc. Dr. Ona Luko\u0161evi\u010dien\u0117',
+                type: 'Laboratoriniai darbai',
+            },
+            {
+                time: '12:10-13:45',
+                title: 'Med\u017Eiag\u0173 mechanika',
+                location: 'P2 154',
+                lecturer: 'Dr. Jurijus Tretjakovas',
+                type: 'Paskaitos',
+            },
+            {
+                time: '12:10-13:45',
+                title: 'Med\u017Eiag\u0173 mokslas',
+                location: 'P2 154',
+                lecturer: 'Prof. Dr. Olegas \u010cerna\u0161evas',
+                type: 'Paskaitos',
+            },
+        ],
+        Penktadienis: [
+            {
+                time: '08:30-10:05',
+                title: 'Angl\u0173 kalba',
+                location: 'P2 511',
+                lecturer: 'Lina Valatkien\u0117',
+                type: 'Pratybos',
+            },
+            {
+                time: '10:20-11:55',
+                title: 'Angl\u0173 kalba',
+                location: 'P2 511',
+                lecturer: 'Lina Valatkien\u0117',
+                type: 'Pratybos',
+            },
+        ],
+    },
+};
+let timetableViewOffset = 0;
+let lastRenderedRotationIndex = null;
+const latestWeekContext = {
+    rotationIndex: 0,
+    weekStart: null,
+};
 
 function startOfDay(date) {
     const copy = new Date(date);
@@ -238,6 +651,187 @@ function formatMonthDay(date) {
     return month + '-' + day;
 }
 
+function shouldPreferNextWeekView(date) {
+    const day = date.getDay();
+    const minutes = date.getHours() * 60 + date.getMinutes();
+    if (day === 5 && minutes >= 12 * 60) {
+        return true;
+    }
+    if (day === 6) {
+        return true;
+    }
+    if (day === 0 && minutes < 12 * 60) {
+        return true;
+    }
+    return false;
+}
+
+function getInitialTimetableViewOffset(date) {
+    return shouldPreferNextWeekView(date) ? 1 : 0;
+}
+
+function updateTimetableToggleLabel() {
+    if (!timetableToggleWeekBtn) {
+        return;
+    }
+    const showingCurrentWeek = timetableViewOffset === 0;
+    timetableToggleWeekBtn.textContent = showingCurrentWeek
+        ? 'Per\u017ei\u016br\u0117ti ateinan\u010Di\u0105 savait\u0119'
+        : 'Gr\u012f\u017eti \u012f \u0161i\u0105 savait\u0119';
+    timetableToggleWeekBtn.setAttribute('aria-pressed', showingCurrentWeek ? 'false' : 'true');
+}
+
+function renderTimetableSection() {
+    if (!timetableWeekContent) {
+        return;
+    }
+    const weekStart = latestWeekContext.weekStart;
+    const rotationIndex = latestWeekContext.rotationIndex;
+    if (!weekStart) {
+        timetableWeekContent.textContent = '';
+        if (timetableWeekEmpty) {
+            timetableWeekEmpty.hidden = false;
+        }
+        return;
+    }
+
+    const viewOffset = ((timetableViewOffset % WEEK_ROTATION_LENGTH) + WEEK_ROTATION_LENGTH) % WEEK_ROTATION_LENGTH;
+    const normalizedRotationIndex =
+        ((rotationIndex + viewOffset) % WEEK_ROTATION_LENGTH + WEEK_ROTATION_LENGTH) % WEEK_ROTATION_LENGTH;
+    const weekNumber = normalizedRotationIndex + 1;
+    const isCurrentWeek = viewOffset === 0;
+    if (timetableWeekLabel) {
+        timetableWeekLabel.textContent = isCurrentWeek ? TIMETABLE_CURRENT_LABEL : TIMETABLE_NEXT_LABEL;
+    }
+    if (timetableWeekNumber) {
+        timetableWeekNumber.textContent = weekNumber + ' savait\u0117';
+    }
+
+    const displayStart = new Date(weekStart);
+    displayStart.setDate(displayStart.getDate() + viewOffset * WEEK_LENGTH_DAYS);
+    const displayEnd = new Date(displayStart);
+    displayEnd.setDate(displayEnd.getDate() + WEEK_LENGTH_DAYS - 1);
+
+    if (timetableWeekRange) {
+        timetableWeekRange.textContent = formatMonthDay(displayStart) + ' \u2013 ' + formatMonthDay(displayEnd);
+    }
+    const weekData = TIMETABLE_DATA[weekNumber];
+    timetableWeekContent.innerHTML = '';
+    timetableWeekContent.setAttribute('role', 'list');
+
+    const emptyMessage = isCurrentWeek
+        ? '\u0160ios savait\u0117s planas dar nepildytas.'
+        : 'Ateinan\u010Dios savait\u0117s planas dar nepildytas.';
+
+    if (!weekData) {
+        if (timetableWeekEmpty) {
+            timetableWeekEmpty.textContent = emptyMessage;
+            timetableWeekEmpty.hidden = false;
+        }
+        timetableWeekContent.setAttribute('aria-hidden', 'true');
+        return;
+    }
+
+    const dayEntries = TIMETABLE_WEEK_ORDER
+        .map((dayName) => ({
+            dayName,
+            sessions: Array.isArray(weekData[dayName]) ? weekData[dayName] : [],
+        }))
+        .filter((entry) => entry.sessions.length > 0);
+
+    if (dayEntries.length === 0) {
+        if (timetableWeekEmpty) {
+            timetableWeekEmpty.textContent = emptyMessage;
+            timetableWeekEmpty.hidden = false;
+        }
+        timetableWeekContent.setAttribute('aria-hidden', 'true');
+        return;
+    }
+
+    const fragment = document.createDocumentFragment();
+
+    dayEntries.forEach((entry, index) => {
+        const dayWrapper = document.createElement('details');
+        dayWrapper.className = 'timetable-day';
+        dayWrapper.setAttribute('role', 'listitem');
+        if (index === 0) {
+            dayWrapper.open = true;
+        }
+
+        const summary = document.createElement('summary');
+        summary.className = 'timetable-day__summary';
+        const nameEl = document.createElement('span');
+        nameEl.className = 'timetable-day__name';
+        nameEl.textContent = entry.dayName;
+        summary.appendChild(nameEl);
+
+        const countEl = document.createElement('span');
+        countEl.className = 'timetable-day__count';
+        countEl.textContent =
+            entry.sessions.length === 1 ? '1 paskaita' : `${entry.sessions.length} paskaitos`;
+        summary.appendChild(countEl);
+        dayWrapper.appendChild(summary);
+
+        const body = document.createElement('div');
+        body.className = 'timetable-day__body';
+        dayWrapper.appendChild(body);
+
+        const sessionsList = document.createElement('ul');
+        sessionsList.className = 'timetable-card__sessions';
+        body.appendChild(sessionsList);
+
+        entry.sessions.forEach((session) => {
+            const sessionItem = document.createElement('li');
+            sessionItem.className = 'timetable-card__session';
+            sessionsList.appendChild(sessionItem);
+
+            if (session.time) {
+                const timeEl = document.createElement('span');
+                timeEl.className = 'timetable-card__session-time';
+                timeEl.textContent = session.time;
+                sessionItem.appendChild(timeEl);
+            }
+
+            const titleEl = document.createElement('p');
+            titleEl.className = 'timetable-card__session-title';
+            titleEl.textContent = session.title || '\u2014';
+            sessionItem.appendChild(titleEl);
+
+            const metaParts = [];
+            if (session.location) {
+                metaParts.push(session.location);
+            }
+            if (session.lecturer) {
+                metaParts.push(session.lecturer);
+            }
+            if (session.type) {
+                metaParts.push(session.type);
+            }
+            if (metaParts.length > 0) {
+                const metaEl = document.createElement('span');
+                metaEl.className = 'timetable-card__session-meta';
+                metaEl.textContent = metaParts.join(' \u2022 ');
+                sessionItem.appendChild(metaEl);
+            }
+
+            if (session.note) {
+                const noteEl = document.createElement('span');
+                noteEl.className = 'timetable-card__session-note';
+                noteEl.textContent = session.note;
+                sessionItem.appendChild(noteEl);
+            }
+        });
+
+        fragment.appendChild(dayWrapper);
+    });
+
+    timetableWeekContent.appendChild(fragment);
+    timetableWeekContent.removeAttribute('aria-hidden');
+    if (timetableWeekEmpty) {
+        timetableWeekEmpty.hidden = true;
+    }
+}
+
 function updateWeekIndicator(now = new Date()) {
     if (!weekIndicatorValue) {
         return;
@@ -246,16 +840,27 @@ function updateWeekIndicator(now = new Date()) {
     const weekNumber = rotationIndex + 1;
     weekIndicatorValue.textContent = weekNumber + ' savait\u0117';
 
+    const weekStart = getWeekStart(now);
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekEnd.getDate() + WEEK_LENGTH_DAYS - 1);
+
     if (weekIndicatorRange) {
-        const weekStart = getWeekStart(now);
-        const weekEnd = new Date(weekStart);
-        weekEnd.setDate(weekEnd.getDate() + WEEK_LENGTH_DAYS - 1);
         weekIndicatorRange.textContent = formatMonthDay(weekStart) + ' \u2013 ' + formatMonthDay(weekEnd);
     }
     if (weekIndicator) {
         weekIndicator.hidden = false;
         weekIndicator.dataset.week = String(weekNumber);
     }
+
+    const needsReset = lastRenderedRotationIndex === null || lastRenderedRotationIndex !== rotationIndex;
+    if (needsReset) {
+        timetableViewOffset = getInitialTimetableViewOffset(now);
+        updateTimetableToggleLabel();
+    }
+    lastRenderedRotationIndex = rotationIndex;
+    latestWeekContext.rotationIndex = rotationIndex;
+    latestWeekContext.weekStart = new Date(weekStart);
+    renderTimetableSection();
 }
 
 function scheduleWeekIndicatorUpdate() {
@@ -422,8 +1027,17 @@ let splashTimeout;
 
 function showScreen(id) {
     screens.forEach((screen) => {
-        screen.classList.toggle('screen--active', screen.dataset.screen === id);
+        const isTarget = screen.dataset.screen === id;
+        screen.classList.toggle('screen--active', isTarget);
+        if ('hidden' in screen) {
+            screen.hidden = !isTarget;
+        }
     });
+    if (hero) {
+        const showHero = id === 'intro';
+        hero.hidden = !showHero;
+        hero.classList.toggle('hero--hidden', !showHero);
+    }
 }
 
 function updateGreetingNames() {
@@ -663,6 +1277,7 @@ function renderFlashcard() {
 
     if (flashcardState.cards.length === 0) {
         flashcardWidget.hidden = true;
+        flashcardForceFront = false;
         return;
     }
 
@@ -670,7 +1285,12 @@ function renderFlashcard() {
     const current = flashcardState.cards[flashcardState.index];
 
     flashcardWidget.hidden = false;
-    flashcardCard.dataset.flipped = flashcardState.flipped ? 'true' : 'false';
+    let flipped = flashcardState.flipped;
+    if (flashcardForceFront) {
+        flipped = false;
+        flashcardCard.classList.add('flashcard-widget__card--no-transition');
+    }
+    flashcardCard.dataset.flipped = flipped ? 'true' : 'false';
     flashcardFront.textContent = current.question;
     flashcardBack.textContent = current.answer;
     flashcardCounter.textContent = `${flashcardState.index + 1} / ${total}`;
@@ -685,9 +1305,20 @@ function renderFlashcard() {
         });
     }
 
+    registerFlashcardView(flashcardState.index);
+
     const disableNav = total <= 1;
     flashcardPrevBtn.disabled = disableNav;
     flashcardNextBtn.disabled = disableNav;
+    if (flashcardShuffleBtn) {
+        flashcardShuffleBtn.disabled = generationBusy || total <= 1;
+    }
+    if (flashcardForceFront && flashcardCard) {
+        requestAnimationFrame(() => {
+            flashcardCard.classList.remove('flashcard-widget__card--no-transition');
+        });
+        flashcardForceFront = false;
+    }
 }
 
 function showFlashcardByIndex(index) {
@@ -695,8 +1326,12 @@ function showFlashcardByIndex(index) {
     if (total === 0) return;
 
     const wrappedIndex = (index + total) % total;
+    if (flashcardState.completedRun && wrappedIndex === 0) {
+        resetFlashcardRunState();
+    }
     flashcardState.index = wrappedIndex;
     flashcardState.flipped = false;
+    requestFlashcardFrontReset();
     renderFlashcard();
     if (flashcardCard) {
         flashcardCard.focus({ preventScroll: true });
@@ -707,6 +1342,37 @@ function toggleFlashcardFace() {
     flashcardState.flipped = !flashcardState.flipped;
     if (flashcardCard) {
         flashcardCard.dataset.flipped = flashcardState.flipped ? 'true' : 'false';
+    }
+}
+
+function shuffleFlashcards() {
+    if (flashcardState.cards.length <= 1) {
+        return;
+    }
+    const originalOrder = flashcardState.cards.slice();
+    const shuffled = originalOrder.slice();
+
+    for (let i = shuffled.length - 1; i > 0; i -= 1) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const temp = shuffled[i];
+        shuffled[i] = shuffled[j];
+        shuffled[j] = temp;
+    }
+
+    const unchanged = shuffled.every((card, index) => card === originalOrder[index]);
+    if (unchanged && shuffled.length > 1) {
+        shuffled.reverse();
+    }
+
+    flashcardState.cards = shuffled;
+    flashcardState.index = 0;
+    flashcardState.flipped = false;
+    resetFlashcardRunState();
+    requestFlashcardFrontReset();
+    renderFlashcard();
+    setFlashcardStatus('Kortel\u0117s i\u0161mai\u0161ytos! Pasiruo\u0161k netik\u0117tumams.', 'success');
+    if (flashcardCard) {
+        flashcardCard.focus({ preventScroll: true });
     }
 }
 
@@ -815,6 +1481,7 @@ function clearFlashcardWidget() {
     flashcardState.cards = [];
     flashcardState.index = 0;
     flashcardState.flipped = false;
+    resetFlashcardRunState();
     if (flashcardWidget) {
         flashcardWidget.hidden = true;
     }
@@ -832,6 +1499,7 @@ function clearQuizWidget() {
     quizState.index = 0;
     quizState.score = 0;
     quizState.answered = false;
+    resetQuizRunState();
     if (quizWidget) {
         quizWidget.hidden = true;
     }
@@ -964,6 +1632,7 @@ function loadQuizQuestions(questions) {
     quizState.index = 0;
     quizState.score = 0;
     quizState.answered = false;
+    resetQuizRunState();
 
     if (quizEmpty) {
         quizEmpty.hidden = true;
@@ -986,6 +1655,7 @@ function reshuffleQuizQuestions() {
     quizState.index = 0;
     quizState.score = 0;
     quizState.answered = false;
+    resetQuizRunState();
     renderQuizQuestion();
     updateRegenerateButtonsAvailability();
 }
@@ -1017,6 +1687,10 @@ async function regenerateQuizQuestions() {
         includeQuiz: true,
         quizCount: desiredQuizCount,
     };
+
+    const previousFlashcards = flashcardState.cards.slice();
+    const previousIndex = flashcardState.index;
+    const previousFlipped = flashcardState.flipped;
 
     setGenerationBusy(true);
     setFlashcardStatus('Kuriame nauj\u0105 test\u0105 per OpenAI...', 'pending');
@@ -1156,6 +1830,7 @@ function showQuizSummary() {
     }
 
     quizState.answered = true;
+    registerQuizCompletion();
 }
 
 function updateNotepadEmptyState() {
@@ -1444,6 +2119,10 @@ flashcardNextBtn?.addEventListener('click', () => {
     showFlashcardByIndex(flashcardState.index + 1);
 });
 
+flashcardShuffleBtn?.addEventListener('click', () => {
+    shuffleFlashcards();
+});
+
 quizNextButton?.addEventListener('click', () => {
     if (quizState.questions.length === 0 || !quizState.answered) {
         return;
@@ -1464,6 +2143,7 @@ quizRestartButton?.addEventListener('click', () => {
     quizState.index = 0;
     quizState.score = 0;
     quizState.answered = false;
+    resetQuizRunState();
     renderQuizQuestion();
 });
 
@@ -1526,19 +2206,30 @@ flashcardForm?.addEventListener('submit', async (event) => {
         setFlashcardStatus(actionLabel, 'pending');
 
         const bundle = await fetchStudyBundleFromApi(text, state.apiKey, plan);
-        const cards = includeFlashcards ? bundle.flashcards : [];
+        const rawCards = includeFlashcards ? bundle.flashcards : [];
         const quizQuestions = includeQuiz ? bundle.quizQuestions : [];
         let statusMessage = '';
+        let flashcardExtraMessage = '';
 
         if (includeFlashcards) {
-            if (!cards.length) {
+            if (!rawCards.length) {
                 throw new Error('Korteli\u0173 negavome. Pabandyk ai\u0161kesn\u012f PDF arba pakoreguok turin\u012f.');
             }
-            flashcardState.cards = cards;
+            const { cards: preparedCards, duplicatesRemoved, keys } = prepareFlashcardBatch(rawCards);
+            if (preparedCards.length === 0) {
+                throw new Error('Visos naujos kortel\u0117s sutapo su ankstesn\u0117mis. Pabandyk kit\u0105 PDF arba pasirink kitok\u012f korteli\u0173 kiek\u012f.');
+            }
+            flashcardState.cards = preparedCards;
             flashcardState.index = 0;
             flashcardState.flipped = false;
+            resetFlashcardRunState();
+            persistFlashcardHistoryKeys(keys);
+            requestFlashcardFrontReset();
             renderFlashcard();
-            statusMessage = 'Kortel\u0117s paruo\u0161tos!';
+            if (duplicatesRemoved > 0) {
+                flashcardExtraMessage = ' Pasikartojan\u010dios kortel\u0117s praleistos automati\u0161kai.';
+            }
+            statusMessage = 'Kortel\u0117s paruo\u0161tos!' + flashcardExtraMessage;
         } else {
             clearFlashcardWidget();
         }
@@ -1555,6 +2246,9 @@ flashcardForm?.addEventListener('submit', async (event) => {
             statusMessage = includeFlashcards
                 ? 'Kortel\u0117s ir testas paruo\u0161ti! Apversk ir pasitikrink save.'
                 : 'Testas paruo\u0161tas! Pasitikrink save.';
+            if (includeFlashcards && flashcardExtraMessage) {
+                statusMessage += flashcardExtraMessage;
+            }
         } else {
             clearQuizWidget();
             if (quizEmpty) {
@@ -1569,6 +2263,13 @@ flashcardForm?.addEventListener('submit', async (event) => {
         }
     } catch (error) {
         console.error(error);
+        if (previousFlashcards.length > 0 && flashcardState.cards.length === 0) {
+            flashcardState.cards = previousFlashcards;
+            flashcardState.index = Math.min(previousIndex, flashcardState.cards.length - 1);
+            flashcardState.flipped = Boolean(previousFlipped && flashcardState.cards.length > 0);
+            requestFlashcardFrontReset();
+            renderFlashcard();
+        }
         setFlashcardStatus(error.message || 'Kuriant korteles \u012fvyko klaida.', 'error');
     } finally {
         setGenerationBusy(false);
@@ -1607,6 +2308,7 @@ clearStickiesBtn?.addEventListener('click', () => {
 
 loadStoredApiKey();
 loadStoredStickies();
+loadRewardState();
 if (nameInput) {
     nameInput.value = state.name;
 }
@@ -1628,6 +2330,14 @@ if (weekIndicator) {
         }
     });
 }
+timetableToggleWeekBtn?.addEventListener('click', () => {
+    if (!latestWeekContext.weekStart) {
+        return;
+    }
+    timetableViewOffset = (timetableViewOffset + 1) % WEEK_ROTATION_LENGTH;
+    updateTimetableToggleLabel();
+    renderTimetableSection();
+});
 updateWeekIndicator();
 scheduleWeekIndicatorUpdate();
 document.addEventListener('visibilitychange', () => {

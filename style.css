@@ -161,6 +161,140 @@ body.week-indicator-collapsed {
     transform: translateY(2px);
 }
 
+.reward-meter {
+    --reward-meter-translate: 0;
+    position: fixed;
+    top: calc(var(--week-banner-height) + 18px);
+    right: clamp(16px, 5vw, 40px);
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.88);
+    border: 1px solid rgba(255, 157, 208, 0.28);
+    box-shadow: 0 18px 38px rgba(255, 157, 208, 0.18);
+    z-index: 1300;
+    backdrop-filter: blur(10px);
+    transform: translateX(var(--reward-meter-translate));
+    transform-origin: center;
+    transition: top 220ms ease, transform 220ms ease, box-shadow 220ms ease;
+}
+
+body.week-indicator-collapsed .reward-meter {
+    top: calc(var(--week-banner-collapsed-height) + 18px);
+    box-shadow: 0 14px 28px rgba(255, 157, 208, 0.16);
+}
+
+.reward-meter__label {
+    font-family: 'Quicksand', 'Century Gothic', 'Segoe UI', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(68, 38, 63, 0.6);
+}
+
+.reward-meter__count {
+    font-family: 'Bodoni Moda', 'Didot', 'Georgia', serif;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-dark);
+}
+
+.reward-meter__tiles {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    max-width: min(360px, 40vw);
+    overflow: hidden;
+}
+
+.reward-tile {
+    width: 26px;
+    height: 20px;
+    border-radius: 6px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 237, 237, 0.92));
+    border: 1px solid rgba(255, 176, 220, 0.4);
+    box-shadow:
+        inset 0 0 0 1px rgba(255, 255, 255, 0.8),
+        0 6px 14px rgba(255, 157, 208, 0.25);
+    position: relative;
+}
+
+.reward-tile::before,
+.reward-tile::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 70%;
+    height: 70%;
+    border-radius: 4px;
+    transform: translate(-50%, -50%);
+    box-shadow:
+        0 -5px 0 rgba(255, 255, 255, 0.45) inset,
+        0 5px 0 rgba(255, 209, 224, 0.32) inset;
+}
+
+.reward-tile::after {
+    width: 30%;
+    height: 30%;
+    border-radius: 2px;
+    box-shadow:
+        0 -2px 0 rgba(255, 255, 255, 0.9) inset,
+        0 2px 0 rgba(255, 206, 225, 0.6) inset;
+}
+
+.reward-tile--overflow {
+    background: rgba(255, 255, 255, 0.96);
+    border: 1px dashed rgba(255, 79, 161, 0.4);
+    color: var(--pink-500);
+    font-family: 'Quicksand', 'Century Gothic', 'Segoe UI', sans-serif;
+    font-size: 0.68rem;
+    font-weight: 700;
+    display: grid;
+    place-items: center;
+    box-shadow: 0 6px 14px rgba(255, 157, 208, 0.18);
+}
+
+.reward-tile--overflow::before,
+.reward-tile--overflow::after {
+    display: none;
+}
+
+.reward-meter--pulse {
+    animation: rewardPop 480ms ease;
+}
+
+@keyframes rewardPop {
+    0% {
+        transform: translateX(var(--reward-meter-translate)) scale(1);
+    }
+    40% {
+        transform: translateX(var(--reward-meter-translate)) scale(1.08);
+    }
+    70% {
+        transform: translateX(var(--reward-meter-translate)) scale(0.98);
+    }
+    100% {
+        transform: translateX(var(--reward-meter-translate)) scale(1);
+    }
+}
+
+@media (max-width: 640px) {
+    .reward-meter {
+        left: 50%;
+        right: auto;
+        --reward-meter-translate: -50%;
+        top: calc(var(--week-banner-height) + 60px);
+    }
+    body.week-indicator-collapsed .reward-meter {
+        top: calc(var(--week-banner-collapsed-height) + 48px);
+    }
+}
+
+
 button, input {
     font-family: 'Quicksand', 'Century Gothic', 'Segoe UI', sans-serif;
     color: inherit;
@@ -549,6 +683,10 @@ body, h1, h2, h3, h4, h5, h6, p, span, label, li {
     background: radial-gradient(circle, rgba(255, 205, 233, 0.38) 0%, transparent 70%);
 }
 
+.hero--hidden {
+    display: none;
+}
+
 .hero__badge {
     display: inline-block;
     padding: 8px 18px;
@@ -842,6 +980,188 @@ body, h1, h2, h3, h4, h5, h6, p, span, label, li {
 
 .timetable-card__body {
     display: block;
+}
+
+.timetable-card__week {
+    display: grid;
+    gap: clamp(12px, 2vw, 18px);
+    padding: clamp(18px, 4vw, 24px);
+    border-radius: 22px;
+    background: linear-gradient(135deg, rgba(255, 248, 253, 0.96), rgba(255, 233, 246, 0.94));
+    border: 1px solid rgba(255, 157, 208, 0.28);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.3);
+}
+
+.timetable-card__week-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    justify-content: space-between;
+}
+
+.timetable-card__week-label {
+    font-family: 'Caveat', 'Quicksand', 'Century Gothic', 'Segoe UI', sans-serif;
+    font-size: clamp(24px, 4.2vw, 32px);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+.timetable-card__week-number {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: rgba(255, 157, 208, 0.18);
+    border: 1px solid rgba(255, 79, 161, 0.2);
+    font-family: 'Quicksand', 'Century Gothic', 'Segoe UI', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-dark);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.timetable-card__week-range {
+    font-family: 'Quicksand', 'Century Gothic', 'Segoe UI', sans-serif;
+    font-size: 0.78rem;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+}
+
+.timetable-card__week-content {
+    display: grid;
+    gap: clamp(12px, 2.6vw, 18px);
+}
+
+.timetable-day {
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(255, 157, 208, 0.3);
+    box-shadow: 0 14px 28px rgba(255, 157, 208, 0.18);
+    overflow: hidden;
+    transition: box-shadow 200ms ease, border-color 200ms ease, transform 200ms ease;
+}
+
+.timetable-day[open] {
+    border-color: rgba(255, 79, 161, 0.35);
+    box-shadow: 0 18px 36px rgba(255, 157, 208, 0.22);
+    transform: translateY(-2px);
+}
+
+.timetable-day__summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 16px 48px 16px 20px;
+    cursor: pointer;
+    list-style: none;
+    font-family: 'Caveat', 'Quicksand', 'Century Gothic', 'Segoe UI', sans-serif;
+    font-size: clamp(19px, 3.4vw, 26px);
+    font-weight: 700;
+    position: relative;
+}
+
+.timetable-day__summary::-webkit-details-marker {
+    display: none;
+}
+
+.timetable-day__summary::after {
+    content: '';
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    margin-top: -6px;
+    width: 12px;
+    height: 12px;
+    border-right: 2px solid rgba(68, 38, 63, 0.3);
+    border-bottom: 2px solid rgba(68, 38, 63, 0.3);
+    transform: rotate(45deg);
+    transition: transform 200ms ease;
+}
+
+.timetable-day[open] .timetable-day__summary::after {
+    transform: rotate(-135deg) translateY(-2px);
+}
+
+.timetable-day__name {
+    flex: 1;
+}
+
+.timetable-day__count {
+    font-family: 'Quicksand', 'Century Gothic', 'Segoe UI', sans-serif;
+    font-size: 0.74rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(68, 38, 63, 0.55);
+    font-weight: 700;
+}
+
+.timetable-day__body {
+    padding: 0 20px 20px;
+    display: grid;
+    gap: 12px;
+}
+
+.timetable-card__sessions {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.timetable-card__session {
+    display: grid;
+    gap: 4px;
+    padding: 10px 12px;
+    border-radius: 16px;
+    background: rgba(255, 248, 253, 0.86);
+    border: 1px dashed rgba(255, 157, 208, 0.35);
+    position: relative;
+}
+
+.timetable-card__session-time {
+    font-family: 'Quicksand', 'Century Gothic', 'Segoe UI', sans-serif;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: rgba(68, 38, 63, 0.6);
+}
+
+.timetable-card__session-title {
+    font-family: 'Bodoni Moda', 'Didot', 'Georgia', serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.timetable-card__session-meta {
+    font-family: 'Quicksand', 'Century Gothic', 'Segoe UI', sans-serif;
+    font-size: 0.75rem;
+    color: rgba(68, 38, 63, 0.7);
+}
+
+.timetable-card__session-note {
+    font-family: 'Quicksand', 'Century Gothic', 'Segoe UI', sans-serif;
+    font-size: 0.74rem;
+    color: rgba(68, 38, 63, 0.75);
+    font-style: italic;
+}
+
+.timetable-card__empty {
+    margin: 0;
+    font-family: 'Quicksand', 'Century Gothic', 'Segoe UI', sans-serif;
+    font-size: 0.86rem;
+    color: rgba(68, 38, 63, 0.68);
+    text-align: center;
+}
+
+.timetable-card__week-footer {
+    display: flex;
+    justify-content: center;
 }
 
 .timetable-card__details {
@@ -1771,6 +2091,19 @@ body, h1, h2, h3, h4, h5, h6, p, span, label, li {
 }
 
 .flashcard-widget__controls {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    column-gap: 14px;
+    width: 100%;
+}
+
+.flashcard-widget__controls-spacer {
+    width: 42px;
+    height: 1px;
+}
+
+.flashcard-widget__controls-core {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1782,6 +2115,41 @@ body, h1, h2, h3, h4, h5, h6, p, span, label, li {
     color: var(--text-muted);
     font-size: 15px;
     white-space: nowrap;
+}
+
+.flashcard-widget__shuffle {
+    justify-self: end;
+    width: 42px;
+    height: 42px;
+    min-width: 42px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 79, 161, 0.28);
+    background: rgba(255, 157, 208, 0.28);
+    display: grid;
+    place-items: center;
+    padding: 0;
+    cursor: pointer;
+    transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease, border-color 160ms ease;
+}
+
+.flashcard-widget__shuffle:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.flashcard-widget__shuffle:hover:not(:disabled) {
+    transform: translateY(-2px);
+    background: rgba(255, 157, 208, 0.42);
+    border-color: rgba(255, 79, 161, 0.42);
+    box-shadow: 0 12px 22px rgba(255, 79, 161, 0.18);
+}
+
+.flashcard-widget__shuffle-icon {
+    width: 20px;
+    height: 20px;
+    fill: var(--pink-500);
 }
 
 
@@ -1803,6 +2171,10 @@ body, h1, h2, h3, h4, h5, h6, p, span, label, li {
     outline: none;
     transform-style: preserve-3d;
     transition: transform 480ms ease;
+}
+
+.flashcard-widget__card--no-transition {
+    transition: none !important;
 }
 
 .flashcard-widget__card:focus-visible {
@@ -2182,3 +2554,5 @@ body, h1, h2, h3, h4, h5, h6, p, span, label, li {
         background-attachment: scroll, scroll;
     }
 }
+
+

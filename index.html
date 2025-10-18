@@ -23,6 +23,11 @@
         <span id="week-indicator-range" class="week-indicator__range"></span>
         <span class="week-indicator__chevron" aria-hidden="true"></span>
     </div>
+    <div class="reward-meter" role="status" aria-live="polite">
+        <span class="reward-meter__label">Baltas &#353;okoladas</span>
+        <span id="reward-count" class="reward-meter__count">0</span>
+        <div id="reward-tiles" class="reward-meter__tiles" role="list"></div>
+    </div>
     <div class="welcome-splash" aria-hidden="true">
         <div class="welcome-splash__content">
             <div class="welcome-splash__runner" aria-hidden="true"></div>
@@ -87,6 +92,18 @@
                     <h3 class="card__title" id="timetable-title">Studij&#371; tvarkara&#353;tis</h3>
                 </div>
                 <div class="timetable-card__body">
+                    <div class="timetable-card__week" aria-live="polite">
+                        <div class="timetable-card__week-header">
+                            <span class="timetable-card__week-label">&#352;ios savait&#279;s paskaitos</span>
+                            <span id="timetable-week-number" class="timetable-card__week-number">&mdash;</span>
+                        </div>
+                        <div id="timetable-week-range" class="timetable-card__week-range"></div>
+                        <div id="timetable-week-content" class="timetable-card__week-content" role="list"></div>
+                        <p id="timetable-week-empty" class="timetable-card__empty" hidden>&#352;ios savait&#279;s planas dar nepildytas.</p>
+                        <div class="timetable-card__week-footer">
+                            <button id="timetable-toggle-week" type="button" class="btn btn--secondary btn--tiny">Per&#382;i&#363;r&#279;ti ateinan&#269;i&#261; savait&#281;</button>
+                        </div>
+                    </div>
                     <details class="timetable-card__details">
                         <summary class="timetable-card__summary">
                             <span class="timetable-card__summary-label">Svarbios datos</span>
@@ -176,9 +193,26 @@
 
                     <div id="flashcard-widget" class="flashcard-widget" hidden aria-labelledby="flashcard-title">
                         <div class="flashcard-widget__controls">
-                            <button id="flashcard-prev" type="button" class="btn btn--pill" aria-label="Ankstesn&#279; kortel&#279;">Atgal</button>
-                            <span id="flashcard-counter" class="flashcard-widget__counter">0 / 0</span>
-                            <button id="flashcard-next" type="button" class="btn btn--pill" aria-label="Kita kortel&#279;">Pirmyn</button>
+                            <span class="flashcard-widget__controls-spacer" aria-hidden="true"></span>
+                            <div class="flashcard-widget__controls-core">
+                                <button id="flashcard-prev" type="button" class="btn btn--pill" aria-label="Ankstesn&#279; kortel&#279;">Atgal</button>
+                                <span id="flashcard-counter" class="flashcard-widget__counter">0 / 0</span>
+                                <button id="flashcard-next" type="button" class="btn btn--pill" aria-label="Kita kortel&#279;">Pirmyn</button>
+                            </div>
+                            <button
+                                id="flashcard-shuffle"
+                                type="button"
+                                class="flashcard-widget__shuffle"
+                                aria-label="I&#353;mai&#353;yti korteles"
+                                title="I&#353;mai&#353;yti korteles"
+                                disabled
+                            >
+                                <svg class="flashcard-widget__shuffle-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                                    <path
+                                        d="M17.59 3.59 21 7l-3.41 3.41V8h-1.86a4 4 0 0 0-2.83 1.17l-2.3 2.3 2.3 2.3a4 4 0 0 0 2.83 1.17H17v-2.41L21 16l-4 4v-2.41h-2.27a6 6 0 0 1-4.24-1.76l-2.01-2-2 2A3 3 0 0 1 4.59 17H3v-2h1.59a1 1 0 0 0 .7-.29l2-2-2-2A1 1 0 0 0 4.59 10H3V8h1.59a3 3 0 0 1 2.12.88l2 2 2.01-2a6 6 0 0 1 4.24-1.76H17V3.59Z"
+                                    ></path>
+                                </svg>
+                            </button>
                         </div>
                         <div class="flashcard-widget__stage">
                             <button id="flashcard-card" type="button" class="flashcard-widget__card" aria-live="polite" aria-label="Apversti kortel&#281;">
