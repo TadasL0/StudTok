@@ -22,6 +22,10 @@
     box-sizing: border-box;
 }
 
+html {
+    overflow-x: hidden;
+}
+
 .sr-only {
     position: absolute;
     width: 1px;
@@ -204,6 +208,7 @@ body.week-indicator-collapsed {
     box-shadow: 0 12px 26px rgba(255, 157, 208, 0.18);
     backdrop-filter: blur(10px);
     min-width: 0;
+    max-width: min(42vw, 160px);
 }
 
 .reward-meter__icon {
@@ -262,6 +267,7 @@ body.week-indicator-collapsed {
     .reward-meter {
         padding: 5px 9px;
         gap: 5px;
+        max-width: min(48vw, 140px);
     }
     .reward-meter__icon {
         width: 26px;
