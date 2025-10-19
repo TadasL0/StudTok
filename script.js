@@ -826,33 +826,39 @@ function renderTimetableSection() {
 }
 
 function updateWeekIndicator(now = new Date()) {
-    const rotationIndex = getWeekRotationIndex(now);
-    const weekNumber = rotationIndex + 1;
+    const baseRotationIndex = getWeekRotationIndex(now);
+    const baseWeekStart = getWeekStart(now);
+    const prefersNextWeek = shouldPreferNextWeekView(now);
+
+    let displayRotationIndex = baseRotationIndex;
+    const displayWeekStart = new Date(baseWeekStart);
+    if (prefersNextWeek) {
+        displayRotationIndex = (displayRotationIndex + 1) % WEEK_ROTATION_LENGTH;
+        displayWeekStart.setDate(displayWeekStart.getDate() + WEEK_LENGTH_DAYS);
+    }
+    const displayWeekEnd = new Date(displayWeekStart);
+    displayWeekEnd.setDate(displayWeekEnd.getDate() + WEEK_LENGTH_DAYS - 1);
 
     if (weekIndicatorValue) {
-        weekIndicatorValue.textContent = weekNumber + ' savait\u0117';
+        weekIndicatorValue.textContent = displayRotationIndex + 1 + ' savait\u0117';
     }
 
-    const weekStart = getWeekStart(now);
-    const weekEnd = new Date(weekStart);
-    weekEnd.setDate(weekEnd.getDate() + WEEK_LENGTH_DAYS - 1);
-
     if (weekIndicatorRange) {
-        weekIndicatorRange.textContent = formatMonthDay(weekStart) + ' \u2013 ' + formatMonthDay(weekEnd);
+        weekIndicatorRange.textContent = formatMonthDay(displayWeekStart) + ' \u2013 ' + formatMonthDay(displayWeekEnd);
     }
     if (weekIndicator) {
         weekIndicator.hidden = false;
-        weekIndicator.dataset.week = String(weekNumber);
+        weekIndicator.dataset.week = String(displayRotationIndex + 1);
     }
 
-    const needsReset = lastRenderedRotationIndex === null || lastRenderedRotationIndex !== rotationIndex;
+    const needsReset = lastRenderedRotationIndex === null || lastRenderedRotationIndex !== baseRotationIndex;
     if (needsReset) {
         timetableViewOffset = getInitialTimetableViewOffset(now);
         updateTimetableToggleLabel();
     }
-    lastRenderedRotationIndex = rotationIndex;
-    latestWeekContext.rotationIndex = rotationIndex;
-    latestWeekContext.weekStart = new Date(weekStart);
+    lastRenderedRotationIndex = baseRotationIndex;
+    latestWeekContext.rotationIndex = baseRotationIndex;
+    latestWeekContext.weekStart = new Date(baseWeekStart);
     renderTimetableSection();
     scheduleLayoutTopSync();
 }
