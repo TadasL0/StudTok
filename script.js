@@ -653,7 +653,7 @@ function shouldPreferNextWeekView(date) {
     if (day === 6) {
         return true;
     }
-    if (day === 0 && minutes < 12 * 60) {
+    if (day === 0) {
         return true;
     }
     return false;
