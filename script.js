@@ -842,11 +842,14 @@ function updateWeekIndicator(now = new Date()) {
         weekIndicator.dataset.week = String(weekNumber);
     }
 
+    const desiredOffset = getInitialTimetableViewOffset(now);
     const needsReset = lastRenderedRotationIndex === null || lastRenderedRotationIndex !== rotationIndex;
-    if (needsReset) {
-        timetableViewOffset = getInitialTimetableViewOffset(now);
+    const offsetChanged = !needsReset && timetableViewOffset !== desiredOffset;
+    if (needsReset || offsetChanged) {
+        timetableViewOffset = desiredOffset;
         updateTimetableToggleLabel();
     }
+
     lastRenderedRotationIndex = rotationIndex;
     latestWeekContext.rotationIndex = rotationIndex;
     latestWeekContext.weekStart = new Date(weekStart);
