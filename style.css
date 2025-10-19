@@ -1072,7 +1072,7 @@ body, h1, h2, h3, h4, h5, h6, p, span, label, li {
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    padding: 16px 60px 16px 20px;
+    padding: 16px 72px 16px 20px;
     cursor: pointer;
     list-style: none;
     font-family: 'Caveat', 'Quicksand', 'Century Gothic', 'Segoe UI', sans-serif;
@@ -1118,7 +1118,8 @@ body, h1, h2, h3, h4, h5, h6, p, span, label, li {
     text-transform: uppercase;
     color: rgba(68, 38, 63, 0.55);
     font-weight: 700;
-    padding-right: 12px;
+    padding-right: 28px;
+    white-space: nowrap;
 }
 
 .timetable-day__body {
