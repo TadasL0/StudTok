@@ -56,6 +56,12 @@ body {
     transition: padding-top 220ms ease;
 }
 
+@media (max-width: 960px) {
+    body {
+        align-items: stretch;
+    }
+}
+
 body.week-indicator-collapsed {
     padding-top: var(--layout-top-offset);
 }
@@ -140,10 +146,18 @@ body.week-indicator-collapsed {
 
 @media (max-width: 640px) {
     .week-indicator {
+        grid-template-columns: minmax(0, 1fr);
+        justify-items: center;
         column-gap: clamp(10px, 5vw, 20px);
         row-gap: 2px;
         padding: clamp(10px, 4vw, 16px) clamp(16px, 7vw, 28px);
         border-radius: 0 0 24px 24px;
+    }
+    .reward-meter {
+        grid-column: 1;
+        grid-row: auto;
+        justify-self: center;
+        margin-top: 6px;
     }
 
     .week-indicator__label {
@@ -633,10 +647,18 @@ body, h1, h2, h3, h4, h5, h6, p, span, label, li {
 }
 
 .app {
-    width: min(1024px, 100%);
+    width: 100%;
+    max-width: 1024px;
+    margin: 0 auto;
     display: grid;
     gap: 32px;
     z-index: 1;
+}
+
+@media (max-width: 768px) {
+    .app {
+        gap: 24px;
+    }
 }
 
 .hero {
@@ -712,6 +734,14 @@ body, h1, h2, h3, h4, h5, h6, p, span, label, li {
 .screen--active {
     display: block;
     animation: fadeUp 500ms ease;
+}
+
+.screen__title {
+    margin: 0 0 18px;
+    text-align: center;
+    font-size: clamp(24px, 6vw, 34px);
+    color: var(--text-dark);
+    letter-spacing: 0.01em;
 }
 
 @keyframes fadeUp {
@@ -1606,6 +1636,24 @@ body, h1, h2, h3, h4, h5, h6, p, span, label, li {
     color: var(--text-dark);
 }
 
+@media (max-width: 560px) {
+    .flashcard-form__file-picker {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .flashcard-form__file-button {
+        width: 100%;
+    }
+
+    .flashcard-form__file-name {
+        min-width: 0;
+        width: 100%;
+        display: block;
+        text-align: center;
+    }
+}
+
 @keyframes sparkleOrbit {
     0%,
     100% {
@@ -1637,6 +1685,22 @@ body, h1, h2, h3, h4, h5, h6, p, span, label, li {
 .studio-actions__note {
     margin: 0;
     flex: 1;
+}
+
+@media (max-width: 540px) {
+    .studio-actions {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+
+    .studio-actions__note {
+        width: 100%;
+    }
+
+    .studio-actions .btn {
+        width: 100%;
+    }
 }
 
 @media (min-width: 960px) {
@@ -2119,6 +2183,33 @@ body, h1, h2, h3, h4, h5, h6, p, span, label, li {
     transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease, border-color 160ms ease;
 }
 
+@media (max-width: 560px) {
+    .flashcard-widget__controls {
+        grid-template-columns: 1fr;
+        row-gap: 12px;
+        justify-items: center;
+    }
+
+    .flashcard-widget__controls-spacer {
+        display: none;
+    }
+
+    .flashcard-widget__controls-core {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 10px;
+    }
+
+    .flashcard-widget__counter {
+        width: 100%;
+        text-align: center;
+    }
+
+    .flashcard-widget__shuffle {
+        justify-self: center;
+    }
+}
+
 .flashcard-widget__shuffle:disabled {
     opacity: 0.4;
     cursor: not-allowed;
@@ -2353,6 +2444,22 @@ body, h1, h2, h3, h4, h5, h6, p, span, label, li {
     font-family: 'Quicksand', 'Century Gothic', 'Segoe UI', sans-serif;
     font-size: 15px;
     color: var(--text-muted);
+}
+
+@media (max-width: 520px) {
+    .quiz-widget__footer {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .quiz-widget__progress {
+        width: 100%;
+        text-align: center;
+    }
+
+    .quiz-widget__footer .btn {
+        width: 100%;
+    }
 }
 
 .quiz-widget__feedback {
