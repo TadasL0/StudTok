@@ -5,7 +5,7 @@ Sparkle-powered study sessions with a fresh flashcard generator.
 ## Quick Start
 
 1. Open `index.html` in your favourite browser.
-2. On the welcome screen, enter a name (or leave it as Emilija), drop in your OpenAI API key, optionally tick **Remember this key**, and hit **Enter the Lounge**.
+2. On the welcome screen, enter a name (or leave it as Emilija), type the passcode **differentdimension** (or paste your own OpenAI API key if you prefer), optionally tick **Remember this code**, and hit **Enter the Lounge**.
 3. Inside the **Sparkle Study Studio**, use the notepad, sticky board, and flashcard mixer to craft the perfect vibe. Need to tweak your details later? Tap **Back to Setup** anytime.
 
 ## Sparkle Study Studio Corners
@@ -16,8 +16,9 @@ Sparkle-powered study sessions with a fresh flashcard generator.
 
 ### What you need
 
-- An OpenAI API key with access to `gpt-4.1-mini` (or adjust the model name in `script.js` if you prefer another).
-- An internet connection so the page can load the `pdf.js` helper from the CDN and talk to the OpenAI API.
+- The built-in passcode `differentdimension` (works with the bundled Raspberry Pi proxy).
+- An OpenAI API key with access to `gpt-4.1-mini` if you want to call OpenAI directly or configure the proxy with your own model.
+- An internet connection so the page can load the `pdf.js` helper from the CDN and reach your Pi proxy / OpenAI.
 - A text-based PDF under 8&nbsp;MB (scanned images without selectable text will not extract well).
 
 ### How to use the mixer
@@ -31,8 +32,8 @@ If something goes wrong the status line under the button will explain whether th
 
 ### Security notes
 
-- Keys are never transmitted anywhere except directly to `api.openai.com` via the browser.
-- Choosing not to tick **Remember this key** means nothing is stored; otherwise the key is saved under `pinkStudy.apiKey` in `localStorage` for reuse.
+- Keys are never transmitted anywhere except to your Raspberry Pi proxy (or directly to `api.openai.com` if you choose to enter the key in the browser).
+- Choosing not to tick **Remember this code** means nothing is stored; otherwise the passcode or key is saved under `pinkStudy.credential` in `localStorage` for reuse.
 
 ## Tweaks
 

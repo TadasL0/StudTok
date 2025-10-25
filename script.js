@@ -55,10 +55,17 @@ const quizEmptyDefaultText = quizEmpty?.textContent || '';
 const quizNotSelectedText = 'Testas nebuvo pasirinktas. Pa\u017Eym\u0117k "ABCD test\u0105", jei jo reikia.';
 
 const pdfFileNameEmptyText = pdfFileName?.dataset?.empty || 'Failas nepasirinktas';
+const PASSCODE = 'differentdimension';
+const DEFAULT_BACKEND_ENDPOINT = 'http://192.168.0.134:5001/study-bundle';
+const STUDY_BACKEND_ENDPOINT =
+    window.PINK_STUDY_BACKEND ??
+    document.documentElement?.dataset?.studyBackend ??
+    DEFAULT_BACKEND_ENDPOINT;
 
 const state = {
     name: 'Emilija',
     apiKey: '',
+    activeCredential: '',
     notepadPrompt: '',
 };
 
@@ -93,6 +100,14 @@ const REWARD_STORAGE_KEY = 'pinkStudy.rewards';
 const rewardState = {
     count: 0,
 };
+
+function shouldUseBackendProxy() {
+    return state.activeCredential?.toLowerCase() === PASSCODE.toLowerCase() && Boolean(STUDY_BACKEND_ENDPOINT);
+}
+
+function hasGenerationCredential() {
+    return Boolean(state.apiKey) || shouldUseBackendProxy();
+}
 
 function updatePdfSelectionLabel(file) {
     if (!pdfFileName) return;
@@ -178,14 +193,14 @@ function updateQuizLengthVisibility() {
 
 function updateRegenerateButtonsAvailability() {
     const hasStoredText = Boolean(generationState.pdfText);
-    const hasApiKey = Boolean(state.apiKey);
+    const hasCredential = hasGenerationCredential();
     if (regenerateFlashcardsBtn) {
         const hasCards = flashcardState.cards.length > 0;
-        regenerateFlashcardsBtn.disabled = generationBusy || !hasStoredText || !hasApiKey || !hasCards;
+        regenerateFlashcardsBtn.disabled = generationBusy || !hasStoredText || !hasCredential || !hasCards;
     }
     if (regenerateQuizBtn) {
         const hasQuestions = quizState.questions.length > 0;
-        regenerateQuizBtn.disabled = generationBusy || !hasStoredText || !hasApiKey || !hasQuestions;
+        regenerateQuizBtn.disabled = generationBusy || !hasStoredText || !hasCredential || !hasQuestions;
     }
     if (flashcardShuffleBtn) {
         const canShuffleCards = flashcardState.cards.length > 1;
@@ -896,9 +911,9 @@ function toggleWeekIndicatorCollapsed() {
     setWeekIndicatorCollapsed(collapsed);
 }
 
-const introApiKeyInput = document.getElementById('intro-api-key');
+const introCredentialInput = document.getElementById('intro-credential');
 const introToggleKeyBtn = document.getElementById('intro-toggle-key');
-const introRememberKeyCheckbox = document.getElementById('intro-remember-key');
+const introRememberCredentialCheckbox = document.getElementById('intro-remember-credential');
 const editSetupBtn = document.getElementById('edit-setup');
 
 const splash = document.querySelector('.welcome-splash');
@@ -953,7 +968,8 @@ const stickyBoard = document.getElementById('sticky-board');
 const stickyEmpty = document.getElementById('sticky-empty');
 const clearStickiesBtn = document.getElementById('clear-stickies');
 
-const FLASHCARD_STORAGE_KEY = 'pinkStudy.apiKey';
+const CREDENTIAL_STORAGE_KEY = 'pinkStudy.credential';
+const LEGACY_CREDENTIAL_STORAGE_KEY = 'pinkStudy.apiKey';
 const STICKY_STORAGE_KEY = 'pinkStudy.stickies';
 const FLASHCARD_MODEL = 'gpt-4.1-mini';
 const OPENAI_ENDPOINT = 'https://api.openai.com/v1/chat/completions';
@@ -1096,6 +1112,54 @@ async function extractTextFromPdf(file) {
 }
 
 async function fetchStudyBundleFromApi(text, apiKey, generationPlan) {
+    if (shouldUseBackendProxy()) {
+        return fetchStudyBundleViaBackend(text, generationPlan);
+    }
+    return fetchStudyBundleViaOpenAI(text, apiKey, generationPlan);
+}
+
+async function fetchStudyBundleViaBackend(text, generationPlan) {
+    if (!STUDY_BACKEND_ENDPOINT) {
+        throw new Error('Nenurodytas Pi proxy adresas. Patikrink STUDY_BACKEND_ENDPOINT reik\u0161m\u0119.');
+    }
+    const plan = generationPlan && typeof generationPlan === 'object' ? generationPlan : {};
+    const payload = {
+        pdf_text: text,
+        plan: {
+            includeFlashcards: Boolean(plan.includeFlashcards),
+            flashcardCount: Number(plan.flashcardCount ?? 25),
+            includeQuiz: Boolean(plan.includeQuiz),
+            quizCount: Number(plan.quizCount ?? 0),
+            flashcardLength: plan.flashcardLength || null,
+            quizLength: plan.quizLength || null,
+            quizMode: plan.quizMode || null,
+        },
+    };
+
+    const response = await fetch(STUDY_BACKEND_ENDPOINT, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Passcode': PASSCODE,
+        },
+        body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+        const details = await response.text();
+        throw new Error(
+            `Pi proxy klaida (${response.status}). ${details || 'Patikrink, ar tarnyba veikia ir ar IP teisingas.'}`
+        );
+    }
+
+    const data = await response.json();
+    return {
+        flashcards: Array.isArray(data.flashcards) ? data.flashcards : [],
+        quizQuestions: Array.isArray(data.quizQuestions) ? data.quizQuestions : [],
+    };
+}
+
+async function fetchStudyBundleViaOpenAI(text, apiKey, generationPlan) {
     const plan = generationPlan && typeof generationPlan === 'object' ? generationPlan : {};
     const {
         includeFlashcards = true,
@@ -1371,29 +1435,43 @@ function shuffleFlashcards() {
     }
 }
 
-function loadStoredApiKey() {
+function loadStoredCredential() {
     try {
-        const stored = localStorage.getItem(FLASHCARD_STORAGE_KEY);
-        if (stored) {
-            state.apiKey = stored;
-            if (introApiKeyInput) {
-                introApiKeyInput.value = stored;
-            }
-            if (introRememberKeyCheckbox) {
-                introRememberKeyCheckbox.checked = true;
-            }
+        const stored =
+            localStorage.getItem(CREDENTIAL_STORAGE_KEY) ??
+            localStorage.getItem(LEGACY_CREDENTIAL_STORAGE_KEY);
+        if (!stored) {
+            return;
         }
+        const storedIsPasscode = stored.toLowerCase() === PASSCODE;
+        state.activeCredential = stored;
+        state.apiKey = storedIsPasscode ? '' : stored;
+        if (introCredentialInput) {
+            introCredentialInput.value = stored;
+        }
+        if (introRememberCredentialCheckbox) {
+            introRememberCredentialCheckbox.checked = true;
+        }
+        if (storedIsPasscode) {
+            localStorage.setItem(CREDENTIAL_STORAGE_KEY, PASSCODE);
+            localStorage.removeItem(LEGACY_CREDENTIAL_STORAGE_KEY);
+        } else if (!localStorage.getItem(CREDENTIAL_STORAGE_KEY)) {
+            localStorage.setItem(CREDENTIAL_STORAGE_KEY, stored);
+            localStorage.removeItem(LEGACY_CREDENTIAL_STORAGE_KEY);
+        }
+        updateRegenerateButtonsAvailability();
     } catch (error) {
         // Storage may be disabled; ignore politely.
     }
 }
 
-function persistApiKey(value, shouldRemember) {
+function persistCredential(value, shouldRemember) {
     try {
         if (shouldRemember && value) {
-            localStorage.setItem(FLASHCARD_STORAGE_KEY, value);
+            localStorage.setItem(CREDENTIAL_STORAGE_KEY, value);
+            localStorage.removeItem(LEGACY_CREDENTIAL_STORAGE_KEY);
         } else {
-            localStorage.removeItem(FLASHCARD_STORAGE_KEY);
+            localStorage.removeItem(CREDENTIAL_STORAGE_KEY);
         }
     } catch (error) {
         // Best effort only.
@@ -1659,10 +1737,10 @@ async function regenerateQuizQuestions() {
     if (generationBusy) {
         return;
     }
-    if (!state.apiKey) {
-        setFlashcardStatus('Pirmiausia pradiniame ekrane \u012fra\u0161yk OpenAI API rakt\u0105.', 'error');
+    if (!hasGenerationCredential()) {
+        setFlashcardStatus('Pirmiausia atrakink slapta\u017Eod\u017Eiu arba \u012Fvesk OpenAI rakt\u0105 pradiniame ekrane.', 'error');
         showScreen('intro');
-        introApiKeyInput?.focus();
+        introCredentialInput?.focus();
         return;
     }
     if (!generationState.pdfText) {
@@ -2059,36 +2137,58 @@ function playChime(type = 'pin') {
 
 introForm?.addEventListener('submit', (event) => {
     event.preventDefault();
-    const rawKey = introApiKeyInput?.value?.trim();
+    const rawCredential = introCredentialInput?.value?.trim();
 
-    if (!rawKey) {
-        introApiKeyInput?.focus();
+    if (!rawCredential) {
+        introCredentialInput?.focus();
         return;
     }
 
+    const normalised = rawCredential.toLowerCase();
+    const isPasscode = normalised === PASSCODE.toLowerCase();
+    const isLikelyApiKey = /^sk-[a-zA-Z0-9]{20,}$/.test(rawCredential);
+
+    if (!isPasscode && !isLikelyApiKey) {
+        introCredentialInput?.setCustomValidity(
+            'Slapta\u017Eodis neatpa\u017Eintas. Naudok differentdimension arba \u012Fra\u0161yk OpenAI API rakt\u0105.'
+        );
+        introCredentialInput?.reportValidity();
+        return;
+    }
+
+    if (introCredentialInput) {
+        introCredentialInput.setCustomValidity('');
+    }
+
     state.name = 'Emilija';
-    state.apiKey = rawKey;
-    persistApiKey(state.apiKey, introRememberKeyCheckbox ? introRememberKeyCheckbox.checked : false);
+    const storedCredential = isPasscode ? PASSCODE : rawCredential;
+    state.activeCredential = storedCredential;
+    state.apiKey = isPasscode ? '' : rawCredential;
+    persistCredential(
+        storedCredential,
+        introRememberCredentialCheckbox ? introRememberCredentialCheckbox.checked : false
+    );
+    updateRegenerateButtonsAvailability();
     updateGreetingNames();
     scheduleSplashHide(600);
     showScreen('tasks');
 });
 
 introToggleKeyBtn?.addEventListener('click', () => {
-    if (!introApiKeyInput) return;
-    const reveal = introApiKeyInput.type === 'password';
-    introApiKeyInput.type = reveal ? 'text' : 'password';
+    if (!introCredentialInput) return;
+    const reveal = introCredentialInput.type === 'password';
+    introCredentialInput.type = reveal ? 'text' : 'password';
     introToggleKeyBtn.textContent = reveal ? 'Sl\u0117pti' : 'Rodyti';
     introToggleKeyBtn.setAttribute('aria-pressed', reveal ? 'true' : 'false');
-    introApiKeyInput.focus();
+    introCredentialInput.focus();
 });
 
 editSetupBtn?.addEventListener('click', () => {
     if (nameInput) {
         nameInput.value = state.name;
     }
-    if (introApiKeyInput) {
-        introApiKeyInput.value = state.apiKey;
+    if (introCredentialInput) {
+        introCredentialInput.value = state.activeCredential || '';
     }
     updateGreetingNames();
     showScreen('intro');
@@ -2154,10 +2254,10 @@ flashcardForm?.addEventListener('submit', async (event) => {
     event.preventDefault();
     if (!pdfInput) return;
 
-    if (!state.apiKey) {
-        setFlashcardStatus('Pirmiausia pradiniame ekrane \u012fra\u0161yk OpenAI API rakt\u0105.', 'error');
+    if (!hasGenerationCredential()) {
+        setFlashcardStatus('Pirmiausia atrakink slapta\u017Eod\u017Eiu arba \u012Fvesk OpenAI rakt\u0105 pradiniame ekrane.', 'error');
         showScreen('intro');
-        introApiKeyInput?.focus();
+        introCredentialInput?.focus();
         return;
     }
 
@@ -2301,7 +2401,7 @@ clearStickiesBtn?.addEventListener('click', () => {
     setTimeout(updateStickyEmptyState, 500);
 });
 
-loadStoredApiKey();
+loadStoredCredential();
 loadStoredStickies();
 loadRewardState();
 if (nameInput) {
