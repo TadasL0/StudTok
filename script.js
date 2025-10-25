@@ -56,7 +56,7 @@ const quizNotSelectedText = 'Testas nebuvo pasirinktas. Pa\u017Eym\u0117k "ABCD 
 
 const pdfFileNameEmptyText = pdfFileName?.dataset?.empty || 'Failas nepasirinktas';
 const PASSCODE = 'differentdimension';
-const DEFAULT_BACKEND_ENDPOINT = 'http://192.168.0.134:5001/study-bundle';
+const DEFAULT_BACKEND_ENDPOINT = 'https://pi-proxy.studtok.com/study-bundle';
 const STUDY_BACKEND_ENDPOINT =
     window.PINK_STUDY_BACKEND ??
     document.documentElement?.dataset?.studyBackend ??
