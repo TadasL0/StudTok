@@ -56,6 +56,7 @@ const quizNotSelectedText = 'Testas nebuvo pasirinktas. Pa\u017Eym\u0117k "ABCD 
 
 const pdfFileNameEmptyText = pdfFileName?.dataset?.empty || 'Failas nepasirinktas';
 const PASSCODE = 'differentdimension';
+const ZERO_WIDTH_SPACE_PATTERN = /[\u200B\u200C\u200D\u2060\uFEFF]/g;
 const DEFAULT_BACKEND_ENDPOINT = 'https://pi-proxy.studtok.com/study-bundle';
 const STUDY_BACKEND_ENDPOINT =
     window.PINK_STUDY_BACKEND ??
@@ -107,6 +108,21 @@ function shouldUseBackendProxy() {
 
 function hasGenerationCredential() {
     return Boolean(state.apiKey) || shouldUseBackendProxy();
+}
+
+// Remove invisible whitespace so pasted credentials match reliably.
+function sanitiseCredentialInput(value) {
+    if (typeof value !== 'string') {
+        return '';
+    }
+    let cleaned = value;
+    try {
+        cleaned = cleaned.normalize('NFKC');
+    } catch (error) {
+        // Older browsers might not support normalize; ignore if so.
+    }
+    cleaned = cleaned.replace(ZERO_WIDTH_SPACE_PATTERN, '');
+    return cleaned.replace(/\s+/g, '');
 }
 
 function updatePdfSelectionLabel(file) {
@@ -2137,16 +2153,21 @@ function playChime(type = 'pin') {
 
 introForm?.addEventListener('submit', (event) => {
     event.preventDefault();
-    const rawCredential = introCredentialInput?.value?.trim();
+    const rawCredential = introCredentialInput?.value ?? '';
+    const cleanedCredential = sanitiseCredentialInput(rawCredential);
 
-    if (!rawCredential) {
+    if (introCredentialInput && rawCredential !== cleanedCredential) {
+        introCredentialInput.value = cleanedCredential;
+    }
+
+    if (!cleanedCredential) {
         introCredentialInput?.focus();
         return;
     }
 
-    const normalised = rawCredential.toLowerCase();
+    const normalised = cleanedCredential.toLowerCase();
     const isPasscode = normalised === PASSCODE.toLowerCase();
-    const isLikelyApiKey = /^sk-[a-zA-Z0-9]{20,}$/.test(rawCredential);
+    const isLikelyApiKey = /^sk-[a-zA-Z0-9]{20,}$/.test(cleanedCredential);
 
     if (!isPasscode && !isLikelyApiKey) {
         introCredentialInput?.setCustomValidity(
@@ -2161,9 +2182,9 @@ introForm?.addEventListener('submit', (event) => {
     }
 
     state.name = 'Emilija';
-    const storedCredential = isPasscode ? PASSCODE : rawCredential;
+    const storedCredential = isPasscode ? PASSCODE : cleanedCredential;
     state.activeCredential = storedCredential;
-    state.apiKey = isPasscode ? '' : rawCredential;
+    state.apiKey = isPasscode ? '' : cleanedCredential;
     persistCredential(
         storedCredential,
         introRememberCredentialCheckbox ? introRememberCredentialCheckbox.checked : false
