@@ -2281,6 +2281,10 @@ flashcardForm?.addEventListener('submit', async (event) => {
     clearQuizWidget();
     setFlashcardStatus('I\u0161traukiame svarbiausias pastabas i\u0161 PDF...', 'pending');
 
+    const previousFlashcards = flashcardState.cards.slice();
+    const previousIndex = flashcardState.index;
+    const previousFlipped = flashcardState.flipped;
+
     try {
         const text = await extractTextFromPdf(file);
         if (!text) {
