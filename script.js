@@ -20,6 +20,7 @@ const flashcardNextBtn = document.getElementById('flashcard-next');
 const flashcardShuffleBtn = document.getElementById('flashcard-shuffle');
 const flashcardCounter = document.getElementById('flashcard-counter');
 const flashcardTags = document.getElementById('flashcard-tags');
+const generationNoteInput = document.getElementById('generation-note');
 const generateFlashcardsBtn = document.getElementById('generate-flashcards');
 const flashcardLengthInputs = document.querySelectorAll('input[name="flashcard-length"]');
 const generateFlashcardsToggle = document.getElementById('mode-flashcards');
@@ -430,6 +431,7 @@ let weekIndicatorTimeoutId = null;
 const TIMETABLE_CURRENT_LABEL = '\u0160ios savait\u0117s paskaitos';
 const TIMETABLE_NEXT_LABEL = 'Ateinan\u010Dios savait\u0117s paskaitos';
 const TIMETABLE_WEEK_ORDER = ['Pirmadienis', 'Antradienis', 'Tre\u010diadienis', 'Ketvirtadienis', 'Penktadienis', '\u0160e\u0161tadienis'];
+const TIMETABLE_WEEKDAY_LABELS = ['Sekmadienis', 'Pirmadienis', 'Antradienis', 'Tre\u010diadienis', 'Ketvirtadienis', 'Penktadienis', '\u0160e\u0161tadienis'];
 const TIMETABLE_DATA = {
     1: {
         Pirmadienis: [
@@ -669,6 +671,22 @@ function getWeekRotationIndex(date) {
     return rotationIndex;
 }
 
+function getTimetableDayNameForDate(date) {
+    const label = TIMETABLE_WEEKDAY_LABELS[date.getDay()] || '';
+    return TIMETABLE_WEEK_ORDER.includes(label) ? label : '';
+}
+
+function shouldAutoFocusTimetableToday(now = new Date()) {
+    const day = now.getDay();
+    if (day < 1 || day > 5) {
+        return false;
+    }
+    if (now.getHours() >= 12) {
+        return false;
+    }
+    return state.activeCredential?.toLowerCase() === PASSCODE.toLowerCase();
+}
+
 function formatMonthDay(date) {
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
@@ -702,7 +720,23 @@ function updateTimetableToggleLabel() {
     timetableToggleWeekBtn.setAttribute('aria-pressed', showingCurrentWeek ? 'false' : 'true');
 }
 
-function renderTimetableSection() {
+function autoFocusTimetableOnToday(now = new Date()) {
+    if (!shouldAutoFocusTimetableToday(now) || !latestWeekContext.weekStart) {
+        return;
+    }
+    const dayName = getTimetableDayNameForDate(now);
+    if (!dayName) {
+        return;
+    }
+    if (timetableViewOffset !== 0) {
+        timetableViewOffset = 0;
+        updateTimetableToggleLabel();
+    }
+    renderTimetableSection({ autoFocusDayName: dayName });
+}
+
+function renderTimetableSection(options = {}) {
+    const { autoFocusDayName = null } = options;
     if (!timetableWeekContent) {
         return;
     }
@@ -770,13 +804,17 @@ function renderTimetableSection() {
     }
 
     const fragment = document.createDocumentFragment();
+    let matchedAutoFocusDay = false;
 
     dayEntries.forEach((entry, index) => {
         const dayWrapper = document.createElement('details');
         dayWrapper.className = 'timetable-day';
         dayWrapper.setAttribute('role', 'listitem');
-        if (index === 0) {
-            dayWrapper.open = true;
+        const shouldAutoOpen = isCurrentWeek && Boolean(autoFocusDayName) && autoFocusDayName === entry.dayName;
+        const shouldDefaultOpen = !autoFocusDayName && index === 0;
+        dayWrapper.open = shouldAutoOpen || shouldDefaultOpen;
+        if (shouldAutoOpen) {
+            matchedAutoFocusDay = true;
         }
 
         const summary = document.createElement('summary');
@@ -847,6 +885,12 @@ function renderTimetableSection() {
     });
 
     timetableWeekContent.appendChild(fragment);
+    if (autoFocusDayName && !matchedAutoFocusDay) {
+        const firstDay = timetableWeekContent.querySelector('.timetable-day');
+        if (firstDay) {
+            firstDay.open = true;
+        }
+    }
     timetableWeekContent.removeAttribute('aria-hidden');
     if (timetableWeekEmpty) {
         timetableWeekEmpty.hidden = true;
@@ -1143,8 +1187,10 @@ async function fetchStudyBundleViaBackend(text, generationPlan) {
         throw new Error('Nenurodytas Pi proxy adresas. Patikrink STUDY_BACKEND_ENDPOINT reik\u0161m\u0119.');
     }
     const plan = generationPlan && typeof generationPlan === 'object' ? generationPlan : {};
+    const learnerNote = typeof plan.note === 'string' ? plan.note.trim() : '';
+    const enrichedText = learnerNote ? `Emilijos komentaras: ${learnerNote}\n\n${text}` : text;
     const payload = {
-        pdf_text: text,
+        pdf_text: enrichedText,
         plan: {
             includeFlashcards: Boolean(plan.includeFlashcards),
             flashcardCount: Number(plan.flashcardCount ?? 25),
@@ -1186,6 +1232,7 @@ async function fetchStudyBundleViaOpenAI(text, apiKey, generationPlan) {
         flashcardCount = 25,
         includeQuiz = false,
         quizCount = 0,
+        note = '',
     } = plan;
     const instructionParts = [];
 
@@ -1207,6 +1254,10 @@ async function fetchStudyBundleViaOpenAI(text, apiKey, generationPlan) {
         instructionParts.push(
             'ABCD testo \u0161\u012Fkart neformuok - laukas "quizQuestions" turi b\u016Bti tu\u0161\u010Dias masyvas.'
         );
+    }
+
+    if (typeof note === 'string' && note.trim()) {
+        instructionParts.push(`Papildoma Emilijos pastaba: ${note.trim()}.`);
     }
 
     instructionParts.push('Visus laukus ra\u0161yk lietuvi\u0161kai ir gr\u0105\u017Eink tik valid\u0173 JSON objekt\u0105.');
@@ -1623,6 +1674,13 @@ function clearQuizWidget() {
     updateRegenerateButtonsAvailability();
 }
 
+function getGenerationNoteValue() {
+    if (!generationNoteInput) {
+        return '';
+    }
+    return generationNoteInput.value.trim();
+}
+
 function getSelectedFlashcardPreferences() {
     const defaultFlashcardCount = 25;
     const defaultQuizCount = 20;
@@ -1654,6 +1712,7 @@ function getSelectedFlashcardPreferences() {
         flashcardCount,
         includeQuiz,
         quizCount: includeQuiz ? Math.max(3, quizPreference) : 0,
+        note: getGenerationNoteValue(),
     };
 }
 
@@ -1779,6 +1838,7 @@ async function regenerateQuizQuestions() {
         flashcardCount: currentPlan.flashcardCount,
         includeQuiz: true,
         quizCount: desiredQuizCount,
+        note: getGenerationNoteValue(),
     };
 
     const previousFlashcards = flashcardState.cards.slice();
@@ -2197,6 +2257,7 @@ introForm?.addEventListener('submit', (event) => {
     updateGreetingNames();
     scheduleSplashHide(600);
     showScreen('tasks');
+    autoFocusTimetableOnToday();
 });
 
 introToggleKeyBtn?.addEventListener('click', () => {
