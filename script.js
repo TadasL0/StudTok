@@ -932,6 +932,10 @@ const introToggleKeyBtn = document.getElementById('intro-toggle-key');
 const introRememberCredentialCheckbox = document.getElementById('intro-remember-credential');
 const editSetupBtn = document.getElementById('edit-setup');
 
+introCredentialInput?.addEventListener('input', () => {
+    introCredentialInput.setCustomValidity('');
+});
+
 const splash = document.querySelector('.welcome-splash');
 const splashName = document.getElementById('splash-name');
 const splashRunner = document.querySelector('.welcome-splash__runner');
@@ -2171,7 +2175,7 @@ introForm?.addEventListener('submit', (event) => {
 
     if (!isPasscode && !isLikelyApiKey) {
         introCredentialInput?.setCustomValidity(
-            'Slapta\u017Eodis neatpa\u017Eintas. Naudok differentdimension arba \u012Fra\u0161yk OpenAI API rakt\u0105.'
+            'Slapta\u017Eodis neatpa\u017Eintas. \u012Evesk teising\u0105 slapta\u017Eod\u012F arba OpenAI API rakt\u0105.'
         );
         introCredentialInput?.reportValidity();
         return;
