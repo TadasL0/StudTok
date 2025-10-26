@@ -25,12 +25,15 @@ const flashcardModeVisualBtn = document.getElementById('flashcard-mode-visual');
 const flashcardTextPanel = document.getElementById('flashcard-panel-text');
 const flashcardVisualPanel = document.getElementById('flashcard-panel-visual');
 const graphicFlashcardStatusEl = document.getElementById('graphic-flashcard-status');
-const graphicFlashcardImage = document.getElementById('graphic-flashcard-image');
+const graphicFlashcardLoadBtn = document.getElementById('graphic-flashcard-load');
+const graphicFlashcardOpenBtn = document.getElementById('graphic-flashcard-open');
+const graphicFlashcardCard = document.getElementById('graphic-flashcard-card');
+const graphicFlashcardImageFront = document.getElementById('graphic-flashcard-image-front');
+const graphicFlashcardImageBack = document.getElementById('graphic-flashcard-image-back');
 const graphicFlashcardPrevBtn = document.getElementById('graphic-flashcard-prev');
 const graphicFlashcardNextBtn = document.getElementById('graphic-flashcard-next');
 const graphicFlashcardCounter = document.getElementById('graphic-flashcard-counter');
 const graphicFlashcardLoader = document.getElementById('graphic-flashcard-loader');
-const graphicFlashcardOpenBtn = document.getElementById('graphic-flashcard-open');
 const generationNoteInput = document.getElementById('generation-note');
 const generateFlashcardsBtn = document.getElementById('generate-flashcards');
 const flashcardLengthInputs = document.querySelectorAll('input[name="flashcard-length"]');
@@ -105,7 +108,10 @@ const graphicFlashcardState = {
     pageBusy: false,
     renderToken: 0,
     currentDataUrl: '',
+    pendingFile: null,
+    flipped: false,
 };
+const GRAPHIC_FLASHCARD_DEFAULT_STATUS = 'Įkelk PDF ir paspausk „Paruošti“, kad pamatytum schemas ir brėžinius.';
 
 const quizState = {
     baseQuestions: [],
@@ -1030,20 +1036,59 @@ if (pdfTrigger && pdfInput) {
     });
 }
 
-pdfInput?.addEventListener('change', async () => {
+pdfInput?.addEventListener('change', () => {
+
     const file = pdfInput.files && pdfInput.files[0];
+
     updatePdfSelectionLabel(file || null);
+
     generationState.pdfText = '';
+
     generationState.lastPlan = null;
+
     generationState.lastFileName = file ? file.name : '';
+
     updateRegenerateButtonsAvailability();
-    try {
-        await prepareGraphicFlashcardsFromFile(file || null);
-    } catch (error) {
-        console.error(error);
-        setGraphicFlashcardStatus('Nepavyko paruošti PDF brėžinių režimui.', 'error');
+
+    graphicFlashcardState.pendingFile = file || null;
+
+    if (file) {
+
+        resetGraphicFlashcards({ preservePending: true });
+
+        setGraphicFlashcardStatus(getQueuedGraphicFlashcardMessage());
+
+    } else {
+
+        resetGraphicFlashcards();
+
     }
+
+    syncGraphicFlashcardLoadButtonState();
+
 });
+
+
+
+const initialPdfFile = pdfInput?.files && pdfInput.files[0];
+
+updatePdfSelectionLabel(initialPdfFile || null);
+
+if (initialPdfFile) {
+
+    graphicFlashcardState.pendingFile = initialPdfFile;
+
+    resetGraphicFlashcards({ preservePending: true });
+
+    setGraphicFlashcardStatus(getQueuedGraphicFlashcardMessage());
+
+} else {
+
+    setGraphicFlashcardStatus(GRAPHIC_FLASHCARD_DEFAULT_STATUS);
+
+}
+
+syncGraphicFlashcardLoadButtonState();
 
 const initialPdfFile = pdfInput?.files && pdfInput.files[0];
 updatePdfSelectionLabel(initialPdfFile || null);
@@ -1174,9 +1219,51 @@ function setFlashcardStatus(message, mood = 'info') {
     }
 }
 
+function getQueuedGraphicFlashcardMessage() {
+    if (graphicFlashcardState.pendingFile?.name) {
+        return `Failas „${graphicFlashcardState.pendingFile.name}“ paruoštas. Paspausk „Paruošti grafines korteles“.`;
+    }
+    return GRAPHIC_FLASHCARD_DEFAULT_STATUS;
+}
+
+function syncGraphicFlashcardLoadButtonState() {
+    if (!graphicFlashcardLoadBtn) return;
+    const hasFile = Boolean(graphicFlashcardState.pendingFile);
+    graphicFlashcardLoadBtn.disabled = !hasFile || graphicFlashcardState.busy;
+}
+
+function clearGraphicFlashcardImages() {
+    if (graphicFlashcardImageFront) {
+        graphicFlashcardImageFront.removeAttribute('src');
+        graphicFlashcardImageFront.hidden = true;
+    }
+    if (graphicFlashcardImageBack) {
+        graphicFlashcardImageBack.removeAttribute('src');
+        graphicFlashcardImageBack.hidden = true;
+    }
+}
+
+function resetGraphicFlashcardFlip() {
+    graphicFlashcardState.flipped = false;
+    updateGraphicFlashcardCardState();
+}
+
+function updateGraphicFlashcardCardState() {
+    if (!graphicFlashcardCard) return;
+    const hasImage = Boolean(graphicFlashcardState.currentDataUrl);
+    const interactive =
+        hasImage && graphicFlashcardState.ready && !graphicFlashcardState.busy && !graphicFlashcardState.pageBusy;
+    graphicFlashcardCard.disabled = !interactive;
+    graphicFlashcardCard.dataset.flipped = graphicFlashcardState.flipped ? 'true' : 'false';
+}
+
 function shouldDisplayFlashcardWidget() {
     const hasCards = flashcardState.cards.length > 0;
-    const visualActive = graphicFlashcardState.ready || graphicFlashcardState.busy || graphicFlashcardState.pageBusy;
+    const visualActive =
+        graphicFlashcardState.ready ||
+        graphicFlashcardState.busy ||
+        graphicFlashcardState.pageBusy ||
+        Boolean(graphicFlashcardState.pendingFile);
     return hasCards || visualActive;
 }
 
@@ -1220,7 +1307,8 @@ function setFlashcardMode(mode) {
 
 function updateFlashcardModeAvailability() {
     const hasTextCards = flashcardState.cards.length > 0;
-    const hasVisualContent = graphicFlashcardState.ready || graphicFlashcardState.busy;
+    const hasVisualContent =
+        graphicFlashcardState.ready || graphicFlashcardState.busy || Boolean(graphicFlashcardState.pendingFile);
     if (flashcardModeTextBtn) {
         flashcardModeTextBtn.disabled = !hasTextCards;
     }
@@ -1238,121 +1326,273 @@ function updateFlashcardModeAvailability() {
     }
 }
 
-function setGraphicFlashcardStatus(message, mood = 'info') {
+function setGraphicFlashcardStatus(message = GRAPHIC_FLASHCARD_DEFAULT_STATUS, mood = 'info') {
+
     if (!graphicFlashcardStatusEl) return;
-    graphicFlashcardStatusEl.textContent = message;
+
+    const text = typeof message === 'string' && message.trim().length > 0 ? message : GRAPHIC_FLASHCARD_DEFAULT_STATUS;
+
+    graphicFlashcardStatusEl.textContent = text;
+
     graphicFlashcardStatusEl.classList.remove('graphic-flashcard__status-text--error', 'graphic-flashcard__status-text--success');
+
     if (mood === 'error') {
+
         graphicFlashcardStatusEl.classList.add('graphic-flashcard__status-text--error');
+
     } else if (mood === 'success') {
+
         graphicFlashcardStatusEl.classList.add('graphic-flashcard__status-text--success');
+
     }
+
 }
+
+
 
 function setGraphicFlashcardLoading(isLoading) {
+
     if (graphicFlashcardLoader) {
+
         graphicFlashcardLoader.hidden = !isLoading;
+
     }
-    if (graphicFlashcardImage) {
-        const shouldHideImage = isLoading || !graphicFlashcardState.currentDataUrl;
-        graphicFlashcardImage.hidden = shouldHideImage;
+
+    if (graphicFlashcardCard) {
+
+        if (isLoading) {
+
+            graphicFlashcardCard.setAttribute('aria-busy', 'true');
+
+        } else {
+
+            graphicFlashcardCard.removeAttribute('aria-busy');
+
+        }
+
     }
+
 }
 
-function resetGraphicFlashcards() {
+
+
+function resetGraphicFlashcards(options = {}) {
+
+    const { preservePending = false } = options;
+
     if (graphicFlashcardState.pdf && typeof graphicFlashcardState.pdf.destroy === 'function') {
+
         graphicFlashcardState.pdf.destroy();
+
     }
+
     graphicFlashcardState.pdf = null;
+
     graphicFlashcardState.pageCount = 0;
+
     graphicFlashcardState.index = 0;
+
     graphicFlashcardState.cache = new Map();
+
     graphicFlashcardState.ready = false;
+
     graphicFlashcardState.busy = false;
+
     graphicFlashcardState.pageBusy = false;
+
     graphicFlashcardState.currentDataUrl = '';
+
     graphicFlashcardState.renderToken += 1;
-    if (graphicFlashcardImage) {
-        graphicFlashcardImage.removeAttribute('src');
-        graphicFlashcardImage.hidden = true;
+
+    if (!preservePending) {
+
+        graphicFlashcardState.pendingFile = null;
+
     }
+
+    clearGraphicFlashcardImages();
+
+    resetGraphicFlashcardFlip();
+
     setGraphicFlashcardLoading(false);
-    setGraphicFlashcardStatus('Įkelk PDF, kad pamatytum schemas ir brėžinius.');
+
+    setGraphicFlashcardStatus(getQueuedGraphicFlashcardMessage());
+
     updateGraphicFlashcardNavigation();
+
+    updateGraphicFlashcardCardState();
+
+    syncGraphicFlashcardLoadButtonState();
+
     updateFlashcardModeAvailability();
-    if (activeFlashcardMode === FLASHCARD_MODES.visual) {
+
+    if (!preservePending && activeFlashcardMode === FLASHCARD_MODES.visual) {
+
         setFlashcardMode(FLASHCARD_MODES.text);
+
     }
+
     updateFlashcardWidgetVisibility();
+
 }
+
+
 
 async function prepareGraphicFlashcardsFromFile(file) {
-    if (!file) {
-        resetGraphicFlashcards();
+
+    const targetFile = file || graphicFlashcardState.pendingFile;
+
+    if (!targetFile) {
+
+        setGraphicFlashcardStatus('Pirmiausia pasirink PDF failą ir paspausk „Paruošti“.', 'error');
+
         return;
+
     }
+
+    graphicFlashcardState.pendingFile = targetFile;
+
     if (!window.pdfjsLib) {
+
         setGraphicFlashcardStatus('Nepavyko paleisti PDF peržiūros bibliotekos.', 'error');
+
         return;
+
     }
+
     if (graphicFlashcardState.pdf && typeof graphicFlashcardState.pdf.destroy === 'function') {
+
         graphicFlashcardState.pdf.destroy();
+
     }
+
     graphicFlashcardState.renderToken += 1;
+
     const loadToken = graphicFlashcardState.renderToken;
+
     graphicFlashcardState.pageCount = 0;
+
     graphicFlashcardState.index = 0;
+
     graphicFlashcardState.cache = new Map();
+
     graphicFlashcardState.ready = false;
+
     graphicFlashcardState.busy = true;
+
     graphicFlashcardState.pageBusy = false;
+
     graphicFlashcardState.currentDataUrl = '';
+
+    clearGraphicFlashcardImages();
+
+    resetGraphicFlashcardFlip();
+
     setGraphicFlashcardLoading(true);
+
     setGraphicFlashcardStatus('Krauname PDF puslapius...', 'info');
+
     updateGraphicFlashcardNavigation();
+
+    updateGraphicFlashcardCardState();
+
+    syncGraphicFlashcardLoadButtonState();
+
     updateFlashcardModeAvailability();
+
     updateFlashcardWidgetVisibility();
+
     try {
-        const arrayBuffer = await file.arrayBuffer();
+
+        const arrayBuffer = await targetFile.arrayBuffer();
+
         const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+
         if (graphicFlashcardState.renderToken !== loadToken) {
+
             pdf.destroy?.();
+
             return;
+
         }
+
         const totalPages = Number(pdf.numPages) || 0;
+
         if (totalPages <= 0) {
+
             pdf.destroy?.();
+
             graphicFlashcardState.pdf = null;
+
             graphicFlashcardState.pageCount = 0;
+
             graphicFlashcardState.ready = false;
+
             setGraphicFlashcardStatus('Šiame PDF nerasta puslapių.', 'error');
+
             return;
+
         }
+
         graphicFlashcardState.pdf = pdf;
+
         graphicFlashcardState.pageCount = totalPages;
+
         graphicFlashcardState.index = 0;
+
         graphicFlashcardState.ready = true;
+
         setGraphicFlashcardStatus('Schemos ruošiamos, luktelk akimirką...', 'info');
+
         updateGraphicFlashcardNavigation();
+
+        updateGraphicFlashcardCardState();
+
         updateFlashcardModeAvailability();
+
         if (flashcardState.cards.length === 0) {
+
             setFlashcardMode(FLASHCARD_MODES.visual);
+
         }
+
+        resetGraphicFlashcardFlip();
+
         await renderGraphicFlashcard(true);
+
         if (graphicFlashcardState.currentDataUrl) {
-            setGraphicFlashcardStatus('Schemos paruoštos! Perjunk per puslapius.', 'success');
+
+            setGraphicFlashcardStatus('Schemos paruoštos! Apversk kortelę, kai norėsi pamatyti pilną vaizdą.', 'success');
+
         }
+
     } catch (error) {
+
         console.error(error);
-        setGraphicFlashcardStatus('Nepavyko nuskaityti PDF grafiniam režimui.', 'error');
+
+        setGraphicFlashcardStatus('Nepavyko paruošti grafinio režimo.', 'error');
+
     } finally {
+
         graphicFlashcardState.busy = false;
+
         setGraphicFlashcardLoading(false);
+
         updateGraphicFlashcardNavigation();
+
+        updateGraphicFlashcardCardState();
+
+        syncGraphicFlashcardLoadButtonState();
+
         updateFlashcardModeAvailability();
+
         updateFlashcardWidgetVisibility();
+
     }
+
 }
+
+
 
 function limitGraphicFlashcardCacheSize() {
     const MAX_CACHE_SIZE = 12;
@@ -1366,51 +1606,110 @@ function limitGraphicFlashcardCacheSize() {
 }
 
 async function renderGraphicFlashcard(forceRender = false) {
+
     if (!graphicFlashcardState.ready || !graphicFlashcardState.pdf) {
+
         graphicFlashcardState.currentDataUrl = '';
+
+        clearGraphicFlashcardImages();
+
         setGraphicFlashcardLoading(false);
+
         updateGraphicFlashcardNavigation();
+
+        updateGraphicFlashcardCardState();
+
         return;
+
     }
+
     const total = graphicFlashcardState.pageCount;
+
     if (total === 0) {
+
         setGraphicFlashcardLoading(false);
+
         updateGraphicFlashcardNavigation();
+
+        updateGraphicFlashcardCardState();
+
         return;
+
     }
+
     if (graphicFlashcardState.index < 0) {
+
         graphicFlashcardState.index = 0;
+
     }
+
     if (graphicFlashcardState.index > total - 1) {
+
         graphicFlashcardState.index = total - 1;
+
     }
+
     const pageNumber = graphicFlashcardState.index + 1;
+
     const cached = graphicFlashcardState.cache.get(pageNumber);
+
     if (cached && !forceRender) {
+
         applyGraphicFlashcardImage(cached.url);
+
         setGraphicFlashcardLoading(false);
+
         updateGraphicFlashcardNavigation();
+
+        updateGraphicFlashcardCardState();
+
         return;
+
     }
+
     graphicFlashcardState.pageBusy = true;
+
     setGraphicFlashcardLoading(true);
+
     updateGraphicFlashcardNavigation();
+
+    updateGraphicFlashcardCardState();
+
     try {
+
         const dataUrl = await renderGraphicFlashcardPageImage(pageNumber);
+
         if (dataUrl) {
+
             graphicFlashcardState.cache.set(pageNumber, { url: dataUrl });
+
             limitGraphicFlashcardCacheSize();
+
             applyGraphicFlashcardImage(dataUrl);
+
         }
+
     } catch (error) {
+
         console.error(error);
+
         setGraphicFlashcardStatus('Nepavyko atvaizduoti PDF puslapio.', 'error');
+
     } finally {
+
         graphicFlashcardState.pageBusy = false;
+
         setGraphicFlashcardLoading(false);
+
         updateGraphicFlashcardNavigation();
+
+        updateGraphicFlashcardCardState();
+
     }
+
 }
+
+
 
 async function renderGraphicFlashcardPageImage(pageNumber) {
     if (!graphicFlashcardState.pdf) return null;
@@ -1435,51 +1734,138 @@ async function renderGraphicFlashcardPageImage(pageNumber) {
 }
 
 function applyGraphicFlashcardImage(dataUrl) {
-    if (!graphicFlashcardImage) return;
+
     graphicFlashcardState.currentDataUrl = dataUrl;
-    graphicFlashcardImage.src = dataUrl;
-    graphicFlashcardImage.hidden = false;
+
+    if (graphicFlashcardImageFront) {
+
+        graphicFlashcardImageFront.src = dataUrl;
+
+        graphicFlashcardImageFront.hidden = false;
+
+    }
+
+    if (graphicFlashcardImageBack) {
+
+        graphicFlashcardImageBack.src = dataUrl;
+
+        graphicFlashcardImageBack.hidden = false;
+
+    }
+
     updateGraphicFlashcardNavigation();
+
+    updateGraphicFlashcardCardState();
+
 }
+
+
 
 function updateGraphicFlashcardNavigation() {
+
     const total = graphicFlashcardState.pageCount;
+
     const hasPages = total > 0 && (graphicFlashcardState.ready || graphicFlashcardState.busy);
+
     if (graphicFlashcardCounter) {
+
         graphicFlashcardCounter.textContent = hasPages
+
             ? `Puslapis ${Math.min(graphicFlashcardState.index + 1, total)} / ${total}`
+
             : 'Puslapis 0 / 0';
+
     }
+
     const disableNav = !graphicFlashcardState.ready || graphicFlashcardState.pageBusy || total === 0;
+
     if (graphicFlashcardPrevBtn) {
+
         graphicFlashcardPrevBtn.disabled = disableNav || graphicFlashcardState.index === 0;
+
     }
+
     if (graphicFlashcardNextBtn) {
+
         graphicFlashcardNextBtn.disabled = disableNav || graphicFlashcardState.index >= total - 1;
+
     }
+
     if (graphicFlashcardOpenBtn) {
+
         graphicFlashcardOpenBtn.disabled = !graphicFlashcardState.currentDataUrl;
+
     }
+
 }
+
+
 
 function showGraphicFlashcardByIndex(index) {
+
     if (!graphicFlashcardState.ready || graphicFlashcardState.pageBusy) {
+
         return;
+
     }
+
     const total = graphicFlashcardState.pageCount;
+
     if (total === 0) return;
+
     const clamped = Math.max(0, Math.min(index, total - 1));
+
     if (clamped === graphicFlashcardState.index) {
+
         return;
+
     }
+
     graphicFlashcardState.index = clamped;
+
+    resetGraphicFlashcardFlip();
+
     renderGraphicFlashcard();
+
 }
 
+
+
 function nudgeGraphicFlashcard(delta) {
+
     if (!Number.isFinite(delta)) return;
+
     showGraphicFlashcardByIndex(graphicFlashcardState.index + delta);
+
 }
+
+
+
+function toggleGraphicFlashcardFace() {
+
+    if (
+
+        !graphicFlashcardState.ready ||
+
+        graphicFlashcardState.busy ||
+
+        graphicFlashcardState.pageBusy ||
+
+        !graphicFlashcardState.currentDataUrl
+
+    ) {
+
+        return;
+
+    }
+
+    graphicFlashcardState.flipped = !graphicFlashcardState.flipped;
+
+    updateGraphicFlashcardCardState();
+
+}
+
+
 
 function scheduleSplashHide(delay = 1950) {
     if (!splash) return;
@@ -2663,6 +3049,21 @@ flashcardShuffleBtn?.addEventListener('click', () => {
     shuffleFlashcards();
 });
 
+graphicFlashcardLoadBtn?.addEventListener('click', () => {
+    prepareGraphicFlashcardsFromFile(graphicFlashcardState.pendingFile).catch((error) => {
+        console.error(error);
+        setGraphicFlashcardStatus('Nepavyko paruošti grafinio režimo.', 'error');
+    });
+});
+
+graphicFlashcardCard?.addEventListener('click', toggleGraphicFlashcardFace);
+graphicFlashcardCard?.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        toggleGraphicFlashcardFace();
+    }
+});
+
 flashcardModeTextBtn?.addEventListener('click', () => {
     setFlashcardMode(FLASHCARD_MODES.text);
 });
@@ -2888,6 +3289,8 @@ setFlashcardStatus('');
 updateFlashcardModeAvailability();
 setGraphicFlashcardLoading(false);
 updateGraphicFlashcardNavigation();
+syncGraphicFlashcardLoadButtonState();
+updateGraphicFlashcardCardState();
 
 updateNotepadEmptyState();
 updateStickyEmptyState();

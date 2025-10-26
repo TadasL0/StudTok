@@ -285,33 +285,69 @@
                             <div class="graphic-flashcard">
                                 <div class="graphic-flashcard__status">
                                     <p id="graphic-flashcard-status" class="graphic-flashcard__status-text" role="status">Įkelk PDF, kad pamatytum schemas ir brėžinius.</p>
-                                    <button
-                                        id="graphic-flashcard-open"
-                                        type="button"
-                                        class="btn btn--secondary btn--tiny"
-                                        disabled
-                                        aria-label="Atidaryti &#353;&#303; PDF puslap&#303; naujame lange"
-                                    >
-                                        Atidaryti dideliu vaizdu
-                                    </button>
+                                    <div class="graphic-flashcard__status-actions">
+                                        <button
+                                            id="graphic-flashcard-load"
+                                            type="button"
+                                            class="btn btn--secondary btn--tiny"
+                                            disabled
+                                        >
+                                            Paruošti grafines korteles
+                                        </button>
+                                        <button
+                                            id="graphic-flashcard-open"
+                                            type="button"
+                                            class="btn btn--ghost btn--tiny"
+                                            disabled
+                                            aria-label="Atidaryti &#353;&#303; PDF puslap&#303; naujame lange"
+                                        >
+                                            Atidaryti dideliu vaizdu
+                                        </button>
+                                    </div>
                                 </div>
-                                <div class="graphic-flashcard__frame">
-                                    <div id="graphic-flashcard-loader" class="graphic-flashcard__loader" aria-hidden="true" hidden></div>
-                                    <img
-                                        id="graphic-flashcard-image"
-                                        class="graphic-flashcard__image"
-                                        alt="PDF puslapio per&#382;i&#363;ra"
-                                        loading="lazy"
-                                        hidden
-                                        draggable="false"
-                                    />
+                                <div class="graphic-flashcard__stage">
+                                    <button
+                                        id="graphic-flashcard-card"
+                                        type="button"
+                                        class="flashcard-widget__card graphic-flashcard__card"
+                                        aria-live="polite"
+                                        aria-label="Apversti grafinę kortelę"
+                                        disabled
+                                    >
+                                        <div class="flashcard-widget__side graphic-flashcard__side graphic-flashcard__side--front">
+                                            <div class="graphic-flashcard__image-shell">
+                                                <img
+                                                    id="graphic-flashcard-image-front"
+                                                    class="graphic-flashcard__image graphic-flashcard__image--front"
+                                                    alt="PDF puslapio eskizas"
+                                                    loading="lazy"
+                                                    hidden
+                                                    draggable="false"
+                                                />
+                                            </div>
+                                            <span class="graphic-flashcard__overlay">Atspėk, koks čia brėžinys, ir apversk kortelę.</span>
+                                        </div>
+                                        <div class="flashcard-widget__side graphic-flashcard__side graphic-flashcard__side--back">
+                                            <div class="graphic-flashcard__image-shell">
+                                                <img
+                                                    id="graphic-flashcard-image-back"
+                                                    class="graphic-flashcard__image graphic-flashcard__image--back"
+                                                    alt="PDF puslapio peržiūra"
+                                                    loading="lazy"
+                                                    hidden
+                                                    draggable="false"
+                                                />
+                                            </div>
+                                        </div>
+                                    </button>
+                                    <div id="graphic-flashcard-loader" class="graphic-flashcard__loader" hidden aria-hidden="true"></div>
                                 </div>
                                 <div class="graphic-flashcard__nav">
                                     <button id="graphic-flashcard-prev" type="button" class="btn btn--pill" aria-label="Ankstesnis PDF puslapis" disabled>Atgal</button>
                                     <span id="graphic-flashcard-counter" class="graphic-flashcard__counter">Puslapis 0 / 0</span>
                                     <button id="graphic-flashcard-next" type="button" class="btn btn--pill" aria-label="Kitas PDF puslapis" disabled>Pirmyn</button>
                                 </div>
-                                <p class="graphic-flashcard__hint">&#352;iame r&#279;&#382;ime treniruokis atpa&#382;inti grafikus, schemas ir diagramas i&#353; PDF.</p>
+                                <p class="graphic-flashcard__hint">&#352;iame r&#279;&#382;ime treniruokis atpa&#382;inti grafikus, schemas ir diagramas i&#353; PDF. Apversk kortel&#281;, kai nor&#279;si pamatyti piln&#261; vaizd&#261;.</p>
                             </div>
                         </div>
                     </div>
