@@ -5,7 +5,7 @@ Sparkle-powered study sessions with a fresh flashcard generator.
 ## Quick Start
 
 1. Open `index.html` in your favourite browser.
-2. On the welcome screen, enter a name (or leave it as Emilija), type the passcode **differentdimension** (or paste your own OpenAI API key if you prefer), optionally tick **Remember this code**, and hit **Enter the Lounge**.
+2. On the welcome screen, enter a name (or leave it as Emilija), type the passcode(or paste your own OpenAI API key if you prefer), optionally tick **Remember this code**, and hit **Enter the Lounge**.
 3. Inside the **Sparkle Study Studio**, use the notepad, sticky board, and flashcard mixer to craft the perfect vibe. Need to tweak your details later? Tap **Back to Setup** anytime.
 
 ## Sparkle Study Studio Corners
@@ -16,7 +16,7 @@ Sparkle-powered study sessions with a fresh flashcard generator.
 
 ### What you need
 
-- The built-in passcode `differentdimension` (works with the bundled Raspberry Pi proxy).
+- The built-in passcode (works with the bundled Raspberry Pi proxy).
 - An OpenAI API key with access to `gpt-4.1-mini` if you want to call OpenAI directly or configure the proxy with your own model.
 - An internet connection so the page can load the `pdf.js` helper from the CDN and reach your Pi proxy / OpenAI.
 - A text-based PDF under 8&nbsp;MB (scanned images without selectable text will not extract well).
