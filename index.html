@@ -209,44 +209,110 @@
                     </form>
 
                     <div id="flashcard-widget" class="flashcard-widget" hidden aria-labelledby="flashcard-title">
-                        <div class="flashcard-widget__controls">
-                            <span class="flashcard-widget__controls-spacer" aria-hidden="true"></span>
-                            <div class="flashcard-widget__controls-core">
-                                <button id="flashcard-prev" type="button" class="btn btn--pill" aria-label="Ankstesn&#279; kortel&#279;">Atgal</button>
-                                <span id="flashcard-counter" class="flashcard-widget__counter">0 / 0</span>
-                                <button id="flashcard-next" type="button" class="btn btn--pill" aria-label="Kita kortel&#279;">Pirmyn</button>
-                            </div>
+                        <div class="flashcard-widget__mode" role="tablist" aria-label="Korteli&#371; r&#279;&#382;imai">
                             <button
-                                id="flashcard-shuffle"
+                                id="flashcard-mode-text"
+                                class="flashcard-widget__mode-btn"
                                 type="button"
-                                class="flashcard-widget__shuffle"
-                                aria-label="I&#353;mai&#353;yti korteles"
-                                title="I&#353;mai&#353;yti korteles"
+                                role="tab"
+                                aria-controls="flashcard-panel-text"
+                                aria-selected="true"
+                            >
+                                Tekstin&#279;s kortel&#279;s
+                            </button>
+                            <button
+                                id="flashcard-mode-visual"
+                                class="flashcard-widget__mode-btn"
+                                type="button"
+                                role="tab"
+                                aria-controls="flashcard-panel-visual"
+                                aria-selected="false"
                                 disabled
                             >
-                                <svg class="flashcard-widget__shuffle-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                                    <path
-                                        d="M17.59 3.59 21 7l-3.41 3.41V8h-1.86a4 4 0 0 0-2.83 1.17l-2.3 2.3 2.3 2.3a4 4 0 0 0 2.83 1.17H17v-2.41L21 16l-4 4v-2.41h-2.27a6 6 0 0 1-4.24-1.76l-2.01-2-2 2A3 3 0 0 1 4.59 17H3v-2h1.59a1 1 0 0 0 .7-.29l2-2-2-2A1 1 0 0 0 4.59 10H3V8h1.59a3 3 0 0 1 2.12.88l2 2 2.01-2a6 6 0 0 1 4.24-1.76H17V3.59Z"
-                                    ></path>
-                                </svg>
+                                Grafin&#279;s kortel&#279;s
                             </button>
                         </div>
-                        <div class="flashcard-widget__stage">
-                            <button id="flashcard-card" type="button" class="flashcard-widget__card" aria-live="polite" aria-label="Apversti kortel&#281;">
-                                <div class="flashcard-widget__side flashcard-widget__side--front">
-                                    <h4 class="flashcard-widget__heading">Klausimas</h4>
-                                    <p id="flashcard-front" class="flashcard-widget__text"></p>
+
+                        <div id="flashcard-panel-text" class="flashcard-widget__panel flashcard-widget__panel--text" data-mode-panel="text">
+                            <div class="flashcard-widget__controls">
+                                <span class="flashcard-widget__controls-spacer" aria-hidden="true"></span>
+                                <div class="flashcard-widget__controls-core">
+                                    <button id="flashcard-prev" type="button" class="btn btn--pill" aria-label="Ankstesn&#279; kortel&#279;">Atgal</button>
+                                    <span id="flashcard-counter" class="flashcard-widget__counter">0 / 0</span>
+                                    <button id="flashcard-next" type="button" class="btn btn--pill" aria-label="Kita kortel&#279;">Pirmyn</button>
                                 </div>
-                                <div class="flashcard-widget__side flashcard-widget__side--back">
-                                    <h4 class="flashcard-widget__heading">Atsakymas</h4>
-                                    <p id="flashcard-back" class="flashcard-widget__text"></p>
-                                </div>
-                            </button>
+                                <button
+                                    id="flashcard-shuffle"
+                                    type="button"
+                                    class="flashcard-widget__shuffle"
+                                    aria-label="I&#353;mai&#353;yti korteles"
+                                    title="I&#353;mai&#353;yti korteles"
+                                    disabled
+                                >
+                                    <svg class="flashcard-widget__shuffle-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                                        <path
+                                            d="M17.59 3.59 21 7l-3.41 3.41V8h-1.86a4 4 0 0 0-2.83 1.17l-2.3 2.3 2.3 2.3a4 4 0 0 0 2.83 1.17H17v-2.41L21 16l-4 4v-2.41h-2.27a6 6 0 0 1-4.24-1.76l-2.01-2-2 2A3 3 0 0 1 4.59 17H3v-2h1.59a1 1 0 0 0 .7-.29l2-2-2-2A1 1 0 0 0 4.59 10H3V8h1.59a3 3 0 0 1 2.12.88l2 2 2.01-2a6 6 0 0 1 4.24-1.76H17V3.59Z"
+                                        ></path>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="flashcard-widget__stage">
+                                <button id="flashcard-card" type="button" class="flashcard-widget__card" aria-live="polite" aria-label="Apversti kortel&#281;">
+                                    <div class="flashcard-widget__side flashcard-widget__side--front">
+                                        <h4 class="flashcard-widget__heading">Klausimas</h4>
+                                        <p id="flashcard-front" class="flashcard-widget__text"></p>
+                                    </div>
+                                    <div class="flashcard-widget__side flashcard-widget__side--back">
+                                        <h4 class="flashcard-widget__heading">Atsakymas</h4>
+                                        <p id="flashcard-back" class="flashcard-widget__text"></p>
+                                    </div>
+                                </button>
+                            </div>
+                            <div id="flashcard-tags" class="flashcard-widget__tags" aria-live="polite"></div>
+                            <p class="flashcard-widget__hint">Bakstel&#279;k arba spausk tarpo ar Enter klavi&#353;&#261; ir apversk kortel&#281;. Naudok ro&#382;inius mygtukus nar&#353;ymui.</p>
+                            <div class="flashcard-widget__actions">
+                                <button id="flashcard-regenerate" type="button" class="btn btn--secondary btn--tiny" disabled>Sukurti naujas korteles</button>
+                            </div>
                         </div>
-                        <div id="flashcard-tags" class="flashcard-widget__tags" aria-live="polite"></div>
-                        <p class="flashcard-widget__hint">Bakstel&#279;k arba spausk tarpo ar Enter klavi&#353;&#261; ir apversk kortel&#281;. Naudok ro&#382;inius mygtukus nar&#353;ymui.</p>
-                        <div class="flashcard-widget__actions">
-                            <button id="flashcard-regenerate" type="button" class="btn btn--secondary btn--tiny" disabled>Sukurti naujas korteles</button>
+
+                        <div
+                            id="flashcard-panel-visual"
+                            class="flashcard-widget__panel flashcard-widget__panel--visual"
+                            data-mode-panel="visual"
+                            hidden
+                            aria-live="polite"
+                        >
+                            <div class="graphic-flashcard">
+                                <div class="graphic-flashcard__status">
+                                    <p id="graphic-flashcard-status" class="graphic-flashcard__status-text" role="status">Įkelk PDF, kad pamatytum schemas ir brėžinius.</p>
+                                    <button
+                                        id="graphic-flashcard-open"
+                                        type="button"
+                                        class="btn btn--secondary btn--tiny"
+                                        disabled
+                                        aria-label="Atidaryti &#353;&#303; PDF puslap&#303; naujame lange"
+                                    >
+                                        Atidaryti dideliu vaizdu
+                                    </button>
+                                </div>
+                                <div class="graphic-flashcard__frame">
+                                    <div id="graphic-flashcard-loader" class="graphic-flashcard__loader" aria-hidden="true" hidden></div>
+                                    <img
+                                        id="graphic-flashcard-image"
+                                        class="graphic-flashcard__image"
+                                        alt="PDF puslapio per&#382;i&#363;ra"
+                                        loading="lazy"
+                                        hidden
+                                        draggable="false"
+                                    />
+                                </div>
+                                <div class="graphic-flashcard__nav">
+                                    <button id="graphic-flashcard-prev" type="button" class="btn btn--pill" aria-label="Ankstesnis PDF puslapis" disabled>Atgal</button>
+                                    <span id="graphic-flashcard-counter" class="graphic-flashcard__counter">Puslapis 0 / 0</span>
+                                    <button id="graphic-flashcard-next" type="button" class="btn btn--pill" aria-label="Kitas PDF puslapis" disabled>Pirmyn</button>
+                                </div>
+                                <p class="graphic-flashcard__hint">&#352;iame r&#279;&#382;ime treniruokis atpa&#382;inti grafikus, schemas ir diagramas i&#353; PDF.</p>
+                            </div>
                         </div>
                     </div>
                 </div>
