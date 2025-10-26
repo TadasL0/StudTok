@@ -1,4 +1,4 @@
-'use strict';
+﻿'use strict';
 
 const rootElement = document.documentElement;
 const screens = document.querySelectorAll('.screen');
@@ -34,6 +34,12 @@ const graphicFlashcardPrevBtn = document.getElementById('graphic-flashcard-prev'
 const graphicFlashcardNextBtn = document.getElementById('graphic-flashcard-next');
 const graphicFlashcardCounter = document.getElementById('graphic-flashcard-counter');
 const graphicFlashcardLoader = document.getElementById('graphic-flashcard-loader');
+const graphicFlashcardStage = document.querySelector('.graphic-flashcard__stage');
+const graphicFlashcardOverlayText = document.getElementById('graphic-flashcard-overlay');
+const graphicFlashcardQuestionInput = document.getElementById('graphic-flashcard-question');
+const graphicFlashcardMaskLayer = document.getElementById('graphic-flashcard-mask-layer');
+const graphicFlashcardMaskToggle = document.getElementById('graphic-flashcard-mask-toggle');
+const graphicFlashcardMaskClear = document.getElementById('graphic-flashcard-mask-clear');
 const generationNoteInput = document.getElementById('generation-note');
 const generateFlashcardsBtn = document.getElementById('generate-flashcards');
 const flashcardLengthInputs = document.querySelectorAll('input[name="flashcard-length"]');
@@ -110,8 +116,21 @@ const graphicFlashcardState = {
     currentDataUrl: '',
     pendingFile: null,
     flipped: false,
+    annotations: new Map(),
+    nextMaskId: 1,
 };
 const GRAPHIC_FLASHCARD_DEFAULT_STATUS = 'Įkelk PDF ir paspausk „Paruošti“, kad pamatytum schemas ir brėžinius.';
+const GRAPHIC_FLASHCARD_DEFAULT_PROMPT = 'Atspėk, koks čia brėžinys, ir apversk kortelę.';
+const GRAPHIC_MASK_MIN_PERCENT = 2;
+const graphicMaskEditorState = {
+    enabled: false,
+    drawing: false,
+    startX: 0,
+    startY: 0,
+    previewEl: null,
+    pointerId: null,
+    bounds: null,
+};
 
 const quizState = {
     baseQuestions: [],
@@ -357,6 +376,18 @@ function normaliseFlashcardText(value) {
         return '';
     }
     return value.trim();
+}
+
+function clamp(value, min, max) {
+    if (!Number.isFinite(value)) {
+        return min;
+    }
+    if (min > max) {
+        return min;
+    }
+    if (value < min) return min;
+    if (value > max) return max;
+    return value;
 }
 
 function buildFlashcardKey(question, answer) {
@@ -1238,9 +1269,300 @@ function updateGraphicFlashcardCardState() {
     if (!graphicFlashcardCard) return;
     const hasImage = Boolean(graphicFlashcardState.currentDataUrl);
     const interactive =
-        hasImage && graphicFlashcardState.ready && !graphicFlashcardState.busy && !graphicFlashcardState.pageBusy;
+        hasImage &&
+        graphicFlashcardState.ready &&
+        !graphicFlashcardState.busy &&
+        !graphicFlashcardState.pageBusy &&
+        !graphicMaskEditorState.enabled;
     graphicFlashcardCard.disabled = !interactive;
     graphicFlashcardCard.dataset.flipped = graphicFlashcardState.flipped ? 'true' : 'false';
+    if (graphicFlashcardCard) {
+        graphicFlashcardCard.dataset.masking = graphicMaskEditorState.enabled ? 'true' : 'false';
+    }
+    if (graphicFlashcardStage) {
+        graphicFlashcardStage.dataset.masking = graphicMaskEditorState.enabled ? 'true' : 'false';
+    }
+}
+
+function getCurrentGraphicPageNumber() {
+    if (!graphicFlashcardState.ready || graphicFlashcardState.pageCount === 0) {
+        return null;
+    }
+    return graphicFlashcardState.index + 1;
+}
+
+function getGraphicPageMeta(pageNumber, createIfMissing = false) {
+    if (!Number.isInteger(pageNumber) || pageNumber <= 0) {
+        return null;
+    }
+    if (!graphicFlashcardState.annotations.has(pageNumber)) {
+        if (!createIfMissing) {
+            return null;
+        }
+        graphicFlashcardState.annotations.set(pageNumber, {
+            question: '',
+            masks: [],
+        });
+    }
+    return graphicFlashcardState.annotations.get(pageNumber);
+}
+
+function getCurrentGraphicPageMeta(createIfMissing = false) {
+    const pageNumber = getCurrentGraphicPageNumber();
+    if (!pageNumber) return null;
+    return getGraphicPageMeta(pageNumber, createIfMissing);
+}
+
+function updateGraphicFlashcardQuestionUI() {
+    const meta = getCurrentGraphicPageMeta();
+    const question = typeof meta?.question === 'string' ? meta.question : '';
+    const overlayText = question.trim().length > 0 ? question.trim() : GRAPHIC_FLASHCARD_DEFAULT_PROMPT;
+    if (graphicFlashcardOverlayText) {
+        graphicFlashcardOverlayText.textContent = overlayText;
+    }
+    if (graphicFlashcardQuestionInput) {
+        const canEdit = graphicFlashcardState.ready && graphicFlashcardState.pageCount > 0;
+        graphicFlashcardQuestionInput.disabled = !canEdit;
+        graphicFlashcardQuestionInput.value = canEdit ? question : '';
+    }
+}
+
+function handleGraphicFlashcardQuestionInput(event) {
+    if (!graphicFlashcardState.ready || graphicFlashcardState.pageCount === 0) {
+        return;
+    }
+    if (!graphicFlashcardQuestionInput) {
+        return;
+    }
+    const rawValue = typeof event?.target?.value === 'string' ? event.target.value : '';
+    const trimmedValue = rawValue.slice(0, graphicFlashcardQuestionInput.maxLength || rawValue.length);
+    const meta = getCurrentGraphicPageMeta(true);
+    if (!meta) {
+        return;
+    }
+    meta.question = trimmedValue;
+    if (graphicFlashcardOverlayText) {
+        const overlayText = trimmedValue.trim().length > 0 ? trimmedValue.trim() : GRAPHIC_FLASHCARD_DEFAULT_PROMPT;
+        graphicFlashcardOverlayText.textContent = overlayText;
+    }
+}
+
+function syncGraphicMaskControls() {
+    const hasPages = graphicFlashcardState.ready && graphicFlashcardState.pageCount > 0;
+    if (graphicFlashcardMaskToggle) {
+        graphicFlashcardMaskToggle.disabled = !hasPages;
+        graphicFlashcardMaskToggle.setAttribute('aria-pressed', graphicMaskEditorState.enabled ? 'true' : 'false');
+        graphicFlashcardMaskToggle.textContent = graphicMaskEditorState.enabled
+            ? 'Baigti maskavim\u0105'
+            : 'Maskavimo re\u017eimas';
+    }
+    if (graphicFlashcardMaskClear) {
+        const maskCount = getCurrentGraphicPageMeta()?.masks?.length || 0;
+        graphicFlashcardMaskClear.disabled = !hasPages || maskCount === 0;
+    }
+    if (!hasPages && graphicMaskEditorState.enabled) {
+        setMaskEditingEnabled(false);
+    }
+}
+function renderGraphicFlashcardMasks() {
+    if (!graphicFlashcardMaskLayer) return;
+    graphicFlashcardMaskLayer.innerHTML = '';
+    const meta = getCurrentGraphicPageMeta();
+    const masks = Array.isArray(meta?.masks) ? meta.masks : [];
+    if (masks.length === 0) {
+        syncGraphicMaskControls();
+        return;
+    }
+    masks.forEach((mask) => {
+        const maskEl = document.createElement('div');
+        maskEl.className = 'graphic-flashcard__mask';
+        maskEl.style.left = `${mask.x}%`;
+        maskEl.style.top = `${mask.y}%`;
+        maskEl.style.width = `${mask.width}%`;
+        maskEl.style.height = `${mask.height}%`;
+        maskEl.dataset.maskId = String(mask.id);
+        const removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.className = 'graphic-flashcard__mask-remove';
+        removeBtn.textContent = '\u00D7';
+        removeBtn.addEventListener('click', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            removeGraphicMask(mask.id);
+        });
+        maskEl.appendChild(removeBtn);
+        graphicFlashcardMaskLayer.appendChild(maskEl);
+    });
+    syncGraphicMaskControls();
+}
+
+function syncGraphicFlashcardAnnotationsUI() {
+    updateGraphicFlashcardQuestionUI();
+    renderGraphicFlashcardMasks();
+}
+
+function setMaskEditingEnabled(enabled) {
+    const shouldEnable = Boolean(enabled) && graphicFlashcardState.ready && graphicFlashcardState.pageCount > 0;
+    if (!shouldEnable && !enabled) {
+        graphicMaskEditorState.enabled = false;
+        cancelMaskDrawing();
+        updateGraphicFlashcardCardState();
+        syncGraphicMaskControls();
+        renderGraphicFlashcardMasks();
+        return;
+    }
+    if (graphicMaskEditorState.enabled === shouldEnable) {
+        syncGraphicMaskControls();
+        return;
+    }
+    graphicMaskEditorState.enabled = shouldEnable;
+    cancelMaskDrawing();
+    updateGraphicFlashcardCardState();
+    syncGraphicMaskControls();
+    renderGraphicFlashcardMasks();
+}
+
+function clearGraphicMasksForCurrentPage() {
+    const meta = getCurrentGraphicPageMeta();
+    if (!meta || !Array.isArray(meta.masks) || meta.masks.length === 0) {
+        return;
+    }
+    meta.masks = [];
+    renderGraphicFlashcardMasks();
+}
+
+function removeGraphicMask(maskId) {
+    const meta = getCurrentGraphicPageMeta();
+    if (!meta || !Array.isArray(meta.masks)) return;
+    const nextMasks = meta.masks.filter((mask) => mask.id !== maskId);
+    meta.masks = nextMasks;
+    renderGraphicFlashcardMasks();
+}
+
+function cancelMaskDrawing() {
+    if (graphicMaskEditorState.previewEl) {
+        graphicMaskEditorState.previewEl.remove();
+    }
+    graphicMaskEditorState.previewEl = null;
+    graphicMaskEditorState.drawing = false;
+    if (graphicMaskEditorState.pointerId !== null && graphicFlashcardMaskLayer?.releasePointerCapture) {
+        try {
+            graphicFlashcardMaskLayer.releasePointerCapture(graphicMaskEditorState.pointerId);
+        } catch (error) {
+            // ignore release errors
+        }
+    }
+    graphicMaskEditorState.pointerId = null;
+    graphicMaskEditorState.bounds = null;
+}
+
+function addGraphicMaskFromSelection(startX, startY, endX, endY, bounds) {
+    if (!bounds || bounds.width === 0 || bounds.height === 0) {
+        return false;
+    }
+    const minX = clamp(Math.min(startX, endX), 0, bounds.width);
+    const minY = clamp(Math.min(startY, endY), 0, bounds.height);
+    const maxX = clamp(Math.max(startX, endX), 0, bounds.width);
+    const maxY = clamp(Math.max(startY, endY), 0, bounds.height);
+    const widthPx = Math.max(0, maxX - minX);
+    const heightPx = Math.max(0, maxY - minY);
+    const widthPercent = (widthPx / bounds.width) * 100;
+    const heightPercent = (heightPx / bounds.height) * 100;
+    if (widthPercent < GRAPHIC_MASK_MIN_PERCENT || heightPercent < GRAPHIC_MASK_MIN_PERCENT) {
+        return false;
+    }
+    const meta = getCurrentGraphicPageMeta(true);
+    if (!meta) {
+        return false;
+    }
+    meta.masks.push({
+        id: `mask-${graphicFlashcardState.nextMaskId++}`,
+        x: (minX / bounds.width) * 100,
+        y: (minY / bounds.height) * 100,
+        width: widthPercent,
+        height: heightPercent,
+    });
+    renderGraphicFlashcardMasks();
+    return true;
+}
+
+function updateMaskPreviewPosition(clientX, clientY) {
+    if (
+        !graphicMaskEditorState.drawing ||
+        !graphicMaskEditorState.previewEl ||
+        !graphicMaskEditorState.bounds ||
+        !graphicFlashcardMaskLayer
+    ) {
+        return;
+    }
+    const bounds = graphicMaskEditorState.bounds;
+    const currentX = clamp(clientX - bounds.left, 0, bounds.width);
+    const currentY = clamp(clientY - bounds.top, 0, bounds.height);
+    const minX = Math.min(graphicMaskEditorState.startX, currentX);
+    const minY = Math.min(graphicMaskEditorState.startY, currentY);
+    const width = Math.abs(currentX - graphicMaskEditorState.startX);
+    const height = Math.abs(currentY - graphicMaskEditorState.startY);
+    graphicMaskEditorState.previewEl.style.left = `${minX}px`;
+    graphicMaskEditorState.previewEl.style.top = `${minY}px`;
+    graphicMaskEditorState.previewEl.style.width = `${width}px`;
+    graphicMaskEditorState.previewEl.style.height = `${height}px`;
+}
+
+function handleGraphicMaskPointerDown(event) {
+    if (!graphicMaskEditorState.enabled || !graphicFlashcardMaskLayer) {
+        return;
+    }
+    if (event.button !== 0) {
+        return;
+    }
+    const bounds = graphicFlashcardMaskLayer.getBoundingClientRect();
+    if (!bounds || bounds.width === 0 || bounds.height === 0) {
+        return;
+    }
+    graphicMaskEditorState.drawing = true;
+    graphicMaskEditorState.startX = clamp(event.clientX - bounds.left, 0, bounds.width);
+    graphicMaskEditorState.startY = clamp(event.clientY - bounds.top, 0, bounds.height);
+    graphicMaskEditorState.bounds = bounds;
+    graphicMaskEditorState.pointerId = typeof event.pointerId === 'number' ? event.pointerId : null;
+    const preview = document.createElement('div');
+    preview.className = 'graphic-flashcard__mask graphic-flashcard__mask--preview';
+    graphicFlashcardMaskLayer.appendChild(preview);
+    graphicMaskEditorState.previewEl = preview;
+    if (graphicFlashcardMaskLayer.setPointerCapture && graphicMaskEditorState.pointerId !== null) {
+        try {
+            graphicFlashcardMaskLayer.setPointerCapture(graphicMaskEditorState.pointerId);
+        } catch (error) {
+            // ignore capture errors
+        }
+    }
+    updateMaskPreviewPosition(event.clientX, event.clientY);
+    event.preventDefault();
+}
+
+function handleGraphicMaskPointerMove(event) {
+    if (!graphicMaskEditorState.drawing) {
+        return;
+    }
+    if (graphicMaskEditorState.pointerId !== null && event.pointerId !== graphicMaskEditorState.pointerId) {
+        return;
+    }
+    updateMaskPreviewPosition(event.clientX, event.clientY);
+}
+
+function handleGraphicMaskPointerUp(event) {
+    if (!graphicMaskEditorState.drawing) {
+        return;
+    }
+    if (graphicMaskEditorState.pointerId !== null && event.pointerId !== graphicMaskEditorState.pointerId) {
+        return;
+    }
+    const bounds = graphicMaskEditorState.bounds;
+    const endX = bounds ? clamp(event.clientX - bounds.left, 0, bounds.width) : 0;
+    const endY = bounds ? clamp(event.clientY - bounds.top, 0, bounds.height) : 0;
+    const startX = graphicMaskEditorState.startX;
+    const startY = graphicMaskEditorState.startY;
+    cancelMaskDrawing();
+    addGraphicMaskFromSelection(startX, startY, endX, endY, bounds);
 }
 
 function shouldDisplayFlashcardWidget() {
@@ -1389,6 +1711,10 @@ function resetGraphicFlashcards(options = {}) {
     graphicFlashcardState.currentDataUrl = '';
 
     graphicFlashcardState.renderToken += 1;
+    graphicFlashcardState.annotations = new Map();
+    graphicFlashcardState.nextMaskId = 1;
+    graphicMaskEditorState.enabled = false;
+    cancelMaskDrawing();
 
     if (!preservePending) {
 
@@ -1411,6 +1737,7 @@ function resetGraphicFlashcards(options = {}) {
     syncGraphicFlashcardLoadButtonState();
 
     updateFlashcardModeAvailability();
+    syncGraphicFlashcardAnnotationsUI();
 
     if (!preservePending && activeFlashcardMode === FLASHCARD_MODES.visual) {
 
@@ -1604,6 +1931,7 @@ async function renderGraphicFlashcard(forceRender = false) {
         updateGraphicFlashcardNavigation();
 
         updateGraphicFlashcardCardState();
+        syncGraphicFlashcardAnnotationsUI();
 
         return;
 
@@ -1618,6 +1946,7 @@ async function renderGraphicFlashcard(forceRender = false) {
         updateGraphicFlashcardNavigation();
 
         updateGraphicFlashcardCardState();
+        syncGraphicFlashcardAnnotationsUI();
 
         return;
 
@@ -1739,6 +2068,7 @@ function applyGraphicFlashcardImage(dataUrl) {
 
     }
 
+    syncGraphicFlashcardAnnotationsUI();
     updateGraphicFlashcardNavigation();
 
     updateGraphicFlashcardCardState();
@@ -1810,6 +2140,7 @@ function showGraphicFlashcardByIndex(index) {
     graphicFlashcardState.index = clamped;
 
     resetGraphicFlashcardFlip();
+    syncGraphicFlashcardAnnotationsUI();
 
     renderGraphicFlashcard();
 
@@ -1837,7 +2168,9 @@ function toggleGraphicFlashcardFace() {
 
         graphicFlashcardState.pageBusy ||
 
-        !graphicFlashcardState.currentDataUrl
+        !graphicFlashcardState.currentDataUrl ||
+
+        graphicMaskEditorState.enabled
 
     ) {
 
@@ -2366,6 +2699,7 @@ function clearFlashcardWidget() {
     updateRegenerateButtonsAvailability();
     updateFlashcardModeAvailability();
     updateFlashcardWidgetVisibility();
+    syncGraphicMaskControls();
 }
 
 function clearQuizWidget() {
@@ -3076,6 +3410,19 @@ graphicFlashcardOpenBtn?.addEventListener('click', () => {
     }
 });
 
+graphicFlashcardMaskToggle?.addEventListener('click', () => {
+    setMaskEditingEnabled(!graphicMaskEditorState.enabled);
+});
+
+graphicFlashcardMaskClear?.addEventListener('click', () => {
+    clearGraphicMasksForCurrentPage();
+});
+
+graphicFlashcardQuestionInput?.addEventListener('input', handleGraphicFlashcardQuestionInput);
+graphicFlashcardMaskLayer?.addEventListener('pointerdown', handleGraphicMaskPointerDown);
+window.addEventListener('pointermove', handleGraphicMaskPointerMove);
+window.addEventListener('pointerup', handleGraphicMaskPointerUp);
+
 quizNextButton?.addEventListener('click', () => {
     if (quizState.questions.length === 0 || !quizState.answered) {
         return;
@@ -3277,6 +3624,8 @@ setGraphicFlashcardLoading(false);
 updateGraphicFlashcardNavigation();
 syncGraphicFlashcardLoadButtonState();
 updateGraphicFlashcardCardState();
+syncGraphicFlashcardAnnotationsUI();
+syncGraphicMaskControls();
 
 updateNotepadEmptyState();
 updateStickyEmptyState();
@@ -3312,3 +3661,4 @@ showScreen('intro');
 scheduleSplashHide();
 ensureNotepadPlaceholder(true);
 scheduleLayoutTopSync();
+

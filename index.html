@@ -305,13 +305,13 @@
                                         </button>
                                     </div>
                                 </div>
-                                <div class="graphic-flashcard__stage">
+                                                                <div class="graphic-flashcard__stage">
                                     <button
                                         id="graphic-flashcard-card"
                                         type="button"
                                         class="flashcard-widget__card graphic-flashcard__card"
                                         aria-live="polite"
-                                        aria-label="Apversti grafinę kortelę"
+                                        aria-label="Apversti grafin&#279; kortel&#281;"
                                         disabled
                                     >
                                         <div class="flashcard-widget__side graphic-flashcard__side graphic-flashcard__side--front">
@@ -324,15 +324,16 @@
                                                     hidden
                                                     draggable="false"
                                                 />
+                                                <div id="graphic-flashcard-mask-layer" class="graphic-flashcard__mask-layer" aria-hidden="true"></div>
                                             </div>
-                                            <span class="graphic-flashcard__overlay">Atspėk, koks čia brėžinys, ir apversk kortelę.</span>
+                                            <span id="graphic-flashcard-overlay" class="graphic-flashcard__overlay">Atsp&#279;k, koks &#269;ia br&#279;&#382;inys, ir apversk kortel&#281;.</span>
                                         </div>
                                         <div class="flashcard-widget__side graphic-flashcard__side graphic-flashcard__side--back">
                                             <div class="graphic-flashcard__image-shell">
                                                 <img
                                                     id="graphic-flashcard-image-back"
                                                     class="graphic-flashcard__image graphic-flashcard__image--back"
-                                                    alt="PDF puslapio peržiūra"
+                                                    alt="PDF puslapio per&#382;i&#363;ra"
                                                     loading="lazy"
                                                     hidden
                                                     draggable="false"
@@ -342,7 +343,22 @@
                                     </button>
                                     <div id="graphic-flashcard-loader" class="graphic-flashcard__loader" hidden aria-hidden="true"></div>
                                 </div>
-                                <div class="graphic-flashcard__nav">
+                                <div class="graphic-flashcard__tools">
+                                    <button id="graphic-flashcard-mask-toggle" type="button" class="btn btn--secondary btn--tiny" aria-pressed="false" disabled>Maskavimo r&#279;&#382;imas</button>
+                                    <button id="graphic-flashcard-mask-clear" type="button" class="btn btn--secondary btn--tiny" disabled>I&#353;valyti u&#382;dengimus</button>
+                                </div>
+                                <div class="graphic-flashcard__question">
+                                    <label class="flashcard-form__label" for="graphic-flashcard-question">Klausimas grafinei kortelei</label>
+                                    <textarea
+                                        id="graphic-flashcard-question"
+                                        class="input graphic-flashcard__question-input"
+                                        rows="2"
+                                        maxlength="160"
+                                        placeholder="Pvz.: Kuri schema vaizduoja gele&#382;ies ir anglies lydini&#371; strukt&#363;rines sudedam&#261;sias?"
+                                        disabled
+                                    ></textarea>
+                                    <p class="graphic-flashcard__question-hint">&#352;is klausimas rodomas kortel&#279;s priekyje, o apra&#353;ymai lieka kortel&#279;s kitoje pus&#279;je.</p>
+                                </div><div class="graphic-flashcard__nav">
                                     <button id="graphic-flashcard-prev" type="button" class="btn btn--pill" aria-label="Ankstesnis PDF puslapis" disabled>Atgal</button>
                                     <span id="graphic-flashcard-counter" class="graphic-flashcard__counter">Puslapis 0 / 0</span>
                                     <button id="graphic-flashcard-next" type="button" class="btn btn--pill" aria-label="Kitas PDF puslapis" disabled>Pirmyn</button>
@@ -410,3 +426,4 @@
     <script src="script.js?v=20251026"></script>
 </body>
 </html>
+

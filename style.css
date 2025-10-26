@@ -652,7 +652,7 @@ body, h1, h2, h3, h4, h5, h6, p, span, label, li {
     margin: 0 auto;
     display: grid;
     gap: 32px;
-    z-index: 1;
+    z-index: 3;
 }
 
 @media (max-width: 768px) {
@@ -2279,8 +2279,8 @@ body, h1, h2, h3, h4, h5, h6, p, span, label, li {
 }
 
 .graphic-flashcard__image--front {
-    filter: blur(10px) saturate(0.9);
-    opacity: 0.85;
+    filter: none;
+    opacity: 1;
 }
 
 .graphic-flashcard__overlay {
@@ -2299,6 +2299,97 @@ body, h1, h2, h3, h4, h5, h6, p, span, label, li {
 
 .graphic-flashcard__card[data-flipped='true'] .graphic-flashcard__overlay {
     opacity: 0;
+}
+
+.graphic-flashcard__mask-layer {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    z-index: 2;
+}
+
+.graphic-flashcard__mask {
+    position: absolute;
+    background: rgba(255, 255, 255, 0.97);
+    border-radius: 14px;
+    border: 1px dashed rgba(255, 157, 208, 0.8);
+    box-shadow: 0 20px 35px rgba(68, 38, 63, 0.2);
+    pointer-events: none;
+}
+
+.graphic-flashcard__mask--preview {
+    background: rgba(255, 255, 255, 0.8);
+    border-style: dotted;
+}
+
+.graphic-flashcard__mask-remove {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 24px;
+    height: 24px;
+    border-radius: 999px;
+    border: none;
+    background: rgba(255, 79, 161, 0.9);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(255, 79, 161, 0.35);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 120ms ease;
+}
+
+.graphic-flashcard__mask-remove:focus-visible {
+    outline: 2px solid rgba(255, 255, 255, 0.8);
+    outline-offset: 2px;
+}
+
+.graphic-flashcard__stage[data-masking='true'] .graphic-flashcard__mask-layer {
+    pointer-events: auto;
+    cursor: crosshair;
+}
+
+.graphic-flashcard__stage[data-masking='true'] .graphic-flashcard__mask {
+    pointer-events: auto;
+}
+
+.graphic-flashcard__stage[data-masking='true'] .graphic-flashcard__mask-remove {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.graphic-flashcard__tools {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: flex-start;
+}
+
+.graphic-flashcard__question {
+    display: grid;
+    gap: 6px;
+}
+
+.graphic-flashcard__question-input {
+    resize: vertical;
+    min-height: 72px;
+}
+
+.graphic-flashcard__question-input:disabled {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.graphic-flashcard__question-hint {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--text-muted);
 }
 
 .graphic-flashcard__loader {
@@ -2515,6 +2606,10 @@ body, h1, h2, h3, h4, h5, h6, p, span, label, li {
     opacity: 0.85;
 }
 
+.flashcard-widget__card.graphic-flashcard__card[data-masking='true'] {
+    cursor: crosshair;
+}
+
 .flashcard-widget__side.graphic-flashcard__side {
     padding: clamp(14px, 2vw, 26px);
     display: flex;
@@ -2529,6 +2624,7 @@ body, h1, h2, h3, h4, h5, h6, p, span, label, li {
     display: flex;
     align-items: center;
     justify-content: center;
+    position: relative;
 }
 
 .flashcard-widget__heading {
