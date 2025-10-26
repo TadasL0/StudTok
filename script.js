@@ -1071,33 +1071,19 @@ pdfInput?.addEventListener('change', () => {
 
 
 const initialPdfFile = pdfInput?.files && pdfInput.files[0];
-
 updatePdfSelectionLabel(initialPdfFile || null);
-
 if (initialPdfFile) {
-
     graphicFlashcardState.pendingFile = initialPdfFile;
-
     resetGraphicFlashcards({ preservePending: true });
-
     setGraphicFlashcardStatus(getQueuedGraphicFlashcardMessage());
-
-} else {
-
-    setGraphicFlashcardStatus(GRAPHIC_FLASHCARD_DEFAULT_STATUS);
-
-}
-
-syncGraphicFlashcardLoadButtonState();
-
-const initialPdfFile = pdfInput?.files && pdfInput.files[0];
-updatePdfSelectionLabel(initialPdfFile || null);
-if (initialPdfFile) {
     prepareGraphicFlashcardsFromFile(initialPdfFile).catch((error) => {
         console.error(error);
         setGraphicFlashcardStatus('Nepavyko paruošti PDF brėžinių režimui.', 'error');
     });
+} else {
+    setGraphicFlashcardStatus(GRAPHIC_FLASHCARD_DEFAULT_STATUS);
 }
+syncGraphicFlashcardLoadButtonState();
 handleGenerationToggleChange(generateFlashcardsToggle, generateQuizToggle);
 generateFlashcardsToggle?.addEventListener('change', () => {
     generationState.modeTouched = true;
