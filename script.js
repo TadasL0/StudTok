@@ -29,7 +29,7 @@ const graphicFlashcardLoadBtn = document.getElementById('graphic-flashcard-load'
 const graphicFlashcardOpenBtn = document.getElementById('graphic-flashcard-open');
 const graphicFlashcardCard = document.getElementById('graphic-flashcard-card');
 const graphicFlashcardImageFront = document.getElementById('graphic-flashcard-image-front');
-const graphicFlashcardCaption = document.getElementById('graphic-flashcard-caption');
+const graphicFlashcardImageBack = document.getElementById('graphic-flashcard-image-back');
 const graphicFlashcardPrevBtn = document.getElementById('graphic-flashcard-prev');
 const graphicFlashcardNextBtn = document.getElementById('graphic-flashcard-next');
 const graphicFlashcardCounter = document.getElementById('graphic-flashcard-counter');
@@ -114,7 +114,11 @@ const graphicFlashcardState = {
     pageBusy: false,
     renderToken: 0,
     currentDataUrl: '',
-    currentCaption: '',
+    currentCropUrl: '',
+    currentImageWidth: 0,
+    currentImageHeight: 0,
+    cropRenderToken: 0,
+    cropUpdateHandle: null,
     pendingFile: null,
     flipped: false,
     annotations: new Map(),
@@ -122,7 +126,6 @@ const graphicFlashcardState = {
 };
 const GRAPHIC_FLASHCARD_DEFAULT_STATUS = 'Įkelk PDF ir paspausk „Paruošti“, kad pamatytum schemas ir brėžinius.';
 const GRAPHIC_FLASHCARD_DEFAULT_PROMPT = 'Atspėk, koks čia brėžinys, ir apversk kortelę.';
-const GRAPHIC_FLASHCARD_FALLBACK_CAPTION = 'Pavadinimas nerastas. Atverk PDF, kad sužinotum daugiau.';
 const GRAPHIC_MASK_MIN_PERCENT = 2;
 const graphicMaskEditorState = {
     enabled: false,
@@ -1256,11 +1259,11 @@ function clearGraphicFlashcardImages() {
         graphicFlashcardImageFront.removeAttribute('src');
         graphicFlashcardImageFront.hidden = true;
     }
-    if (graphicFlashcardCaption) {
-        graphicFlashcardCaption.textContent = GRAPHIC_FLASHCARD_FALLBACK_CAPTION;
-        graphicFlashcardCaption.dataset.empty = 'true';
+    if (graphicFlashcardImageBack) {
+        graphicFlashcardImageBack.removeAttribute('src');
+        graphicFlashcardImageBack.hidden = true;
     }
-    graphicFlashcardState.currentCaption = '';
+    graphicFlashcardState.currentCropUrl = '';
 }
 
 function resetGraphicFlashcardFlip() {
@@ -1374,6 +1377,7 @@ function renderGraphicFlashcardMasks() {
     const masks = Array.isArray(meta?.masks) ? meta.masks : [];
     if (masks.length === 0) {
         syncGraphicMaskControls();
+        scheduleGraphicFlashcardCropUpdate();
         return;
     }
     masks.forEach((mask) => {
@@ -1397,6 +1401,7 @@ function renderGraphicFlashcardMasks() {
         graphicFlashcardMaskLayer.appendChild(maskEl);
     });
     syncGraphicMaskControls();
+    scheduleGraphicFlashcardCropUpdate();
 }
 
 function syncGraphicFlashcardAnnotationsUI() {
@@ -1712,7 +1717,14 @@ function resetGraphicFlashcards(options = {}) {
     graphicFlashcardState.pageBusy = false;
 
     graphicFlashcardState.currentDataUrl = '';
-    graphicFlashcardState.currentCaption = '';
+    graphicFlashcardState.currentCropUrl = '';
+    graphicFlashcardState.currentImageWidth = 0;
+    graphicFlashcardState.currentImageHeight = 0;
+    graphicFlashcardState.cropRenderToken = 0;
+    if (graphicFlashcardState.cropUpdateHandle !== null) {
+        clearTimeout(graphicFlashcardState.cropUpdateHandle);
+    }
+    graphicFlashcardState.cropUpdateHandle = null;
 
     graphicFlashcardState.renderToken += 1;
     graphicFlashcardState.annotations = new Map();
@@ -1878,7 +1890,7 @@ async function prepareGraphicFlashcardsFromFile(file) {
         await renderGraphicFlashcard(true);
 
         if (graphicFlashcardState.currentDataUrl) {
-            setGraphicFlashcardStatus('Schemos paruoštos! Apversk kortelę ir perskaityk pavadinimą.', 'success');
+            setGraphicFlashcardStatus('Schemos paruoštos! Pažymėk norimą vietą ir apversk kortelę.', 'success');
         }
 
     } catch (error) {
@@ -1925,7 +1937,14 @@ async function renderGraphicFlashcard(forceRender = false) {
     if (!graphicFlashcardState.ready || !graphicFlashcardState.pdf) {
 
         graphicFlashcardState.currentDataUrl = '';
-        graphicFlashcardState.currentCaption = '';
+        graphicFlashcardState.currentCropUrl = '';
+        graphicFlashcardState.currentImageWidth = 0;
+        graphicFlashcardState.currentImageHeight = 0;
+        graphicFlashcardState.cropRenderToken += 1;
+        if (graphicFlashcardState.cropUpdateHandle !== null) {
+            clearTimeout(graphicFlashcardState.cropUpdateHandle);
+            graphicFlashcardState.cropUpdateHandle = null;
+        }
 
         clearGraphicFlashcardImages();
 
@@ -2026,103 +2045,28 @@ async function renderGraphicFlashcardPageImage(pageNumber) {
     const scale = Math.min(Math.max(maxWidth / initialViewport.width, 1.1), 1.8);
     const viewport = page.getViewport({ scale });
     const canvas = document.createElement('canvas');
-    const context = canvas.getContext('2d', { willReadFrequently: true });
+    const context = canvas.getContext('2d', { willReadFrequently: false });
     canvas.width = Math.ceil(viewport.width);
     canvas.height = Math.ceil(viewport.height);
     await page.render({ canvasContext: context, viewport }).promise;
-    let textItems = [];
-    try {
-        const textContent = await page.getTextContent({ includeMarkedContent: true });
-        if (Array.isArray(textContent?.items)) {
-            textItems = textContent.items;
-            eraseTextFromCanvas(context, viewport, textItems);
-        }
-    } catch (error) {
-        console.error('Nepavyko nuskaityti PDF teksto turinio grafinėms kortelėms.', error);
-    }
-    const caption = deriveCaptionFromTextItems(textItems);
-    const dataUrl = canvas.toDataURL('image/png', 0.92);
-    canvas.width = 0;
-    canvas.height = 0;
     if (graphicFlashcardState.renderToken !== renderToken) {
         return null;
     }
-    return { url: dataUrl, caption };
-}
-
-function eraseTextFromCanvas(context, viewport, textItems) {
-    if (!context || !viewport || !Array.isArray(textItems) || textItems.length === 0) {
-        return;
-    }
-    const padding = 3;
-    context.save();
-    context.fillStyle = '#ffffff';
-    textItems.forEach((item) => {
-        const raw = typeof item?.str === 'string' ? item.str : '';
-        if (!raw.trim()) {
-            return;
-        }
-        const transform = Array.isArray(item?.transform) ? item.transform : null;
-        if (!transform || transform.length !== 6) {
-            return;
-        }
-        const tx = pdfjsLib.Util.transform(viewport.transform, transform);
-        const x = tx[4];
-        const y = tx[5];
-        const fontHeight = Math.hypot(tx[1], tx[3]);
-        const scaledWidth = (item.width || 0) * viewport.scale;
-        const scaledHeight = (item.height || 0) * viewport.scale;
-        const width = scaledWidth > 0 ? scaledWidth : Math.max(raw.length * (fontHeight * 0.55), 12);
-        const height = scaledHeight > 0 ? scaledHeight : Math.max(fontHeight, 12);
-        const rectX = x - padding;
-        const rectY = y - height - padding;
-        const rectWidth = width + padding * 2;
-        const rectHeight = height + padding * 2;
-        context.fillRect(rectX, rectY, rectWidth, rectHeight);
-    });
-    context.restore();
-}
-
-function deriveCaptionFromTextItems(textItems) {
-    if (!Array.isArray(textItems) || textItems.length === 0) {
-        return '';
-    }
-    const lines = [];
-    let buffer = '';
-    textItems.forEach((item) => {
-        const raw = typeof item?.str === 'string' ? item.str : '';
-        const text = raw.replace(/\s+/g, ' ').trim();
-        if (text) {
-            buffer = buffer ? `${buffer} ${text}` : text;
-        }
-        if ((text && item?.hasEOL) || (!text && buffer && item?.hasEOL)) {
-            lines.push(buffer.trim());
-            buffer = '';
-        }
-    });
-    if (buffer) {
-        lines.push(buffer.trim());
-    }
-    const normalizedLines = lines
-        .map((line) => line.replace(/\s+/g, ' ').trim())
-        .filter((line) => line.length > 0);
-    if (normalizedLines.length === 0) {
-        return '';
-    }
-    const keywordPattern = /\b(?:schema|schem|paveiksl|diagram|grafik|lentel|iliustr|fig\.)/i;
-    const keywordLine = normalizedLines.find((line) => keywordPattern.test(line));
-    const captionSource = keywordLine || normalizedLines.find((line) => line.length > 18) || normalizedLines[0];
-    if (!captionSource) {
-        return '';
-    }
-    return captionSource.length > 180 ? `${captionSource.slice(0, 177).trim()}...` : captionSource;
+    const width = canvas.width;
+    const height = canvas.height;
+    const dataUrl = canvas.toDataURL('image/png', 0.92);
+    canvas.width = 0;
+    canvas.height = 0;
+    return { url: dataUrl, width, height };
 }
 
 function applyGraphicFlashcardData(data) {
     const dataUrl = typeof data?.url === 'string' ? data.url : '';
-    const caption = typeof data?.caption === 'string' ? data.caption.trim() : '';
+    const width = Number.isFinite(data?.width) ? data.width : 0;
+    const height = Number.isFinite(data?.height) ? data.height : 0;
     graphicFlashcardState.currentDataUrl = dataUrl;
-    graphicFlashcardState.currentCaption = caption;
+    graphicFlashcardState.currentImageWidth = width;
+    graphicFlashcardState.currentImageHeight = height;
 
     if (graphicFlashcardImageFront) {
         if (dataUrl) {
@@ -2134,19 +2078,110 @@ function applyGraphicFlashcardData(data) {
         }
     }
 
-    if (graphicFlashcardCaption) {
-        if (caption) {
-            graphicFlashcardCaption.textContent = caption;
-            graphicFlashcardCaption.dataset.empty = 'false';
-        } else {
-            graphicFlashcardCaption.textContent = GRAPHIC_FLASHCARD_FALLBACK_CAPTION;
-            graphicFlashcardCaption.dataset.empty = 'true';
-        }
-    }
-
     syncGraphicFlashcardAnnotationsUI();
     updateGraphicFlashcardNavigation();
     updateGraphicFlashcardCardState();
+    applyGraphicFlashcardCrop('');
+    scheduleGraphicFlashcardCropUpdate();
+}
+
+function scheduleGraphicFlashcardCropUpdate() {
+    if (graphicFlashcardState.cropUpdateHandle !== null) {
+        clearTimeout(graphicFlashcardState.cropUpdateHandle);
+    }
+    graphicFlashcardState.cropUpdateHandle = setTimeout(() => {
+        graphicFlashcardState.cropUpdateHandle = null;
+        updateGraphicFlashcardCrop().catch((error) => {
+            console.error('Nepavyko atnaujinti grafinės kortelės iškirpties.', error);
+        });
+    }, 0);
+}
+
+function getPrimaryGraphicMask() {
+    const meta = getCurrentGraphicPageMeta();
+    if (!meta || !Array.isArray(meta.masks) || meta.masks.length === 0) {
+        return null;
+    }
+    return meta.masks[meta.masks.length - 1];
+}
+
+function applyGraphicFlashcardCrop(cropUrl) {
+    const nextUrl = cropUrl || graphicFlashcardState.currentDataUrl || '';
+    graphicFlashcardState.currentCropUrl = cropUrl || '';
+    if (!graphicFlashcardImageBack) {
+        return;
+    }
+    if (nextUrl) {
+        graphicFlashcardImageBack.src = nextUrl;
+        graphicFlashcardImageBack.hidden = false;
+    } else {
+        graphicFlashcardImageBack.removeAttribute('src');
+        graphicFlashcardImageBack.hidden = true;
+    }
+}
+
+function loadGraphicFlashcardImage(url) {
+    return new Promise((resolve, reject) => {
+        if (!url) {
+            reject(new Error('Trūksta paveikslėlio adreso.'));
+            return;
+        }
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = () => reject(new Error('Nepavyko įkelti paveikslėlio.'));
+        img.src = url;
+    });
+}
+
+async function updateGraphicFlashcardCrop() {
+    const token = ++graphicFlashcardState.cropRenderToken;
+    const imageUrl = graphicFlashcardState.currentDataUrl;
+    if (!imageUrl) {
+        applyGraphicFlashcardCrop('');
+        return;
+    }
+    const mask = getPrimaryGraphicMask();
+    if (!mask) {
+        applyGraphicFlashcardCrop('');
+        return;
+    }
+    try {
+        const image = await loadGraphicFlashcardImage(imageUrl);
+        if (token !== graphicFlashcardState.cropRenderToken) {
+            return;
+        }
+        const width = image.naturalWidth || image.width || graphicFlashcardState.currentImageWidth;
+        const height = image.naturalHeight || image.height || graphicFlashcardState.currentImageHeight;
+        if (!width || !height) {
+            applyGraphicFlashcardCrop('');
+            return;
+        }
+        const startX = clamp(Math.round((mask.x / 100) * width), 0, width);
+        const startY = clamp(Math.round((mask.y / 100) * height), 0, height);
+        const endX = clamp(Math.round(((mask.x + mask.width) / 100) * width), 0, width);
+        const endY = clamp(Math.round(((mask.y + mask.height) / 100) * height), 0, height);
+        const cropWidth = Math.max(1, endX - startX);
+        const cropHeight = Math.max(1, endY - startY);
+        if (cropWidth <= 2 || cropHeight <= 2) {
+            applyGraphicFlashcardCrop('');
+            return;
+        }
+        const cropCanvas = document.createElement('canvas');
+        cropCanvas.width = cropWidth;
+        cropCanvas.height = cropHeight;
+        const ctx = cropCanvas.getContext('2d', { willReadFrequently: false });
+        ctx.drawImage(image, startX, startY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
+        const cropUrl = cropCanvas.toDataURL('image/png', 0.95);
+        if (token !== graphicFlashcardState.cropRenderToken) {
+            return;
+        }
+        applyGraphicFlashcardCrop(cropUrl);
+    } catch (error) {
+        console.error('Nepavyko sukurti iškirptos vietos grafinėje kortelėje.', error);
+        if (token === graphicFlashcardState.cropRenderToken) {
+            applyGraphicFlashcardCrop('');
+        }
+    }
 }
 
 
