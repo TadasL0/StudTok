@@ -2300,7 +2300,7 @@ async function fetchStudyBundleViaOpenAI(text, apiKey, generationPlan) {
 
     if (includeQuiz) {
         instructionParts.push(
-            `Sudaryk ${quizCount} testinius klausimus, kuri\u0173 kiekvienas turi keturis atsakymo variantus. Variantus pateik lauke "options" (be raid\u017Ei\u0173), o teising\u0105 raid\u0119 (A, B, C arba D) \u012Fra\u0161yk lauke "correctOption". Jei gali, prid\u0117k trump\u0105 paai\u0161kinim\u0105 lauke "explanation".`
+            `Sudaryk ${quizCount} testinius klausimus, kuri\u0173 kiekvienas turi keturis atsakymo variantus. Klausimus formuluok taip, kad jie b\u016Bt\u0173 vidutinio ar auk\u0161tesnio sud\u0117tingumo ir reikalaut\u0173 keli\u0173 teksto detali\u0173. Kiekvienam klausimui pateik keturis \u012Ftikinamus, pana\u0161aus detali\u0161kumo atsakymo variantus, venk akivaizd\u017Eiai neteising\u0173 formuluo\u010Di\u0173. Variantus pateik lauke "options" (be raid\u017Ei\u0173), o teising\u0105 raid\u0119 (A, B, C arba D) \u012Fra\u0161yk lauke "correctOption". Jei gali, prid\u0117k trump\u0105 paai\u0161kinim\u0105 lauke "explanation".`
         );
     } else {
         instructionParts.push(
