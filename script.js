@@ -29,7 +29,7 @@ const graphicFlashcardLoadBtn = document.getElementById('graphic-flashcard-load'
 const graphicFlashcardOpenBtn = document.getElementById('graphic-flashcard-open');
 const graphicFlashcardCard = document.getElementById('graphic-flashcard-card');
 const graphicFlashcardImageFront = document.getElementById('graphic-flashcard-image-front');
-const graphicFlashcardImageBack = document.getElementById('graphic-flashcard-image-back');
+const graphicFlashcardCaption = document.getElementById('graphic-flashcard-caption');
 const graphicFlashcardPrevBtn = document.getElementById('graphic-flashcard-prev');
 const graphicFlashcardNextBtn = document.getElementById('graphic-flashcard-next');
 const graphicFlashcardCounter = document.getElementById('graphic-flashcard-counter');
@@ -114,6 +114,7 @@ const graphicFlashcardState = {
     pageBusy: false,
     renderToken: 0,
     currentDataUrl: '',
+    currentCaption: '',
     pendingFile: null,
     flipped: false,
     annotations: new Map(),
@@ -121,6 +122,7 @@ const graphicFlashcardState = {
 };
 const GRAPHIC_FLASHCARD_DEFAULT_STATUS = 'Įkelk PDF ir paspausk „Paruošti“, kad pamatytum schemas ir brėžinius.';
 const GRAPHIC_FLASHCARD_DEFAULT_PROMPT = 'Atspėk, koks čia brėžinys, ir apversk kortelę.';
+const GRAPHIC_FLASHCARD_FALLBACK_CAPTION = 'Pavadinimas nerastas. Atverk PDF, kad sužinotum daugiau.';
 const GRAPHIC_MASK_MIN_PERCENT = 2;
 const graphicMaskEditorState = {
     enabled: false,
@@ -1254,10 +1256,11 @@ function clearGraphicFlashcardImages() {
         graphicFlashcardImageFront.removeAttribute('src');
         graphicFlashcardImageFront.hidden = true;
     }
-    if (graphicFlashcardImageBack) {
-        graphicFlashcardImageBack.removeAttribute('src');
-        graphicFlashcardImageBack.hidden = true;
+    if (graphicFlashcardCaption) {
+        graphicFlashcardCaption.textContent = GRAPHIC_FLASHCARD_FALLBACK_CAPTION;
+        graphicFlashcardCaption.dataset.empty = 'true';
     }
+    graphicFlashcardState.currentCaption = '';
 }
 
 function resetGraphicFlashcardFlip() {
@@ -1709,6 +1712,7 @@ function resetGraphicFlashcards(options = {}) {
     graphicFlashcardState.pageBusy = false;
 
     graphicFlashcardState.currentDataUrl = '';
+    graphicFlashcardState.currentCaption = '';
 
     graphicFlashcardState.renderToken += 1;
     graphicFlashcardState.annotations = new Map();
@@ -1874,9 +1878,7 @@ async function prepareGraphicFlashcardsFromFile(file) {
         await renderGraphicFlashcard(true);
 
         if (graphicFlashcardState.currentDataUrl) {
-
-            setGraphicFlashcardStatus('Schemos paruoštos! Apversk kortelę, kai norėsi pamatyti pilną vaizdą.', 'success');
-
+            setGraphicFlashcardStatus('Schemos paruoštos! Apversk kortelę ir perskaityk pavadinimą.', 'success');
         }
 
     } catch (error) {
@@ -1923,6 +1925,7 @@ async function renderGraphicFlashcard(forceRender = false) {
     if (!graphicFlashcardState.ready || !graphicFlashcardState.pdf) {
 
         graphicFlashcardState.currentDataUrl = '';
+        graphicFlashcardState.currentCaption = '';
 
         clearGraphicFlashcardImages();
 
@@ -1967,19 +1970,12 @@ async function renderGraphicFlashcard(forceRender = false) {
     const pageNumber = graphicFlashcardState.index + 1;
 
     const cached = graphicFlashcardState.cache.get(pageNumber);
-
     if (cached && !forceRender) {
-
-        applyGraphicFlashcardImage(cached.url);
-
+        applyGraphicFlashcardData(cached);
         setGraphicFlashcardLoading(false);
-
         updateGraphicFlashcardNavigation();
-
         updateGraphicFlashcardCardState();
-
         return;
-
     }
 
     graphicFlashcardState.pageBusy = true;
@@ -1992,16 +1988,11 @@ async function renderGraphicFlashcard(forceRender = false) {
 
     try {
 
-        const dataUrl = await renderGraphicFlashcardPageImage(pageNumber);
-
-        if (dataUrl) {
-
-            graphicFlashcardState.cache.set(pageNumber, { url: dataUrl });
-
+        const pageData = await renderGraphicFlashcardPageImage(pageNumber);
+        if (pageData) {
+            graphicFlashcardState.cache.set(pageNumber, pageData);
             limitGraphicFlashcardCacheSize();
-
-            applyGraphicFlashcardImage(dataUrl);
-
+            applyGraphicFlashcardData(pageData);
         }
 
     } catch (error) {
@@ -2035,44 +2026,127 @@ async function renderGraphicFlashcardPageImage(pageNumber) {
     const scale = Math.min(Math.max(maxWidth / initialViewport.width, 1.1), 1.8);
     const viewport = page.getViewport({ scale });
     const canvas = document.createElement('canvas');
-    const context = canvas.getContext('2d', { willReadFrequently: false });
+    const context = canvas.getContext('2d', { willReadFrequently: true });
     canvas.width = Math.ceil(viewport.width);
     canvas.height = Math.ceil(viewport.height);
     await page.render({ canvasContext: context, viewport }).promise;
+    let textItems = [];
+    try {
+        const textContent = await page.getTextContent({ includeMarkedContent: true });
+        if (Array.isArray(textContent?.items)) {
+            textItems = textContent.items;
+            eraseTextFromCanvas(context, viewport, textItems);
+        }
+    } catch (error) {
+        console.error('Nepavyko nuskaityti PDF teksto turinio grafinėms kortelėms.', error);
+    }
+    const caption = deriveCaptionFromTextItems(textItems);
     const dataUrl = canvas.toDataURL('image/png', 0.92);
     canvas.width = 0;
     canvas.height = 0;
     if (graphicFlashcardState.renderToken !== renderToken) {
         return null;
     }
-    return dataUrl;
+    return { url: dataUrl, caption };
 }
 
-function applyGraphicFlashcardImage(dataUrl) {
+function eraseTextFromCanvas(context, viewport, textItems) {
+    if (!context || !viewport || !Array.isArray(textItems) || textItems.length === 0) {
+        return;
+    }
+    const padding = 3;
+    context.save();
+    context.fillStyle = '#ffffff';
+    textItems.forEach((item) => {
+        const raw = typeof item?.str === 'string' ? item.str : '';
+        if (!raw.trim()) {
+            return;
+        }
+        const transform = Array.isArray(item?.transform) ? item.transform : null;
+        if (!transform || transform.length !== 6) {
+            return;
+        }
+        const tx = pdfjsLib.Util.transform(viewport.transform, transform);
+        const x = tx[4];
+        const y = tx[5];
+        const fontHeight = Math.hypot(tx[1], tx[3]);
+        const scaledWidth = (item.width || 0) * viewport.scale;
+        const scaledHeight = (item.height || 0) * viewport.scale;
+        const width = scaledWidth > 0 ? scaledWidth : Math.max(raw.length * (fontHeight * 0.55), 12);
+        const height = scaledHeight > 0 ? scaledHeight : Math.max(fontHeight, 12);
+        const rectX = x - padding;
+        const rectY = y - height - padding;
+        const rectWidth = width + padding * 2;
+        const rectHeight = height + padding * 2;
+        context.fillRect(rectX, rectY, rectWidth, rectHeight);
+    });
+    context.restore();
+}
 
+function deriveCaptionFromTextItems(textItems) {
+    if (!Array.isArray(textItems) || textItems.length === 0) {
+        return '';
+    }
+    const lines = [];
+    let buffer = '';
+    textItems.forEach((item) => {
+        const raw = typeof item?.str === 'string' ? item.str : '';
+        const text = raw.replace(/\s+/g, ' ').trim();
+        if (text) {
+            buffer = buffer ? `${buffer} ${text}` : text;
+        }
+        if ((text && item?.hasEOL) || (!text && buffer && item?.hasEOL)) {
+            lines.push(buffer.trim());
+            buffer = '';
+        }
+    });
+    if (buffer) {
+        lines.push(buffer.trim());
+    }
+    const normalizedLines = lines
+        .map((line) => line.replace(/\s+/g, ' ').trim())
+        .filter((line) => line.length > 0);
+    if (normalizedLines.length === 0) {
+        return '';
+    }
+    const keywordPattern = /\b(?:schema|schem|paveiksl|diagram|grafik|lentel|iliustr|fig\.)/i;
+    const keywordLine = normalizedLines.find((line) => keywordPattern.test(line));
+    const captionSource = keywordLine || normalizedLines.find((line) => line.length > 18) || normalizedLines[0];
+    if (!captionSource) {
+        return '';
+    }
+    return captionSource.length > 180 ? `${captionSource.slice(0, 177).trim()}...` : captionSource;
+}
+
+function applyGraphicFlashcardData(data) {
+    const dataUrl = typeof data?.url === 'string' ? data.url : '';
+    const caption = typeof data?.caption === 'string' ? data.caption.trim() : '';
     graphicFlashcardState.currentDataUrl = dataUrl;
+    graphicFlashcardState.currentCaption = caption;
 
     if (graphicFlashcardImageFront) {
-
-        graphicFlashcardImageFront.src = dataUrl;
-
-        graphicFlashcardImageFront.hidden = false;
-
+        if (dataUrl) {
+            graphicFlashcardImageFront.src = dataUrl;
+            graphicFlashcardImageFront.hidden = false;
+        } else {
+            graphicFlashcardImageFront.removeAttribute('src');
+            graphicFlashcardImageFront.hidden = true;
+        }
     }
 
-    if (graphicFlashcardImageBack) {
-
-        graphicFlashcardImageBack.src = dataUrl;
-
-        graphicFlashcardImageBack.hidden = false;
-
+    if (graphicFlashcardCaption) {
+        if (caption) {
+            graphicFlashcardCaption.textContent = caption;
+            graphicFlashcardCaption.dataset.empty = 'false';
+        } else {
+            graphicFlashcardCaption.textContent = GRAPHIC_FLASHCARD_FALLBACK_CAPTION;
+            graphicFlashcardCaption.dataset.empty = 'true';
+        }
     }
 
     syncGraphicFlashcardAnnotationsUI();
     updateGraphicFlashcardNavigation();
-
     updateGraphicFlashcardCardState();
-
 }
 
 
