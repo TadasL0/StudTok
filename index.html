@@ -209,30 +209,6 @@
                     </form>
 
                     <div id="flashcard-widget" class="flashcard-widget" hidden aria-labelledby="flashcard-title">
-                        <div class="flashcard-widget__mode" role="tablist" aria-label="Korteli&#371; r&#279;&#382;imai">
-                            <button
-                                id="flashcard-mode-text"
-                                class="flashcard-widget__mode-btn"
-                                type="button"
-                                role="tab"
-                                aria-controls="flashcard-panel-text"
-                                aria-selected="true"
-                            >
-                                Tekstin&#279;s kortel&#279;s
-                            </button>
-                            <button
-                                id="flashcard-mode-visual"
-                                class="flashcard-widget__mode-btn"
-                                type="button"
-                                role="tab"
-                                aria-controls="flashcard-panel-visual"
-                                aria-selected="false"
-                                disabled
-                            >
-                                Grafin&#279;s kortel&#279;s
-                            </button>
-                        </div>
-
                         <div id="flashcard-panel-text" class="flashcard-widget__panel flashcard-widget__panel--text" data-mode-panel="text">
                             <div class="flashcard-widget__controls">
                                 <span class="flashcard-widget__controls-spacer" aria-hidden="true"></span>
@@ -274,98 +250,6 @@
                                 <button id="flashcard-regenerate" type="button" class="btn btn--secondary btn--tiny" disabled>Sukurti naujas korteles</button>
                             </div>
                         </div>
-
-                        <div
-                            id="flashcard-panel-visual"
-                            class="flashcard-widget__panel flashcard-widget__panel--visual"
-                            data-mode-panel="visual"
-                            hidden
-                            aria-live="polite"
-                        >
-                            <div class="graphic-flashcard">
-                                <div class="graphic-flashcard__status">
-                                    <p id="graphic-flashcard-status" class="graphic-flashcard__status-text" role="status">Įkelk PDF, kad pamatytum schemas ir brėžinius.</p>
-                                    <div class="graphic-flashcard__status-actions">
-                                        <button
-                                            id="graphic-flashcard-load"
-                                            type="button"
-                                            class="btn btn--secondary btn--tiny"
-                                            disabled
-                                        >
-                                            Paruošti grafines korteles
-                                        </button>
-                                        <button
-                                            id="graphic-flashcard-open"
-                                            type="button"
-                                            class="btn btn--ghost btn--tiny"
-                                            disabled
-                                            aria-label="Atidaryti &#353;&#303; PDF puslap&#303; naujame lange"
-                                        >
-                                            Atidaryti dideliu vaizdu
-                                        </button>
-                                    </div>
-                                </div>
-                                                                <div class="graphic-flashcard__stage">
-                                    <button
-                                        id="graphic-flashcard-card"
-                                        type="button"
-                                        class="flashcard-widget__card graphic-flashcard__card"
-                                        aria-live="polite"
-                                        aria-label="Apversti grafin&#279; kortel&#281;"
-                                        disabled
-                                    >
-                                        <div class="flashcard-widget__side graphic-flashcard__side graphic-flashcard__side--front">
-                                            <div class="graphic-flashcard__image-shell">
-                                                <img
-                                                    id="graphic-flashcard-image-front"
-                                                    class="graphic-flashcard__image graphic-flashcard__image--front"
-                                                    alt="PDF puslapio eskizas"
-                                                    loading="lazy"
-                                                    hidden
-                                                    draggable="false"
-                                                />
-                                                <div id="graphic-flashcard-mask-layer" class="graphic-flashcard__mask-layer" aria-hidden="true"></div>
-                                            </div>
-                                            <span id="graphic-flashcard-overlay" class="graphic-flashcard__overlay">Atsp&#279;k, koks &#269;ia br&#279;&#382;inys, ir apversk kortel&#281;.</span>
-                                        </div>
-                                        <div class="flashcard-widget__side graphic-flashcard__side graphic-flashcard__side--back">
-                                            <div class="graphic-flashcard__image-shell">
-                                                <img
-                                                    id="graphic-flashcard-image-back"
-                                                    class="graphic-flashcard__image graphic-flashcard__image--back"
-                                                    alt="PDF iškirpta sritis"
-                                                    loading="lazy"
-                                                    hidden
-                                                    draggable="false"
-                                                />
-                                            </div>
-                                        </div>
-                                    </button>
-                                    <div id="graphic-flashcard-loader" class="graphic-flashcard__loader" hidden aria-hidden="true"></div>
-                                </div>
-                                <div class="graphic-flashcard__tools">
-                                    <button id="graphic-flashcard-mask-toggle" type="button" class="btn btn--secondary btn--tiny" aria-pressed="false" disabled>Maskavimo r&#279;&#382;imas</button>
-                                    <button id="graphic-flashcard-mask-clear" type="button" class="btn btn--secondary btn--tiny" disabled>I&#353;valyti u&#382;dengimus</button>
-                                </div>
-                                <div class="graphic-flashcard__question">
-                                    <label class="flashcard-form__label" for="graphic-flashcard-question">Klausimas grafinei kortelei</label>
-                                    <textarea
-                                        id="graphic-flashcard-question"
-                                        class="input graphic-flashcard__question-input"
-                                        rows="2"
-                                        maxlength="160"
-                                        placeholder="Pvz.: Kuri schema vaizduoja gele&#382;ies ir anglies lydini&#371; strukt&#363;rines sudedam&#261;sias?"
-                                        disabled
-                                    ></textarea>
-                                    <p class="graphic-flashcard__question-hint">&#352;is klausimas rodomas kortel&#279;s priekyje, o apra&#353;ymai lieka kortel&#279;s kitoje pus&#279;je.</p>
-                                </div><div class="graphic-flashcard__nav">
-                                    <button id="graphic-flashcard-prev" type="button" class="btn btn--pill" aria-label="Ankstesnis PDF puslapis" disabled>Atgal</button>
-                                    <span id="graphic-flashcard-counter" class="graphic-flashcard__counter">Puslapis 0 / 0</span>
-                                    <button id="graphic-flashcard-next" type="button" class="btn btn--pill" aria-label="Kitas PDF puslapis" disabled>Pirmyn</button>
-                                </div>
-                                <p class="graphic-flashcard__hint">&#352;iame r&#279;&#382;ime treniruokis atpa&#382;inti grafikus, schemas ir diagramas i&#353; PDF. Apversk kortel&#281;, kai nor&#279;si pamatyti piln&#261; vaizd&#261;.</p>
-                            </div>
-                        </div>
                     </div>
                 </div>
 
@@ -389,28 +273,6 @@
                             <button id="quiz-regenerate" type="button" class="btn btn--secondary btn--tiny" disabled>Sukurti nauj&#261; test&#261;</button>
                         </div>
                     </div>
-                </div>
-
-                <div class="card notepad-card" aria-live="polite">
-                    <div class="notepad-card__header">
-                        <h3 class="card__title" id="notepad-title">Blizgus u&#382;ra&#353;&#371; bloknotas</h3>
-                        <p class="notepad-card__tagline">U&#382;sira&#353;yk u&#382;duotis, pa&#382;ym&#279;k, kai jos bus atliktos.</p>
-                    </div>
-                    <form id="notepad-form" class="notepad-form" aria-labelledby="notepad-title">
-                        <input id="notepad-input" class="input notepad-input" type="text" maxlength="160" placeholder="" autocomplete="off" required />
-                        <button class="btn btn--primary btn--tiny" type="submit">Prid&#279;ti &#303;ra&#353;&#261;</button>
-                    </form>
-                    <ul id="notepad-list" class="notepad-list"></ul>
-                    <p class="notepad-empty" hidden>Sukurk pirm&#261; u&#382;duot&#303;!</p>
-                </div>
-
-                <div class="card sticky-card" aria-live="polite">
-                    <div class="sticky-card__header">
-                        <h3 class="card__title" id="sticky-title">Prisegt&#371; lapeli&#371; lenta</h3>
-                        <p class="sticky-card__tagline">Prisek m&#279;gstamas id&#279;jas. Atsek, kai jos neb&#279;ra reikalingos.</p>
-                        <button id="clear-stickies" type="button" class="btn btn--secondary btn--tiny">I&#353;valyti lent&#261;</button>
-                    </div>
-                    <div id="sticky-board" class="sticky-board" aria-labelledby="sticky-title"></div>
                 </div>
             </div>
         </section>
