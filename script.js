@@ -50,10 +50,13 @@ const quizQuestion = document.getElementById('quiz-question');
 const quizOptions = document.getElementById('quiz-options');
 const quizProgress = document.getElementById('quiz-progress');
 const quizFeedback = document.getElementById('quiz-feedback');
-const quizNextButton = document.getElementById('quiz-next');
+const quizStartButton = document.getElementById('quiz-start');
+const quizStopButton = document.getElementById('quiz-stop');
 const quizRestartButton = document.getElementById('quiz-restart');
 const quizEmptyDefaultText = quizEmpty?.textContent || '';
 const quizNotSelectedText = 'Testas nebuvo pasirinktas. Pa\u017Eym\u0117k "ABCD test\u0105", jei jo reikia.';
+const quizTimerValue = document.getElementById('quiz-timer');
+const quizScoreValue = document.getElementById('quiz-score');
 
 const pdfFileNameEmptyText = pdfFileName?.dataset?.empty || 'Failas nepasirinktas';
 const PASSCODE = 'differentdimension';
@@ -79,6 +82,10 @@ const flashcardState = {
 };
 const flashcardHistory = new Set();
 
+const QUIZ_ROUND_DURATION_SECONDS = 60;
+const QUIZ_AUTO_ADVANCE_DELAY_MS = 750;
+const QUIZ_TIMER_WARNING_THRESHOLD = 10;
+
 const quizState = {
     baseQuestions: [],
     questions: [],
@@ -86,6 +93,11 @@ const quizState = {
     score: 0,
     answered: false,
     completedRun: false,
+    roundActive: false,
+    timeLeft: QUIZ_ROUND_DURATION_SECONDS,
+    timerId: null,
+    autoAdvanceId: null,
+    answeredCount: 0,
 };
 
 const generationState = {
@@ -215,7 +227,7 @@ function updateRegenerateButtonsAvailability() {
         regenerateFlashcardsBtn.disabled = generationBusy || !hasStoredText || !hasCredential || !hasCards;
     }
     if (regenerateQuizBtn) {
-        const hasQuestions = quizState.questions.length > 0;
+        const hasQuestions = quizState.baseQuestions.length > 0;
         regenerateQuizBtn.disabled = generationBusy || !hasStoredText || !hasCredential || !hasQuestions;
     }
     if (flashcardShuffleBtn) {
@@ -433,6 +445,163 @@ function registerQuizCompletion() {
             }
         }
     }
+}
+
+function stopQuizTimer() {
+    if (quizState.timerId) {
+        clearInterval(quizState.timerId);
+        quizState.timerId = null;
+    }
+}
+
+function clearQuizAutoAdvance() {
+    if (quizState.autoAdvanceId) {
+        clearTimeout(quizState.autoAdvanceId);
+        quizState.autoAdvanceId = null;
+    }
+}
+
+function updateQuizTimerDisplay() {
+    if (!quizTimerValue) {
+        return;
+    }
+    const seconds = Math.max(0, Math.floor(quizState.timeLeft));
+    quizTimerValue.textContent = `${seconds}s`;
+    const timerHolder = quizTimerValue.closest('.quiz-widget__status-item');
+    if (timerHolder) {
+        timerHolder.classList.toggle(
+            'quiz-widget__status-item--warning',
+            quizState.roundActive && seconds <= QUIZ_TIMER_WARNING_THRESHOLD
+        );
+    }
+}
+
+function updateQuizScoreboard() {
+    if (quizScoreValue) {
+        quizScoreValue.textContent = String(Math.max(0, quizState.score));
+    }
+    if (quizProgress) {
+        quizProgress.textContent = String(Math.max(0, quizState.answeredCount));
+    }
+}
+
+function updateQuizControlAvailability() {
+    const hasQuestions = quizState.baseQuestions.length > 0;
+    if (quizStartButton) {
+        quizStartButton.disabled = !hasQuestions || quizState.roundActive;
+        quizStartButton.textContent = quizState.roundActive ? 'Vyksta...' : 'Startuoti (60 s)';
+    }
+    if (quizStopButton) {
+        quizStopButton.disabled = !quizState.roundActive;
+    }
+    if (quizRestartButton) {
+        quizRestartButton.disabled = !hasQuestions;
+    }
+}
+
+function resetTimedQuiz(message = '') {
+    stopQuizTimer();
+    clearQuizAutoAdvance();
+    quizState.roundActive = false;
+    quizState.answered = false;
+    quizState.completedRun = false;
+    quizState.timeLeft = QUIZ_ROUND_DURATION_SECONDS;
+    quizState.score = 0;
+    quizState.answeredCount = 0;
+    if (quizState.baseQuestions.length > 0) {
+        quizState.questions = buildShuffledQuizQuestions(quizState.baseQuestions);
+        quizState.index = 0;
+    } else {
+        quizState.questions = [];
+        quizState.index = 0;
+    }
+    updateQuizTimerDisplay();
+    updateQuizScoreboard();
+    renderQuizQuestion();
+    if (quizFeedback) {
+        quizFeedback.textContent = message
+            ? message
+            : quizState.baseQuestions.length > 0
+            ? 'Paspausk "Startuoti (60 s)" ir rink ta\u0161kus.'
+            : '';
+    }
+    updateQuizControlAvailability();
+}
+
+function startQuizRound() {
+    if (quizState.baseQuestions.length === 0) {
+        return;
+    }
+    stopQuizTimer();
+    clearQuizAutoAdvance();
+    quizState.roundActive = true;
+    quizState.completedRun = false;
+    quizState.timeLeft = QUIZ_ROUND_DURATION_SECONDS;
+    quizState.score = 0;
+    quizState.answeredCount = 0;
+    quizState.index = 0;
+    quizState.questions = buildShuffledQuizQuestions(quizState.baseQuestions);
+    quizState.answered = false;
+    updateQuizTimerDisplay();
+    updateQuizScoreboard();
+    renderQuizQuestion();
+    if (quizFeedback) {
+        quizFeedback.textContent = 'Skub\u0117k ir rink ta\u0161kus per 60 sekund\u017Ei\u0173!';
+    }
+    updateQuizControlAvailability();
+
+    quizState.timerId = setInterval(() => {
+        quizState.timeLeft -= 1;
+        updateQuizTimerDisplay();
+        if (quizState.timeLeft <= 0) {
+            endQuizRound('time');
+        }
+    }, 1000);
+}
+
+function endQuizRound(reason = 'time') {
+    if (!quizState.baseQuestions.length) {
+        return;
+    }
+    stopQuizTimer();
+    clearQuizAutoAdvance();
+    const wasActive = quizState.roundActive;
+    quizState.roundActive = false;
+    if (quizOptions) {
+        const buttons = quizOptions.querySelectorAll('.quiz-option');
+        buttons.forEach((button) => {
+            button.disabled = true;
+            button.classList.add('quiz-option--disabled');
+        });
+    }
+    if (wasActive && quizFeedback) {
+        const summary =
+            reason === 'manual'
+                ? `Sustabdei i\u0161\u0161\u016Bk\u012F. Surinkai ${quizState.score} ta\u0161kus.`
+                : `Laikas! Surinkai ${quizState.score} ta\u0161kus.`;
+        quizFeedback.textContent = summary;
+    }
+    if (wasActive) {
+        registerQuizCompletion();
+    }
+    updateQuizControlAvailability();
+}
+
+function advanceQuizQuestion() {
+    if (quizState.baseQuestions.length === 0 || quizState.questions.length === 0) {
+        return;
+    }
+    if (!quizState.roundActive) {
+        renderQuizQuestion();
+        return;
+    }
+    quizState.index += 1;
+    if (quizState.index >= quizState.questions.length) {
+        quizState.questions = buildShuffledQuizQuestions(quizState.baseQuestions);
+        quizState.index = 0;
+    }
+    quizState.answered = false;
+    renderQuizQuestion();
 }
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
@@ -1535,11 +1704,16 @@ function clearFlashcardWidget() {
 }
 
 function clearQuizWidget() {
+    stopQuizTimer();
+    clearQuizAutoAdvance();
     quizState.baseQuestions = [];
     quizState.questions = [];
     quizState.index = 0;
     quizState.score = 0;
     quizState.answered = false;
+    quizState.roundActive = false;
+    quizState.timeLeft = QUIZ_ROUND_DURATION_SECONDS;
+    quizState.answeredCount = 0;
     resetQuizRunState();
     if (quizWidget) {
         quizWidget.hidden = true;
@@ -1554,21 +1728,23 @@ function clearQuizWidget() {
     if (quizOptions) {
         quizOptions.innerHTML = '';
     }
-    if (quizProgress) {
-        quizProgress.textContent = '0 / 0';
-    }
+    updateQuizTimerDisplay();
+    updateQuizScoreboard();
     if (quizFeedback) {
         quizFeedback.textContent = '';
-    }
-    if (quizNextButton) {
-        quizNextButton.disabled = true;
-        quizNextButton.textContent = 'Kitas klausimas';
     }
     if (quizRestartButton) {
         quizRestartButton.disabled = true;
     }
+    if (quizStartButton) {
+        quizStartButton.disabled = true;
+    }
+    if (quizStopButton) {
+        quizStopButton.disabled = true;
+    }
     updateQuizPlaceholderOnMode();
     updateRegenerateButtonsAvailability();
+    updateQuizControlAvailability();
 }
 
 function getGenerationNoteValue() {
@@ -1677,11 +1853,7 @@ function loadQuizQuestions(questions) {
     }
 
     quizState.baseQuestions = baseQuestions;
-    quizState.questions = buildShuffledQuizQuestions(baseQuestions);
-    quizState.index = 0;
-    quizState.score = 0;
-    quizState.answered = false;
-    resetQuizRunState();
+    resetTimedQuiz();
 
     if (quizEmpty) {
         quizEmpty.hidden = true;
@@ -1689,10 +1861,6 @@ function loadQuizQuestions(questions) {
     if (quizWidget) {
         quizWidget.hidden = false;
     }
-    if (quizRestartButton) {
-        quizRestartButton.disabled = false;
-    }
-    renderQuizQuestion();
     updateRegenerateButtonsAvailability();
 }
 
@@ -1700,12 +1868,7 @@ function reshuffleQuizQuestions() {
     if (quizState.baseQuestions.length === 0) {
         return;
     }
-    quizState.questions = buildShuffledQuizQuestions(quizState.baseQuestions);
-    quizState.index = 0;
-    quizState.score = 0;
-    quizState.answered = false;
-    resetQuizRunState();
-    renderQuizQuestion();
+    resetTimedQuiz('Klausimai permai\u0161yti! Paspausk "Startuoti" ir t\u0119sk.');
     updateRegenerateButtonsAvailability();
 }
 
@@ -1769,16 +1932,26 @@ async function regenerateQuizQuestions() {
 }
 
 function renderQuizQuestion() {
-    if (!quizWidget || quizState.questions.length === 0) {
-        clearQuizWidget();
+    if (!quizWidget) {
+        return;
+    }
+    if (quizState.baseQuestions.length === 0 || quizState.questions.length === 0) {
+        if (quizQuestion) {
+            quizQuestion.textContent = quizState.baseQuestions.length === 0 ? '' : 'Pasiruo\u0161usi startui?';
+        }
+        if (quizOptions) {
+            quizOptions.innerHTML = '';
+        }
         return;
     }
 
-    const total = quizState.questions.length;
     const current = quizState.questions[quizState.index];
 
     if (quizQuestion) {
         quizQuestion.textContent = current.question;
+    }
+    if (quizState.roundActive && !quizState.answered && quizFeedback) {
+        quizFeedback.textContent = '';
     }
 
     if (quizOptions) {
@@ -1800,27 +1973,18 @@ function renderQuizQuestion() {
             textSpan.textContent = optionText;
 
             button.append(letterSpan, textSpan);
+            if (!quizState.roundActive || quizState.answered) {
+                button.disabled = true;
+                button.classList.add('quiz-option--disabled');
+            }
             button.addEventListener('click', () => handleQuizOptionSelect(index));
             quizOptions.appendChild(button);
         });
     }
-
-    if (quizProgress) {
-        quizProgress.textContent = `${quizState.index + 1} / ${total}`;
-    }
-    if (quizFeedback) {
-        quizFeedback.textContent = '';
-    }
-    if (quizNextButton) {
-        quizNextButton.disabled = true;
-        quizNextButton.textContent = quizState.index < total - 1 ? 'Kitas klausimas' : 'Baigti test\u0105';
-    }
-
-    quizState.answered = false;
 }
 
 function handleQuizOptionSelect(optionIndex) {
-    if (!quizOptions || quizState.questions.length === 0 || quizState.answered) {
+    if (!quizOptions || quizState.questions.length === 0 || quizState.answered || !quizState.roundActive) {
         return;
     }
 
@@ -1852,35 +2016,15 @@ function handleQuizOptionSelect(optionIndex) {
     }
 
     quizState.answered = true;
-    if (quizNextButton) {
-        quizNextButton.disabled = false;
+    quizState.answeredCount += 1;
+    updateQuizScoreboard();
+    if (quizState.roundActive) {
+        clearQuizAutoAdvance();
+        quizState.autoAdvanceId = setTimeout(() => {
+            quizState.autoAdvanceId = null;
+            advanceQuizQuestion();
+        }, QUIZ_AUTO_ADVANCE_DELAY_MS);
     }
-}
-
-function showQuizSummary() {
-    if (!quizWidget) {
-        return;
-    }
-    const total = quizState.questions.length;
-    if (quizQuestion) {
-        quizQuestion.textContent = 'Testas baigtas!';
-    }
-    if (quizOptions) {
-        quizOptions.innerHTML = '';
-    }
-    if (quizProgress) {
-        quizProgress.textContent = `${total} / ${total}`;
-    }
-    if (quizFeedback) {
-        quizFeedback.textContent = `Surinkai ${quizState.score} i\u0161 ${total}.`;
-    }
-    if (quizNextButton) {
-        quizNextButton.disabled = true;
-        quizNextButton.textContent = 'Pabaiga';
-    }
-
-    quizState.answered = true;
-    registerQuizCompletion();
 }
 
 introForm?.addEventListener('submit', (event) => {
@@ -1972,29 +2116,22 @@ flashcardShuffleBtn?.addEventListener('click', () => {
     shuffleFlashcards();
 });
 
+quizStartButton?.addEventListener('click', () => {
+    startQuizRound();
+});
 
-quizNextButton?.addEventListener('click', () => {
-    if (quizState.questions.length === 0 || !quizState.answered) {
+quizStopButton?.addEventListener('click', () => {
+    if (!quizState.roundActive) {
         return;
     }
-    if (quizState.index < quizState.questions.length - 1) {
-        quizState.index += 1;
-        quizState.answered = false;
-        renderQuizQuestion();
-    } else {
-        showQuizSummary();
-    }
+    endQuizRound('manual');
 });
 
 quizRestartButton?.addEventListener('click', () => {
-    if (quizState.questions.length === 0) {
+    if (quizState.baseQuestions.length === 0) {
         return;
     }
-    quizState.index = 0;
-    quizState.score = 0;
-    quizState.answered = false;
-    resetQuizRunState();
-    renderQuizQuestion();
+    resetTimedQuiz('Viskas paruo\u0161ta naujam bandymui! Paspausk "Startuoti".');
 });
 
 shuffleQuizBtn?.addEventListener('click', () => {
