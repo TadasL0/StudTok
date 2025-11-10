@@ -1313,6 +1313,51 @@ body, h1, h2, h3, h4, h5, h6, p, span, label, li {
     border: 0;
 }
 
+.important-dates-shell {
+    position: relative;
+    border-radius: 26px;
+    padding: clamp(16px, 4vw, 32px);
+    background: linear-gradient(135deg, rgba(255, 246, 252, 0.96), rgba(255, 226, 244, 0.92));
+    box-shadow:
+        inset 0 0 0 1px rgba(255, 255, 255, 0.6),
+        0 24px 48px rgba(255, 157, 208, 0.25);
+}
+
+.important-dates-shell::after {
+    content: '';
+    position: absolute;
+    inset: 14px;
+    border-radius: 22px;
+    border: 1px dashed rgba(255, 157, 208, 0.4);
+    pointer-events: none;
+}
+
+.important-dates-shell__ribbon {
+    display: inline-block;
+    margin: 0 0 6px;
+    padding: 6px 18px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.9);
+    color: var(--text-dark);
+    font-family: 'Caveat', 'Quicksand', 'Segoe UI', cursive;
+    font-size: clamp(1.4rem, 4vw, 2rem);
+    letter-spacing: 0.05em;
+    box-shadow: 0 12px 24px rgba(255, 157, 208, 0.25);
+}
+
+.important-dates-shell__hint {
+    margin: 0 0 14px;
+    font-size: 0.95rem;
+    color: rgba(68, 38, 63, 0.75);
+    font-family: 'Caveat', 'Quicksand', 'Segoe UI', cursive;
+}
+
+.important-dates-shell__iframe {
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 20px 40px rgba(255, 157, 208, 0.28);
+}
+
 
 
 .timetable-card__details[open] .timetable-card__summary::after {
