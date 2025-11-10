@@ -115,13 +115,87 @@
                         </summary>
                         <div class="timetable-card__panel">
                             <div class="timetable-card__panel-content">
-                                <iframe
-                                    title="Studij&#371; tvarkara&#353;tis"
-                                    src="https://docs.google.com/spreadsheets/d/e/2PACX-1vSXYC-ZQPMy3ViRMeLZXHDIkOJx1e6dfVmqWyWkCtWWBuhD06XFycAhdjIKIVA7_L-REJh-qKL1qnS4/pubhtml?widget=true&amp;headers=false"
-                                    loading="lazy"
-                                    referrerpolicy="no-referrer"
-                                    class="timetable-card__iframe"
-                                ></iframe>
+                                <section class="important-dates" aria-live="polite">
+                                    <header class="important-dates__header">
+                                        <div>
+                                            <p class="important-dates__eyebrow">Termino radaras</p>
+                                            <p id="important-next-title" class="important-dates__title">Kol kas be termin&#371;</p>
+                                        </div>
+                                        <div class="important-dates__status-wrap">
+                                            <span id="important-dates-status" class="important-dates__status" data-tone="muted">Kraunama...</span>
+                                            <button
+                                                id="important-dates-refresh"
+                                                type="button"
+                                                class="btn btn--ghost btn--tiny"
+                                                aria-live="polite"
+                                            >
+                                                Atnaujinti
+                                            </button>
+                                        </div>
+                                    </header>
+                                    <div class="important-dates__highlight" id="important-dates-highlight">
+                                        <span id="important-next-badge" class="important-dates__badge">Terminas</span>
+                                        <p class="important-dates__highlight-date" id="important-next-date">&mdash;</p>
+                                        <div class="important-dates__countdown" aria-live="polite">
+                                            <span id="important-next-countdown" class="important-dates__countdown-value">&mdash;</span>
+                                            <span id="important-next-countdown-label" class="important-dates__countdown-label">dienos</span>
+                                        </div>
+                                        <p id="important-next-note" class="important-dates__highlight-note">Kol kas nerasta artim&#371; termin&#371;.</p>
+                                    </div>
+                                    <div class="important-dates__list-header">
+                                        <div>
+                                            <p class="important-dates__eyebrow">Artimiausi terminai</p>
+                                            <p class="important-dates__subtitle">Filtruok pagal laik&#261;</p>
+                                        </div>
+                                    </div>
+                                    <div
+                                        id="important-dates-filters"
+                                        class="important-dates__filters"
+                                        role="group"
+                                        aria-label="Filtruoti svarbias datas"
+                                    >
+                                        <button type="button" class="chip chip--active" data-important-filter="upcoming">Artimiausios</button>
+                                        <button type="button" class="chip" data-important-filter="month">&#352;io m&#279;nesio</button>
+                                        <button type="button" class="chip" data-important-filter="all">Visos</button>
+                                    </div>
+                                    <ul id="important-dates-list" class="important-dates__list"></ul>
+                                    <p id="important-dates-empty" class="important-dates__empty" hidden>Kol kas n&#279;ra svarbi&#371; dat&#371; &#353;iam filtrui.</p>
+                                    <div class="important-dates__footer">
+                                        <a
+                                            id="important-dates-sheet-link"
+                                            class="btn btn--secondary btn--tiny"
+                                            href="https://docs.google.com/spreadsheets/d/e/2PACX-1vSXYC-ZQPMy3ViRMeLZXHDIkOJx1e6dfVmqWyWkCtWWBuhD06XFycAhdjIKIVA7_L-REJh-qKL1qnS4/pubhtml?widget=true&amp;headers=false"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                        >
+                                            Atidaryti lentel&#281;
+                                        </a>
+                                        <button
+                                            id="important-dates-toggle-embed"
+                                            type="button"
+                                            class="btn btn--ghost btn--tiny"
+                                            aria-expanded="false"
+                                        >
+                                            Rodyti &#303;terpt&#261; lentel&#281;
+                                        </button>
+                                    </div>
+                                    <div
+                                        id="important-dates-embed"
+                                        class="important-dates__embed"
+                                        hidden
+                                        data-sheet-url="https://docs.google.com/spreadsheets/d/e/2PACX-1vSXYC-ZQPMy3ViRMeLZXHDIkOJx1e6dfVmqWyWkCtWWBuhD06XFycAhdjIKIVA7_L-REJh-qKL1qnS4/pubhtml?widget=true&amp;headers=false"
+                                        data-sheet-csv="https://docs.google.com/spreadsheets/d/e/2PACX-1vSXYC-ZQPMy3ViRMeLZXHDIkOJx1e6dfVmqWyWkCtWWBuhD06XFycAhdjIKIVA7_L-REJh-qKL1qnS4/pub?output=csv"
+                                    >
+                                        <iframe
+                                            id="important-dates-iframe"
+                                            title="Studij&#371; tvarkara&#353;tis"
+                                            src="https://docs.google.com/spreadsheets/d/e/2PACX-1vSXYC-ZQPMy3ViRMeLZXHDIkOJx1e6dfVmqWyWkCtWWBuhD06XFycAhdjIKIVA7_L-REJh-qKL1qnS4/pubhtml?widget=true&amp;headers=false"
+                                            loading="lazy"
+                                            referrerpolicy="no-referrer"
+                                            class="timetable-card__iframe"
+                                        ></iframe>
+                                    </div>
+                                </section>
                             </div>
                         </div>
                     </details>

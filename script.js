@@ -42,6 +42,20 @@ const timetableWeekEmpty = document.getElementById('timetable-week-empty');
 const timetableToggleWeekBtn = document.getElementById('timetable-toggle-week');
 const rewardMeter = document.querySelector('.reward-meter');
 const rewardCount = document.getElementById('reward-count');
+const importantDatesList = document.getElementById('important-dates-list');
+const importantDatesEmpty = document.getElementById('important-dates-empty');
+const importantDatesStatus = document.getElementById('important-dates-status');
+const importantDatesRefreshBtn = document.getElementById('important-dates-refresh');
+const importantDatesFilters = document.getElementById('important-dates-filters');
+const importantDatesToggleEmbedBtn = document.getElementById('important-dates-toggle-embed');
+const importantDatesEmbed = document.getElementById('important-dates-embed');
+const importantDatesHighlightTitle = document.getElementById('important-next-title');
+const importantDatesHighlightDate = document.getElementById('important-next-date');
+const importantDatesHighlightCountdown = document.getElementById('important-next-countdown');
+const importantDatesCountdownLabel = document.getElementById('important-next-countdown-label');
+const importantDatesHighlightBadge = document.getElementById('important-next-badge');
+const importantDatesHighlightNote = document.getElementById('important-next-note');
+const importantDatesSheetLink = document.getElementById('important-dates-sheet-link');
 let layoutTopSyncFrameId = null;
 
 const quizWidget = document.getElementById('quiz-widget');
@@ -612,6 +626,20 @@ const TIMETABLE_CURRENT_LABEL = '\u0160ios savait\u0117s paskaitos';
 const TIMETABLE_NEXT_LABEL = 'Ateinan\u010Dios savait\u0117s paskaitos';
 const TIMETABLE_WEEK_ORDER = ['Pirmadienis', 'Antradienis', 'Tre\u010diadienis', 'Ketvirtadienis', 'Penktadienis', '\u0160e\u0161tadienis'];
 const TIMETABLE_WEEKDAY_LABELS = ['Sekmadienis', 'Pirmadienis', 'Antradienis', 'Tre\u010diadienis', 'Ketvirtadienis', 'Penktadienis', '\u0160e\u0161tadienis'];
+const IMPORTANT_DATES_MONTH_SHORT = ['Sau', 'Vas', 'Kov', 'Bal', 'Geg', 'Bir', 'Lie', 'Rgp', 'Rgs', 'Spa', 'Lap', 'Gru'];
+const IMPORTANT_DATES_WEEKDAY_SHORT = ['Sek', 'Pir', 'Ant', 'Tre', 'Ket', 'Pen', '\u0160e'];
+const IMPORTANT_DATES_MAX_UPCOMING = 6;
+const importantDatesCsvUrl = importantDatesEmbed?.dataset?.sheetCsv || '';
+const importantDatesSheetUrl = importantDatesEmbed?.dataset?.sheetUrl || importantDatesSheetLink?.href || '';
+const importantDatesState = {
+    items: [],
+    filter: 'upcoming',
+    loading: false,
+    lastUpdated: null,
+    highlightId: null,
+};
+let importantDatesAbortController = null;
+let importantDatesCountdownTimeoutId = null;
 const TIMETABLE_DATA = {
     1: {
         Pirmadienis: [
@@ -1138,6 +1166,512 @@ function scheduleWeekIndicatorUpdate() {
         updateWeekIndicator();
         scheduleWeekIndicatorUpdate();
     }, Math.max(delay + 1000, 1000));
+}
+
+function parseCsvRows(text) {
+    const rows = [];
+    if (typeof text !== 'string' || text.trim().length === 0) {
+        return rows;
+    }
+    let current = '';
+    let inQuotes = false;
+    let row = [];
+    for (let i = 0; i < text.length; i += 1) {
+        const char = text[i];
+        if (char === '"') {
+            if (inQuotes && text[i + 1] === '"') {
+                current += '"';
+                i += 1;
+            } else {
+                inQuotes = !inQuotes;
+            }
+            continue;
+        }
+        if (char === ',' && !inQuotes) {
+            row.push(current);
+            current = '';
+            continue;
+        }
+        if ((char === '\n' || char === '\r') && !inQuotes) {
+            if (char === '\r' && text[i + 1] === '\n') {
+                i += 1;
+            }
+            row.push(current);
+            rows.push(row);
+            row = [];
+            current = '';
+            continue;
+        }
+        current += char;
+    }
+    if (row.length > 0 || current !== '') {
+        row.push(current);
+        rows.push(row);
+    }
+    return rows.filter((cells) => cells.some((cell) => typeof cell === 'string' && cell.trim().length > 0));
+}
+
+function findColumnIndex(headers, candidates) {
+    if (!Array.isArray(headers)) {
+        return -1;
+    }
+    return headers.findIndex((header) =>
+        candidates.some((term) => typeof header === 'string' && header.includes(term))
+    );
+}
+
+function normaliseSpreadsheetDate(value) {
+    if (value === undefined || value === null) {
+        return null;
+    }
+    const raw = String(value).trim();
+    if (!raw) {
+        return null;
+    }
+    const numeric = Number(raw);
+    if (!Number.isNaN(numeric) && numeric > 20000) {
+        const excelEpoch = Date.UTC(1899, 11, 30);
+        const excelDate = new Date(excelEpoch + numeric * MS_PER_DAY);
+        excelDate.setHours(12, 0, 0, 0);
+        return excelDate;
+    }
+    const cleaned = raw.replace(/[\/.]/g, '-').replace(/[–—]/g, '-').replace(/\s+/g, ' ').trim();
+    const parsedValue = Date.parse(cleaned);
+    if (!Number.isNaN(parsedValue)) {
+        const parsedDate = new Date(parsedValue);
+        parsedDate.setHours(12, 0, 0, 0);
+        return parsedDate;
+    }
+    const fallbackMatch = cleaned.match(/^(\d{1,2})-(\d{1,2})-(\d{2,4})$/);
+    if (fallbackMatch) {
+        const [, dayPart, monthPart, yearPart] = fallbackMatch;
+        const year = yearPart.length === 2 ? 2000 + Number(yearPart) : Number(yearPart);
+        const fallbackDate = new Date(year, Number(monthPart) - 1, Number(dayPart), 12, 0, 0, 0);
+        return fallbackDate;
+    }
+    return null;
+}
+
+function extractTimeFromValue(value) {
+    if (value === undefined || value === null) {
+        return '';
+    }
+    const textValue = String(value);
+    const match = textValue.match(/(\d{1,2}:\d{2})(?:\s*[-–]\s*(\d{1,2}:\d{2}))?/);
+    if (!match) {
+        return '';
+    }
+    if (match[2]) {
+        return `${match[1]}\u2013${match[2]}`;
+    }
+    return match[1];
+}
+
+function normaliseExternalUrl(value) {
+    if (!value) {
+        return '';
+    }
+    const trimmed = String(value).trim();
+    if (!trimmed) {
+        return '';
+    }
+    if (/^(https?:)?\/\//i.test(trimmed) || trimmed.startsWith('#')) {
+        return trimmed.startsWith('//') ? `https:${trimmed}` : trimmed;
+    }
+    return `https://${trimmed}`;
+}
+
+function buildImportantDateEntriesFromCsv(text) {
+    const rows = parseCsvRows(text);
+    if (!rows || rows.length < 2) {
+        return [];
+    }
+    const headers = rows[0].map((cell) => (cell || '').trim().toLowerCase());
+    const columnMap = {
+        date: findColumnIndex(headers, ['data', 'deadline', 'termin', 'date']),
+        title: findColumnIndex(headers, ['pavadin', 'tema', 'title', 'dalykas']),
+        type: findColumnIndex(headers, ['tip', 'kategor', 'type']),
+        note: findColumnIndex(headers, ['pastab', 'note', 'komentar', 'apras']),
+        url: findColumnIndex(headers, ['nuorod', 'url', 'link']),
+        time: findColumnIndex(headers, ['laik', 'time']),
+        location: findColumnIndex(headers, ['vieta', 'location', 'auditor']),
+    };
+
+    const items = [];
+    rows.slice(1).forEach((row, index) => {
+        const rawDateValue =
+            columnMap.date >= 0 && row[columnMap.date] !== undefined ? row[columnMap.date] : row[0];
+        const parsedDate = normaliseSpreadsheetDate(rawDateValue);
+        if (!parsedDate) {
+            return;
+        }
+        const titleSource = columnMap.title >= 0 ? row[columnMap.title] : '';
+        const title = (titleSource || '').trim() || 'Be pavadinimo';
+        const type = columnMap.type >= 0 ? (row[columnMap.type] || '').trim() : '';
+        const note = columnMap.note >= 0 ? (row[columnMap.note] || '').trim() : '';
+        const url = columnMap.url >= 0 ? (row[columnMap.url] || '').trim() : '';
+        const location = columnMap.location >= 0 ? (row[columnMap.location] || '').trim() : '';
+        const explicitTime = columnMap.time >= 0 ? (row[columnMap.time] || '').trim() : '';
+        const derivedTime = explicitTime || extractTimeFromValue(rawDateValue);
+        items.push({
+            id: `${parsedDate.getTime()}-${index}`,
+            date: parsedDate,
+            title,
+            type,
+            note,
+            url: normaliseExternalUrl(url),
+            timeText: derivedTime,
+            location,
+        });
+    });
+    items.sort((a, b) => a.date - b.date);
+    return items;
+}
+
+function setImportantDatesStatus(message, tone = 'muted') {
+    if (!importantDatesStatus) {
+        return;
+    }
+    importantDatesStatus.textContent = message;
+    importantDatesStatus.dataset.tone = tone;
+}
+
+function formatImportantDateHeadline(date) {
+    const dayName = TIMETABLE_WEEKDAY_LABELS[date.getDay()] || '';
+    const monthShort = IMPORTANT_DATES_MONTH_SHORT[date.getMonth()] || '';
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${dayName}, ${monthShort} ${day}`;
+}
+
+function formatImportantDateMeta(item) {
+    const parts = [];
+    const weekday = IMPORTANT_DATES_WEEKDAY_SHORT[item.date.getDay()] || '';
+    const monthShort = IMPORTANT_DATES_MONTH_SHORT[item.date.getMonth()] || '';
+    const day = String(item.date.getDate()).padStart(2, '0');
+    if (weekday || monthShort) {
+        parts.push(`${weekday} \u2022 ${monthShort} ${day}`.trim());
+    }
+    if (item.timeText) {
+        parts.push(item.timeText);
+    }
+    if (item.location) {
+        parts.push(item.location);
+    }
+    return parts.join(' \u2022 ');
+}
+
+function getImportantDateCountdown(date) {
+    const todayStart = startOfDay(new Date());
+    const targetStart = startOfDay(date);
+    const diffDays = Math.round((targetStart - todayStart) / MS_PER_DAY);
+    if (diffDays < 0) {
+        return { value: 'Pra\u0117jo', label: '' };
+    }
+    if (diffDays === 0) {
+        return { value: '\u0160iandien', label: '' };
+    }
+    if (diffDays === 1) {
+        return { value: 'Rytoj', label: '' };
+    }
+    return { value: `${diffDays}`, label: 'dienos' };
+}
+
+function renderImportantDatesHighlight() {
+    if (!importantDatesHighlightTitle || !importantDatesHighlightDate || !importantDatesHighlightCountdown) {
+        return;
+    }
+    const items = importantDatesState.items || [];
+    const todayStart = startOfDay(new Date());
+    if (items.length === 0) {
+        importantDatesHighlightTitle.textContent = 'Kol kas be termin\u0173';
+        importantDatesHighlightDate.textContent = '\u2014';
+        importantDatesHighlightCountdown.textContent = '\u2014';
+        if (importantDatesCountdownLabel) {
+            importantDatesCountdownLabel.textContent = '';
+            importantDatesCountdownLabel.hidden = true;
+        }
+        if (importantDatesHighlightBadge) {
+            importantDatesHighlightBadge.textContent = 'Terminas';
+        }
+        if (importantDatesHighlightNote) {
+            importantDatesHighlightNote.textContent = 'Papildyk lentel\u0119, kai atsiras naujos datos.';
+        }
+        importantDatesState.highlightId = null;
+        return;
+    }
+    const upcoming = items.find((item) => startOfDay(item.date) >= todayStart);
+    if (!upcoming) {
+        importantDatesHighlightTitle.textContent = 'Joki\u0173 termin\u0173 horizonte!';
+        importantDatesHighlightDate.textContent = 'Galima atsikv\u0117pti';
+        importantDatesHighlightCountdown.textContent = '\u2014';
+        if (importantDatesCountdownLabel) {
+            importantDatesCountdownLabel.textContent = '';
+            importantDatesCountdownLabel.hidden = true;
+        }
+        if (importantDatesHighlightBadge) {
+            importantDatesHighlightBadge.textContent = 'Laisva diena';
+        }
+        if (importantDatesHighlightNote) {
+            importantDatesHighlightNote.textContent = 'Pasitikrink lentel\u0119, kai atsiras nauji darbai.';
+        }
+        importantDatesState.highlightId = null;
+        return;
+    }
+    importantDatesState.highlightId = upcoming.id;
+    importantDatesHighlightTitle.textContent = upcoming.title || 'Be pavadinimo';
+    importantDatesHighlightDate.textContent = formatImportantDateHeadline(upcoming.date);
+    const countdown = getImportantDateCountdown(upcoming.date);
+    importantDatesHighlightCountdown.textContent = countdown.value;
+    if (importantDatesCountdownLabel) {
+        importantDatesCountdownLabel.textContent = countdown.label || '';
+        importantDatesCountdownLabel.hidden = !countdown.label;
+    }
+    if (importantDatesHighlightBadge) {
+        importantDatesHighlightBadge.textContent = upcoming.type || 'Terminas';
+    }
+    if (importantDatesHighlightNote) {
+        importantDatesHighlightNote.textContent =
+            upcoming.note || 'Nepamir\u0161k pasi\u017Eym\u0117ti kalendoriuje.';
+    }
+}
+
+function getFilteredImportantDates() {
+    const items = importantDatesState.items || [];
+    if (items.length === 0) {
+        return [];
+    }
+    const todayStart = startOfDay(new Date());
+    const includePast = importantDatesState.filter === 'all';
+    const baseItems = includePast ? items : items.filter((item) => startOfDay(item.date) >= todayStart);
+    if (importantDatesState.filter === 'month') {
+        const now = new Date();
+        const month = now.getMonth();
+        const year = now.getFullYear();
+        return baseItems.filter((item) => item.date.getMonth() === month && item.date.getFullYear() === year);
+    }
+    if (importantDatesState.filter === 'upcoming') {
+        return baseItems.slice(0, IMPORTANT_DATES_MAX_UPCOMING);
+    }
+    return baseItems;
+}
+
+function renderImportantDatesList() {
+    if (!importantDatesList) {
+        return;
+    }
+    importantDatesList.textContent = '';
+    const filtered = getFilteredImportantDates();
+    if (!filtered || filtered.length === 0) {
+        if (importantDatesEmpty) {
+            const emptyMessages = {
+                upcoming: 'Joki\u0173 artimiausi\u0173 termin\u0173. Puiki proga pails\u0117ti!',
+                month: '\u0160iame m\u0117nesyje nebeliko termin\u0173.',
+                all: 'Svarbi\u0173 dat\u0173 dar n\u0117ra. Papildyk lentel\u0119.',
+            };
+            importantDatesEmpty.textContent =
+                emptyMessages[importantDatesState.filter] || 'Kol kas nerasta dat\u0173.';
+            importantDatesEmpty.hidden = false;
+        }
+        return;
+    }
+    if (importantDatesEmpty) {
+        importantDatesEmpty.hidden = true;
+    }
+    const fragment = document.createDocumentFragment();
+    filtered.forEach((item) => {
+        const listItem = document.createElement('li');
+        listItem.className = 'important-dates__item';
+
+        const dateEl = document.createElement('div');
+        dateEl.className = 'important-dates__item-date';
+        const dayEl = document.createElement('span');
+        dayEl.className = 'important-dates__item-day';
+        dayEl.textContent = String(item.date.getDate()).padStart(2, '0');
+        const monthEl = document.createElement('span');
+        monthEl.className = 'important-dates__item-month';
+        monthEl.textContent = IMPORTANT_DATES_MONTH_SHORT[item.date.getMonth()] || '';
+        dateEl.appendChild(dayEl);
+        dateEl.appendChild(monthEl);
+        listItem.appendChild(dateEl);
+
+        const body = document.createElement('div');
+        body.className = 'important-dates__item-body';
+
+        const topRow = document.createElement('div');
+        topRow.className = 'important-dates__item-top';
+        const titleEl = document.createElement('p');
+        titleEl.className = 'important-dates__item-title';
+        titleEl.textContent = item.title || 'Be pavadinimo';
+        topRow.appendChild(titleEl);
+        if (item.type) {
+            const badgeEl = document.createElement('span');
+            badgeEl.className = 'important-dates__item-badge';
+            badgeEl.textContent = item.type;
+            topRow.appendChild(badgeEl);
+        }
+        body.appendChild(topRow);
+
+        if (item.note) {
+            const noteEl = document.createElement('p');
+            noteEl.className = 'important-dates__item-note';
+            noteEl.textContent = item.note;
+            body.appendChild(noteEl);
+        }
+
+        const meta = document.createElement('div');
+        meta.className = 'important-dates__item-meta';
+        const metaText = document.createElement('span');
+        metaText.textContent = formatImportantDateMeta(item);
+        meta.appendChild(metaText);
+        const linkTarget = item.url || importantDatesSheetUrl;
+        if (linkTarget) {
+            const linkEl = document.createElement('a');
+            linkEl.href = linkTarget;
+            linkEl.target = '_blank';
+            linkEl.rel = 'noopener noreferrer';
+            linkEl.textContent = item.url ? 'Detaliau' : 'Visas tvarkara\u0161tis';
+            meta.appendChild(linkEl);
+        }
+        body.appendChild(meta);
+
+        listItem.appendChild(body);
+        fragment.appendChild(listItem);
+    });
+    importantDatesList.appendChild(fragment);
+}
+
+function renderImportantDatesSection() {
+    renderImportantDatesHighlight();
+    renderImportantDatesList();
+    scheduleImportantDatesCountdownUpdate();
+}
+
+function scheduleImportantDatesCountdownUpdate() {
+    if (importantDatesCountdownTimeoutId) {
+        clearTimeout(importantDatesCountdownTimeoutId);
+        importantDatesCountdownTimeoutId = null;
+    }
+    if (!importantDatesState.items || importantDatesState.items.length === 0) {
+        return;
+    }
+    const now = new Date();
+    const next = new Date(now);
+    next.setHours(24, 0, 5, 0);
+    const delay = Math.max(60000, next.getTime() - now.getTime());
+    importantDatesCountdownTimeoutId = window.setTimeout(() => {
+        importantDatesCountdownTimeoutId = null;
+        renderImportantDatesSection();
+    }, delay);
+}
+
+async function refreshImportantDates(force = false) {
+    if (!importantDatesList) {
+        return;
+    }
+    if (!importantDatesCsvUrl) {
+        setImportantDatesStatus('Svarbi\u0173 dat\u0173 lentel\u0117s nuoroda nerasta.', 'warning');
+        if (importantDatesEmbed) {
+            importantDatesEmbed.hidden = false;
+        }
+        return;
+    }
+    if (!force && !importantDatesState.loading && importantDatesState.items.length > 0) {
+        renderImportantDatesSection();
+        return;
+    }
+    if (importantDatesAbortController) {
+        importantDatesAbortController.abort();
+    }
+    importantDatesAbortController = new AbortController();
+    importantDatesState.loading = true;
+    importantDatesRefreshBtn?.setAttribute('aria-busy', 'true');
+    importantDatesRefreshBtn?.setAttribute('disabled', 'true');
+    try {
+        setImportantDatesStatus('Kraunama...', 'muted');
+        const response = await fetch(importantDatesCsvUrl, {
+            signal: importantDatesAbortController.signal,
+            cache: 'no-store',
+        });
+        if (!response.ok) {
+            throw new Error('Svarbi\u0173 dat\u0173 lentel\u0117 nepasiekiama.');
+        }
+        const textContent = await response.text();
+        importantDatesState.items = buildImportantDateEntriesFromCsv(textContent);
+        importantDatesState.lastUpdated = new Date();
+        renderImportantDatesSection();
+        const timestamp = importantDatesState.lastUpdated.toLocaleTimeString('lt-LT', {
+            hour: '2-digit',
+            minute: '2-digit',
+        });
+        setImportantDatesStatus(`Atnaujinta ${timestamp}`, 'success');
+        if (importantDatesState.items.length === 0 && importantDatesEmpty) {
+            importantDatesEmpty.hidden = false;
+            importantDatesEmpty.textContent = 'Kol kas n\u0117ra svarbi\u0173 dat\u0173.';
+        }
+    } catch (error) {
+        if (error.name === 'AbortError') {
+            return;
+        }
+        console.error(error);
+        setImportantDatesStatus('Nepavyko \u012Fkelti duomen\u0173. Atidaryk lentel\u0119 apa\u010Dioje.', 'warning');
+        if (importantDatesEmpty) {
+            importantDatesEmpty.hidden = false;
+            importantDatesEmpty.textContent = 'Nepavyko \u012Fkelti svarbi\u0173 dat\u0173. Bandyk dar kart\u0105.';
+        }
+        if (importantDatesToggleEmbedBtn && importantDatesEmbed) {
+            importantDatesEmbed.hidden = false;
+            importantDatesToggleEmbedBtn.setAttribute('aria-expanded', 'true');
+            importantDatesToggleEmbedBtn.textContent = 'Sl\u0117pti \u012Iterpt\u0105 lentel\u0119';
+        }
+    } finally {
+        importantDatesState.loading = false;
+        importantDatesRefreshBtn?.removeAttribute('aria-busy');
+        importantDatesRefreshBtn?.removeAttribute('disabled');
+        importantDatesAbortController = null;
+    }
+}
+
+function setImportantDatesFilter(filterValue) {
+    if (!filterValue || filterValue === importantDatesState.filter) {
+        return;
+    }
+    importantDatesState.filter = filterValue;
+    if (importantDatesFilters) {
+        const buttons = importantDatesFilters.querySelectorAll('[data-important-filter]');
+        buttons.forEach((button) => {
+            const isActive = button.dataset.importantFilter === filterValue;
+            button.classList.toggle('chip--active', isActive);
+        });
+    }
+    renderImportantDatesList();
+}
+
+function initImportantDatesSection() {
+    if (!importantDatesList) {
+        return;
+    }
+    if (importantDatesSheetUrl && importantDatesSheetLink) {
+        importantDatesSheetLink.href = importantDatesSheetUrl;
+    }
+    importantDatesRefreshBtn?.addEventListener('click', () => refreshImportantDates(true));
+    importantDatesFilters?.addEventListener('click', (event) => {
+        const target = event.target.closest('[data-important-filter]');
+        if (!target) {
+            return;
+        }
+        setImportantDatesFilter(target.dataset.importantFilter);
+    });
+    if (importantDatesToggleEmbedBtn && importantDatesEmbed) {
+        importantDatesToggleEmbedBtn.addEventListener('click', () => {
+            const hidden = importantDatesEmbed.hidden;
+            importantDatesEmbed.hidden = !hidden;
+            importantDatesToggleEmbedBtn.setAttribute('aria-expanded', String(hidden));
+            importantDatesToggleEmbedBtn.textContent = hidden
+                ? 'Sl\u0117pti \u012Iterpt\u0105 lentel\u0119'
+                : 'Rodyti \u012Iterpt\u0105 lentel\u0119';
+        });
+    }
+    refreshImportantDates(true);
 }
 
 function setWeekIndicatorCollapsed(collapsed) {
@@ -2306,6 +2840,7 @@ timetableToggleWeekBtn?.addEventListener('click', () => {
 });
 updateWeekIndicator();
 scheduleWeekIndicatorUpdate();
+initImportantDatesSection();
 window.addEventListener('resize', scheduleLayoutTopSync);
 document.addEventListener('visibilitychange', () => {
     if (!document.hidden) {
