@@ -1332,26 +1332,6 @@ body, h1, h2, h3, h4, h5, h6, p, span, label, li {
     pointer-events: none;
 }
 
-.important-dates-shell__ribbon {
-    display: inline-block;
-    margin: 0 0 6px;
-    padding: 6px 18px;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.9);
-    color: var(--text-dark);
-    font-family: 'Caveat', 'Quicksand', 'Segoe UI', cursive;
-    font-size: clamp(1.4rem, 4vw, 2rem);
-    letter-spacing: 0.05em;
-    box-shadow: 0 12px 24px rgba(255, 157, 208, 0.25);
-}
-
-.important-dates-shell__hint {
-    margin: 0 0 14px;
-    font-size: 0.95rem;
-    color: rgba(68, 38, 63, 0.75);
-    font-family: 'Caveat', 'Quicksand', 'Segoe UI', cursive;
-}
-
 .important-dates-shell__iframe {
     border-radius: 18px;
     background: rgba(255, 255, 255, 0.95);
