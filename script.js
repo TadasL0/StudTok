@@ -983,6 +983,11 @@ function renderTimetableSection(options = {}) {
         return;
     }
 
+    const todaysDayName =
+        !autoFocusDayName && isCurrentWeek ? getTimetableDayNameForDate(new Date()) : '';
+    const defaultOpenDayName =
+        todaysDayName && dayEntries.some((entry) => entry.dayName === todaysDayName) ? todaysDayName : '';
+
     const fragment = document.createDocumentFragment();
     let matchedAutoFocusDay = false;
 
@@ -991,7 +996,9 @@ function renderTimetableSection(options = {}) {
         dayWrapper.className = 'timetable-day';
         dayWrapper.setAttribute('role', 'listitem');
         const shouldAutoOpen = isCurrentWeek && Boolean(autoFocusDayName) && autoFocusDayName === entry.dayName;
-        const shouldDefaultOpen = !autoFocusDayName && index === 0;
+        const shouldDefaultOpen =
+            !autoFocusDayName &&
+            (defaultOpenDayName ? entry.dayName === defaultOpenDayName : index === 0);
         dayWrapper.open = shouldAutoOpen || shouldDefaultOpen;
         if (shouldAutoOpen) {
             matchedAutoFocusDay = true;
