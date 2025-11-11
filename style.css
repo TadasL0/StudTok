@@ -2247,6 +2247,15 @@ body, h1, h2, h3, h4, h5, h6, p, span, label, li {
     gap: 20px;
 }
 
+.blockjam--waiting .blockjam-board,
+.blockjam--waiting .blockjam__pieces-shell,
+.blockjam--waiting .blockjam__status-bar {
+    opacity: 0.35;
+    pointer-events: none;
+    filter: grayscale(0.08);
+    transition: opacity 200ms ease;
+}
+
 .blockjam__status-bar {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
@@ -2297,6 +2306,10 @@ body, h1, h2, h3, h4, h5, h6, p, span, label, li {
 .blockjam-board--frozen .blockjam-cell {
     cursor: not-allowed;
     opacity: 0.65;
+}
+
+.blockjam-cell--new {
+    animation: blockjamPulse 420ms ease;
 }
 
 .blockjam-board__shadow {
@@ -2357,6 +2370,18 @@ body, h1, h2, h3, h4, h5, h6, p, span, label, li {
     100% {
         opacity: 0;
         transform: translateY(6px) scale(0.2);
+    }
+}
+
+@keyframes blockjamPulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(184, 240, 227, 0.6);
+    }
+    70% {
+        box-shadow: 0 0 0 12px rgba(184, 240, 227, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(184, 240, 227, 0);
     }
 }
 
@@ -2443,6 +2468,21 @@ body, h1, h2, h3, h4, h5, h6, p, span, label, li {
     justify-content: center;
 }
 
+.blockjam-piece__badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 42px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    background: rgba(255, 157, 208, 0.2);
+    color: var(--text-dark);
+}
+
 .blockjam-piece__cell {
     border-radius: 10px;
     background: rgba(255, 255, 255, 0.55);
@@ -2454,6 +2494,7 @@ body, h1, h2, h3, h4, h5, h6, p, span, label, li {
     align-items: center;
     justify-content: space-between;
     gap: 10px;
+    flex-wrap: wrap;
 }
 
 .blockjam-piece__label {
@@ -2514,6 +2555,122 @@ body, h1, h2, h3, h4, h5, h6, p, span, label, li {
     color: var(--text-muted);
 }
 
+.blockjam-quiz {
+    background: rgba(255, 255, 255, 0.92);
+    border-radius: 24px;
+    padding: clamp(16px, 4vw, 24px);
+    border: 1px solid rgba(255, 157, 208, 0.24);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+}
+
+.blockjam-quiz__empty {
+    margin: 0;
+    font-size: 14px;
+    color: var(--text-muted);
+}
+
+.blockjam-question {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.blockjam-question__meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+.blockjam-question__label {
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--text-dark);
+}
+
+.blockjam-question__progress {
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.blockjam-question__text {
+    margin: 0;
+    font-weight: 600;
+    font-size: 16px;
+    line-height: 1.5;
+    color: var(--text-dark);
+}
+
+.blockjam-question__options {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.blockjam-answer {
+    border: none;
+    border-radius: 18px;
+    padding: 16px;
+    font-weight: 600;
+    font-size: 15px;
+    text-align: left;
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 14px 32px rgba(255, 79, 161, 0.18);
+    cursor: pointer;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    transition: transform 140ms ease, box-shadow 140ms ease;
+}
+
+.blockjam-answer:hover {
+    transform: translateY(-2px);
+}
+
+.blockjam-answer:focus-visible {
+    outline: 3px solid rgba(255, 79, 161, 0.4);
+    outline-offset: 3px;
+}
+
+.blockjam-answer__badge {
+    width: 34px;
+    height: 34px;
+    border-radius: 12px;
+    background: rgba(255, 157, 208, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    color: var(--text-dark);
+}
+
+.blockjam-answer--correct {
+    background: rgba(184, 240, 227, 0.65);
+    box-shadow: inset 0 0 0 2px rgba(184, 240, 227, 0.9), 0 16px 36px rgba(68, 38, 63, 0.12);
+}
+
+.blockjam-answer--wrong {
+    background: rgba(255, 200, 230, 0.5);
+    box-shadow: inset 0 0 0 2px rgba(255, 79, 161, 0.35), 0 16px 36px rgba(68, 38, 63, 0.12);
+}
+
+.blockjam-question__feedback {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-dark);
+}
+
+.blockjam-question__feedback--success {
+    color: #1aa38c;
+}
+
+.blockjam-question__feedback--warning {
+    color: #ff4fa1;
+}
+
 .blockjam-cell--candy-berry,
 .blockjam-piece__cell--candy-berry {
     background: linear-gradient(140deg, #ff88c5, var(--blockjam-candy-berry));
@@ -2562,6 +2719,30 @@ body, h1, h2, h3, h4, h5, h6, p, span, label, li {
     animation: blockjamShake 360ms ease;
 }
 
+.blockjam-piece--locked::after,
+.blockjam-piece--unlocked::after {
+    content: attr(data-lock-label);
+    position: absolute;
+    top: 12px;
+    right: 14px;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    background: rgba(68, 38, 63, 0.08);
+    color: var(--text-muted);
+}
+
+.blockjam-piece--unlocked::after {
+    background: rgba(184, 240, 227, 0.65);
+    color: var(--text-dark);
+}
+
+.blockjam-piece--unlocked {
+    animation: blockjamGlow 1.4s ease-in-out infinite alternate;
+}
+
 @keyframes blockjamShake {
     0%,
     100% {
@@ -2575,6 +2756,18 @@ body, h1, h2, h3, h4, h5, h6, p, span, label, li {
     }
     75% {
         transform: translateX(-2px);
+    }
+}
+
+@keyframes blockjamGlow {
+    0% {
+        box-shadow: 0 12px 28px rgba(255, 79, 161, 0.18), 0 0 0 0 rgba(255, 255, 255, 0.4);
+    }
+    60% {
+        box-shadow: 0 18px 36px rgba(255, 79, 161, 0.26), 0 0 0 12px rgba(255, 200, 230, 0.25);
+    }
+    100% {
+        box-shadow: 0 12px 28px rgba(255, 79, 161, 0.18), 0 0 0 0 rgba(255, 255, 255, 0.4);
     }
 }
 
@@ -2605,6 +2798,10 @@ body, h1, h2, h3, h4, h5, h6, p, span, label, li {
 
     .blockjam-piece__grid {
         --piece-cell: min(28px, calc(110px / var(--cols, 3)));
+    }
+
+    .blockjam-question__options {
+        grid-template-columns: 1fr;
     }
 }
 

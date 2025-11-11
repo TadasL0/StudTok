@@ -72,6 +72,7 @@ const quizNotSelectedText = 'Testas nebuvo pasirinktas. Pa\u017Eym\u0117k "ABCD 
 const quizTimerValue = document.getElementById('quiz-timer');
 const quizScoreValue = document.getElementById('quiz-score');
 const blockJamCard = document.querySelector('.blockjam-card');
+const blockJamShell = document.querySelector('.blockjam');
 const blockJamBoard = document.getElementById('blockjam-board');
 const blockJamPieces = document.getElementById('blockjam-pieces');
 const blockJamScoreValue = document.getElementById('blockjam-score');
@@ -81,6 +82,14 @@ const blockJamStatusText = document.getElementById('blockjam-status');
 const blockJamHintText = document.getElementById('blockjam-hint');
 const blockJamResetButton = document.getElementById('blockjam-reset');
 const blockJamRotateButton = document.getElementById('blockjam-rotate');
+const blockJamQuizPanel = document.getElementById('blockjam-quiz-panel');
+const blockJamQuizEmpty = document.getElementById('blockjam-quiz-empty');
+const blockJamQuestionShell = document.getElementById('blockjam-question');
+const blockJamQuestionLabel = document.getElementById('blockjam-question-label');
+const blockJamQuestionProgress = document.getElementById('blockjam-question-progress');
+const blockJamQuestionText = document.getElementById('blockjam-question-text');
+const blockJamQuestionOptions = document.getElementById('blockjam-question-options');
+const blockJamQuestionFeedback = document.getElementById('blockjam-question-feedback');
 
 const pdfFileNameEmptyText = pdfFileName?.dataset?.empty || 'Failas nepasirinktas';
 const PASSCODE = 'differentdimension';
@@ -283,11 +292,23 @@ const blockJamState = {
     score: 0,
     combo: 1,
     nextRewardAt: 150,
+    questionPool: [],
+    answeredCount: 0,
+    hasQuiz: false,
+    victoryNotified: false,
 };
 let blockJamInitialised = false;
 const blockJamDangerTimers = new Map();
 const blockJamStatusDefaultText = blockJamStatusText?.textContent || BLOCKJAM_DEFAULT_STATUS;
 const blockJamHintDefaultText = blockJamHintText?.textContent || '';
+
+function blockJamHasQuiz() {
+    return blockJamState.hasQuiz && blockJamState.questionPool.length > 0;
+}
+
+function setBlockJamWaitingState(waiting) {
+    blockJamShell?.classList.toggle('blockjam--waiting', waiting);
+}
 
 let generationBusy = false;
 let flashcardForceFront = false;
@@ -2454,6 +2475,7 @@ function clearQuizWidget() {
     updateQuizPlaceholderOnMode();
     updateRegenerateButtonsAvailability();
     updateQuizControlAvailability();
+    clearBlockJamQuizBridge();
 }
 
 function getGenerationNoteValue() {
@@ -2563,6 +2585,7 @@ function loadQuizQuestions(questions) {
 
     quizState.baseQuestions = baseQuestions;
     resetTimedQuiz();
+    syncBlockJamWithQuizQuestions(baseQuestions);
 
     if (quizEmpty) {
         quizEmpty.hidden = true;
@@ -2929,6 +2952,10 @@ function handleBlockJamBoardLeave(event) {
 }
 
 function handleBlockJamBoardClick(event) {
+    if (!blockJamHasQuiz()) {
+        updateBlockJamStatus('Sukurk PDF test\u0105 ir tada gal\u0117si d\u0117lioti saldaini\u0173 blokelius.', 'warning');
+        return;
+    }
     if (blockJamState.isGameOver) {
         return;
     }
@@ -2944,6 +2971,123 @@ function handleBlockJamBoardClick(event) {
     placeBlockJamPiece(row, col);
 }
 
+function updateBlockJamQuizEmptyState(visible, message) {
+    if (!blockJamQuizEmpty) return;
+    blockJamQuizEmpty.hidden = !visible;
+    if (message) {
+        blockJamQuizEmpty.textContent = message;
+    }
+}
+
+function getActiveBlockJamPiece() {
+    if (blockJamState.selectedIndex === null) {
+        return null;
+    }
+    const piece = blockJamState.queue[blockJamState.selectedIndex];
+    if (!piece || piece.used) {
+        return null;
+    }
+    return piece;
+}
+
+function updateBlockJamQuestionFeedback(message, mood = null) {
+    if (!blockJamQuestionFeedback) return;
+    blockJamQuestionFeedback.textContent = message || '';
+    blockJamQuestionFeedback.classList.remove(
+        'blockjam-question__feedback--success',
+        'blockjam-question__feedback--warning'
+    );
+    if (mood === 'success') {
+        blockJamQuestionFeedback.classList.add('blockjam-question__feedback--success');
+    } else if (mood === 'warning') {
+        blockJamQuestionFeedback.classList.add('blockjam-question__feedback--warning');
+    }
+}
+
+function updateBlockJamQuestionProgress() {
+    if (!blockJamQuestionProgress) return;
+    if (!blockJamHasQuiz()) {
+        blockJamQuestionProgress.textContent = '';
+        return;
+    }
+    const total = blockJamState.questionPool.length;
+    const placed = blockJamState.questionPool.filter((question) => question.placed).length;
+    blockJamQuestionProgress.textContent = `${placed}/${total}`;
+}
+
+function renderBlockJamQuestion(piece) {
+    if (!blockJamQuestionShell || !blockJamQuestionOptions) {
+        return;
+    }
+    if (!piece || !piece.question) {
+        blockJamQuestionShell.hidden = true;
+        if (blockJamHasQuiz()) {
+            updateBlockJamQuizEmptyState(false);
+        }
+        updateBlockJamQuestionFeedback('');
+        return;
+    }
+    updateBlockJamQuizEmptyState(false);
+    blockJamQuestionShell.hidden = false;
+    if (blockJamQuestionLabel) {
+        blockJamQuestionLabel.textContent = piece.question.label || 'Klausimas';
+    }
+    if (blockJamQuestionText) {
+        blockJamQuestionText.textContent = piece.question.question;
+    }
+    blockJamQuestionOptions.innerHTML = '';
+    piece.question.options.forEach((option, index) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'blockjam-answer';
+        button.dataset.index = String(index);
+        const badge = document.createElement('span');
+        badge.className = 'blockjam-answer__badge';
+        badge.textContent = String.fromCharCode(65 + index);
+        const text = document.createElement('span');
+        text.textContent = option;
+        button.append(badge, text);
+        if (piece.question.answered) {
+            button.disabled = true;
+            if (index === piece.question.correctIndex) {
+                button.classList.add('blockjam-answer--correct');
+            } else {
+                button.classList.add('blockjam-answer--wrong');
+            }
+        }
+        blockJamQuestionOptions.appendChild(button);
+    });
+    if (piece.question.answered) {
+        updateBlockJamQuestionFeedback('Teisingai! Dabar pad\u0117k blok\u0105 lenteleje.', 'success');
+    } else {
+        updateBlockJamQuestionFeedback('Pasirink atsakym\u0105 ir atrakink saldaini\u0173 blok\u0105.');
+    }
+}
+
+function handleBlockJamAnswerSelection(optionIndex) {
+    if (!blockJamHasQuiz()) {
+        return;
+    }
+    const piece = getActiveBlockJamPiece();
+    if (!piece || !piece.question || piece.question.answered) {
+        return;
+    }
+    if (optionIndex === piece.question.correctIndex) {
+        piece.question.answered = true;
+        piece.unlocked = true;
+        blockJamState.answeredCount = (blockJamState.answeredCount || 0) + 1;
+        updateBlockJamStatus('Teisingai! U\u017Ed\u0117k blok\u0105 ant lentos.', 'success');
+        updateBlockJamQuestionFeedback('Teisingas atsakymas! Pasirink viet\u0105 lenteleje.', 'success');
+        renderBlockJamPieces();
+        updateBlockJamHud();
+        updateBlockJamQuestionProgress();
+        renderBlockJamQuestion(piece);
+    } else {
+        updateBlockJamQuestionFeedback('Ups! Pabandyk kit\u0105 atsakym\u0105.', 'warning');
+        flashBlockJamPieceWarning(blockJamState.selectedIndex);
+    }
+}
+
 function selectBlockJamPiece(index) {
     if (!Array.isArray(blockJamState.queue) || index < 0 || index >= blockJamState.queue.length) {
         blockJamState.selectedIndex = null;
@@ -2954,11 +3098,18 @@ function selectBlockJamPiece(index) {
     clearBlockJamGhost();
     renderBlockJamPieces();
     updateBlockJamHud();
-    if (blockJamState.selectedIndex === null) {
+    const piece = getActiveBlockJamPiece();
+    if (!piece) {
         updateBlockJamStatus(BLOCKJAM_DEFAULT_STATUS);
+        renderBlockJamQuestion(null);
+        return;
+    }
+    if (piece.question && !piece.question.answered) {
+        updateBlockJamStatus('Atrakinam: ' + (piece.question.label || piece.name), 'info');
+        renderBlockJamQuestion(piece);
     } else {
-        const piece = blockJamState.queue[blockJamState.selectedIndex];
-        updateBlockJamStatus('Pasirinkta: ' + piece.name + '.');
+        updateBlockJamStatus('Pasirinkta: ' + piece.name + '. Pad\u0117k j\u012f lenteleje.');
+        renderBlockJamQuestion(null);
         if (blockJamState.latestHover) {
             updateBlockJamGhost(blockJamState.latestHover.row, blockJamState.latestHover.col);
         }
@@ -2971,6 +3122,9 @@ function rotateBlockJamPiece(index, direction = 1) {
     }
     const piece = blockJamState.queue[index];
     if (!piece || piece.used) {
+        return;
+    }
+    if (piece.question && !piece.question.answered) {
         return;
     }
     const turns = ((direction % 4) + 4) % 4;
@@ -3133,6 +3287,11 @@ function placeBlockJamPiece(row, col) {
         renderBlockJamPieces();
         return;
     }
+    if (piece.question && !piece.question.answered) {
+        updateBlockJamStatus('Pirmiausia atrakink blok\u0105 atsakydama klausim\u0105.', 'warning');
+        renderBlockJamQuestion(piece);
+        return;
+    }
     const placement = getBlockJamPlacement(piece, row, col);
     if (!placement.valid) {
         flashBlockJamPieceWarning(blockJamState.selectedIndex);
@@ -3148,11 +3307,17 @@ function applyBlockJamPlacement(piece, placementCells) {
         const cell = blockJamCells[row]?.[col];
         if (cell) {
             cell.classList.remove('blockjam-cell--ghost-valid', 'blockjam-cell--ghost-invalid');
-            cell.classList.add('blockjam-cell--filled', 'blockjam-cell--' + piece.color);
+            cell.classList.add('blockjam-cell--filled', 'blockjam-cell--' + piece.color, 'blockjam-cell--new');
             cell.setAttribute('aria-label', formatBlockJamCellLabel(row, col, piece.color));
+            setTimeout(() => {
+                cell.classList.remove('blockjam-cell--new');
+            }, 420);
         }
     });
     piece.used = true;
+    if (piece.question) {
+        piece.question.placed = true;
+    }
     blockJamState.selectedIndex = null;
     clearBlockJamGhost();
     const cleared = clearCompletedBlockJamLines();
@@ -3160,6 +3325,8 @@ function applyBlockJamPlacement(piece, placementCells) {
     refillBlockJamQueue();
     renderBlockJamPieces();
     updateBlockJamHud();
+    renderBlockJamQuestion(null);
+    updateBlockJamQuestionProgress();
     checkBlockJamForGameOver();
     const clearedLines = (cleared.rows || 0) + (cleared.cols || 0);
     if (clearedLines > 0) {
@@ -3249,11 +3416,18 @@ function updateBlockJamHud() {
         blockJamComboValue.textContent = 'x' + Math.max(1, blockJamState.combo);
     }
     if (blockJamMovesValue) {
-        const remaining = blockJamState.queue.filter((piece) => !piece.used).length;
-        blockJamMovesValue.textContent = String(remaining || BLOCKJAM_SET_SIZE);
+        const remaining = blockJamHasQuiz()
+            ? blockJamState.questionPool.filter((question) => !question.placed).length
+            : blockJamState.queue.filter((piece) => !piece.used).length;
+        blockJamMovesValue.textContent = String(Math.max(0, remaining));
     }
     if (blockJamRotateButton) {
-        blockJamRotateButton.disabled = blockJamState.selectedIndex === null || blockJamState.isGameOver;
+        const activePiece = getActiveBlockJamPiece();
+        const canRotate =
+            !!activePiece &&
+            !blockJamState.isGameOver &&
+            (!activePiece.question || activePiece.question.answered);
+        blockJamRotateButton.disabled = !canRotate;
     }
 }
 
@@ -3283,6 +3457,15 @@ function renderBlockJamPieces() {
         return;
     }
     blockJamPieces.innerHTML = '';
+    if (blockJamState.queue.length === 0) {
+        const placeholder = document.createElement('p');
+        placeholder.className = 'blockjam-quiz__empty';
+        placeholder.textContent = blockJamHasQuiz()
+            ? 'Atrakink nauj\u0105 klausim\u0105, kad atsirast\u0173 blok\u0173.'
+            : 'Sukurk PDF test\u0105, kad saldaini\u0173 blokai atsirast\u0173 \u010dia.';
+        blockJamPieces.appendChild(placeholder);
+        return;
+    }
     blockJamState.queue.forEach((piece, index) => {
         const card = document.createElement('div');
         card.className = 'blockjam-piece';
@@ -3294,8 +3477,16 @@ function renderBlockJamPieces() {
         if (!piece.used && blockJamState.selectedIndex === index) {
             card.classList.add('blockjam-piece--selected');
         }
-        if (!piece.used && !blockJamPieceHasValidMove(piece)) {
+        const hasSlot = blockJamPieceHasValidMove(piece);
+        if (!piece.used && !hasSlot) {
             card.classList.add('blockjam-piece--danger');
+        }
+        card.classList.remove('blockjam-piece--locked', 'blockjam-piece--unlocked');
+        if (piece.question) {
+            card.dataset.lockLabel = piece.question.answered ? 'Atrakinta' : 'Testas';
+            card.classList.add(piece.question.answered ? 'blockjam-piece--unlocked' : 'blockjam-piece--locked');
+        } else {
+            delete card.dataset.lockLabel;
         }
         const bodyButton = document.createElement('button');
         bodyButton.type = 'button';
@@ -3324,8 +3515,14 @@ function renderBlockJamPieces() {
         footer.className = 'blockjam-piece__footer';
         const label = document.createElement('span');
         label.className = 'blockjam-piece__label';
-        label.textContent = piece.name;
+        label.textContent = piece.question?.label || piece.name;
         footer.appendChild(label);
+        if (piece.question) {
+            const badge = document.createElement('span');
+            badge.className = 'blockjam-piece__badge';
+            badge.textContent = piece.question.answered ? 'Paruo\u0161ta' : 'Klausimas';
+            footer.appendChild(badge);
+        }
 
         const controls = document.createElement('div');
         controls.className = 'blockjam-piece__controls';
@@ -3334,7 +3531,7 @@ function renderBlockJamPieces() {
         rotateBtn.className = 'blockjam-piece__rotate';
         rotateBtn.dataset.index = String(index);
         rotateBtn.dataset.action = 'rotate';
-        rotateBtn.disabled = piece.used;
+        rotateBtn.disabled = piece.used || (piece.question && !piece.question.answered);
         rotateBtn.setAttribute('aria-label', 'Pasukti ' + piece.name);
         rotateBtn.textContent = '\u21bb';
         controls.appendChild(rotateBtn);
@@ -3391,18 +3588,82 @@ function handleBlockJamHotkeys(event) {
         renderBlockJamPieces();
         updateBlockJamHud();
         updateBlockJamStatus(BLOCKJAM_DEFAULT_STATUS);
+        renderBlockJamQuestion(null);
     }
+}
+
+function syncBlockJamWithQuizQuestions(baseQuestions) {
+    if (!blockJamIsReady()) {
+        return;
+    }
+    const decorated = baseQuestions.map((question, index) => ({
+        ...question,
+        id: `blockjam-${index + 1}`,
+        label: `Klausimas #${index + 1}`,
+        assigned: false,
+        answered: false,
+        placed: false,
+    }));
+    blockJamState.questionPool = decorated;
+    blockJamState.hasQuiz = decorated.length > 0;
+    blockJamState.answeredCount = 0;
+    resetBlockJamGame({ resetQuestions: true, announce: false });
+    if (!blockJamHasQuiz()) {
+        updateBlockJamQuizEmptyState(true, 'Sukurk PDF test\u0105 ir saldiniai klausimai atsiras \u010dia.');
+        setBlockJamWaitingState(true);
+        updateBlockJamStatus(BLOCKJAM_DEFAULT_STATUS);
+        updateBlockJamHint(blockJamHintDefaultText);
+        return;
+    }
+    setBlockJamWaitingState(false);
+    refillBlockJamQueue(true);
+    renderBlockJamPieces();
+    updateBlockJamHud();
+    updateBlockJamQuestionProgress();
+    renderBlockJamQuestion(null);
+    updateBlockJamStatus('Pasirink blok\u0105, atsakyk klausim\u0105 ir pad\u0117k j\u012f lentoje.', 'info');
+    updateBlockJamHint('Kiekvienas blokas slepia klausim\u0105 i\u0161 tavo PDF testuko.');
+}
+
+function clearBlockJamQuizBridge() {
+    blockJamState.questionPool = [];
+    blockJamState.queue = [];
+    blockJamState.selectedIndex = null;
+    blockJamState.hasQuiz = false;
+    blockJamState.answeredCount = 0;
+    blockJamState.score = 0;
+    blockJamState.combo = 1;
+    blockJamState.victoryNotified = false;
+    updateBlockJamQuizEmptyState(true, 'Sukurk PDF test\u0105 ir saldiniai klausimai atsiras \u010dia.');
+    setBlockJamWaitingState(true);
+    clearBlockJamGhost();
+    renderBlockJamBoard();
+    renderBlockJamPieces();
+    renderBlockJamQuestion(null);
+    updateBlockJamQuestionProgress();
+    updateBlockJamHud();
+    updateBlockJamStatus(BLOCKJAM_DEFAULT_STATUS);
+    updateBlockJamHint(blockJamHintDefaultText);
 }
 
 function refillBlockJamQueue(force = false) {
-    const unused = blockJamState.queue.filter((piece) => !piece.used);
-    if (!force && unused.length > 0) {
+    const available = blockJamState.queue.filter((piece) => !piece.used);
+    blockJamState.queue = available;
+    if (!blockJamHasQuiz()) {
         return;
     }
-    blockJamState.queue = Array.from({ length: BLOCKJAM_SET_SIZE }, () => buildRandomBlockJamPiece());
+    const needed = Math.max(0, BLOCKJAM_SET_SIZE - blockJamState.queue.length);
+    if (!force && needed === 0) {
+        return;
+    }
+    const candidates = blockJamState.questionPool.filter((question) => !question.assigned && !question.placed);
+    candidates.slice(0, needed).forEach((question) => {
+        question.assigned = true;
+        blockJamState.queue.push(buildRandomBlockJamPiece(question));
+    });
 }
 
-function buildRandomBlockJamPiece() {
+function buildRandomBlockJamPiece(question = null) {
     const shape = BLOCKJAM_SHAPES[Math.floor(Math.random() * BLOCKJAM_SHAPES.length)];
     const rotation = Math.floor(Math.random() * 4);
     const rotatedCells = rotateBlockJamCells(shape.cells, rotation);
@@ -3415,6 +3676,9 @@ function buildRandomBlockJamPiece() {
         width: size.width,
         height: size.height,
         used: false,
+        question,
+        questionId: question?.id ?? null,
+        unlocked: question ? Boolean(question.answered) : true,
     };
 }
 
@@ -3422,6 +3686,7 @@ function resetBlockJamGame(options = {}) {
     if (!blockJamIsReady()) {
         return;
     }
+    const resetQuestions = Boolean(options.resetQuestions);
     blockJamState.board = createBlockJamBoardMatrix();
     blockJamState.queue = [];
     blockJamState.selectedIndex = null;
@@ -3431,34 +3696,78 @@ function resetBlockJamGame(options = {}) {
     blockJamState.score = 0;
     blockJamState.combo = 1;
     blockJamState.nextRewardAt = 150;
+    blockJamState.victoryNotified = false;
+    if (resetQuestions) {
+        blockJamState.questionPool.forEach((question) => {
+            question.assigned = false;
+            question.answered = false;
+            question.placed = false;
+        });
+        blockJamState.answeredCount = 0;
+    }
     blockJamDangerTimers.forEach((timer) => clearTimeout(timer));
     blockJamDangerTimers.clear();
     clearBlockJamGhost();
     renderBlockJamBoard();
     refillBlockJamQueue(true);
     renderBlockJamPieces();
+    renderBlockJamQuestion(null);
+    updateBlockJamQuestionProgress();
     updateBlockJamHud();
-    updateBlockJamStatus(
-        options?.announce === false ? BLOCKJAM_DEFAULT_STATUS : 'Saldaini\u0173 partija prad\u0117ta!'
-    );
-    updateBlockJamHint('');
+    updateBlockJamHint(blockJamHintDefaultText);
     blockJamBoard?.classList.remove('blockjam-board--frozen');
-    checkBlockJamForGameOver();
+    if (options?.announce === false) {
+        updateBlockJamStatus(BLOCKJAM_DEFAULT_STATUS);
+    } else if (blockJamHasQuiz()) {
+        updateBlockJamStatus('Saldaini\u0173 partija prad\u0117ta! Pasirink blok\u0105 ir atsakyk klausim\u0105.');
+    } else {
+        updateBlockJamStatus(BLOCKJAM_DEFAULT_STATUS);
+    }
 }
 
 function checkBlockJamForGameOver() {
     if (!blockJamIsReady()) {
         return;
     }
-    const hasMove = blockJamState.queue.some((piece) => !piece.used && blockJamPieceHasValidMove(piece));
-    blockJamState.isGameOver = !hasMove;
-    blockJamBoard?.classList.toggle('blockjam-board--frozen', blockJamState.isGameOver);
-    if (blockJamState.isGameOver) {
-        updateBlockJamStatus('Neb\u0117ra vietos! Spausk "Restartuoti" ir gauk nauj\u0105 partij\u0105.', 'warning');
-        updateBlockJamHint('Neb\u0117ra \u0117jim\u0173. Restartuok ir tegul saldainiai gr\u012F\u017Eta.');
-    } else {
-        updateBlockJamHint('');
+    if (blockJamHasQuiz()) {
+        const allPlaced = blockJamState.questionPool.length > 0 && blockJamState.questionPool.every((question) => question.placed);
+        if (allPlaced) {
+            blockJamState.isGameOver = true;
+            blockJamBoard?.classList.add('blockjam-board--frozen');
+            updateBlockJamStatus('Visi klausimai \u012Fveikti! Lenta pilna saldumyn\u0173.', 'success');
+            updateBlockJamHint('Paspausk "Restartuoti", jei nori pakartoti sald\u0173 testuk\u0105.');
+            if (!blockJamState.victoryNotified) {
+                awardReward('blockjam');
+                blockJamState.victoryNotified = true;
+            }
+            return;
+        }
+        const unlockedPieces = blockJamState.queue.filter(
+            (piece) => !piece.used && (!piece.question || piece.question.answered)
+        );
+        const hasMove = unlockedPieces.some((piece) => blockJamPieceHasValidMove(piece));
+        const hasPendingQuestions = blockJamState.questionPool.some((question) => !question.answered);
+        if (!hasMove && !hasPendingQuestions) {
+            blockJamState.isGameOver = true;
+            blockJamBoard?.classList.add('blockjam-board--frozen');
+            updateBlockJamStatus('Neb\u0117ra vietos! Spausk "Restartuoti" ir gauk nauj\u0105 partij\u0105.', 'warning');
+            updateBlockJamHint('Neb\u0117ra \u0117jim\u0173. Restartuok ir tegul saldainiai gr\u012F\u017Eta.');
+            return;
+        }
+        blockJamState.isGameOver = false;
+        blockJamBoard?.classList.remove('blockjam-board--frozen');
+        if (!hasMove && hasPendingQuestions) {
+            updateBlockJamStatus('Atrakink dar vien\u0105 blok\u0105, kad atsirast\u0173 vietos.', 'info');
+            updateBlockJamHint('Pasirink kit\u0105 klausim\u0105 ir d\u0117liok nauj\u0105 fig\u016Br\u0105.');
+        } else {
+            updateBlockJamHint(blockJamHintDefaultText);
+        }
+        return;
     }
+    // Fallback when no quiz is attached.
+    const fallbackMove = blockJamState.queue.some((piece) => !piece.used && blockJamPieceHasValidMove(piece));
+    blockJamState.isGameOver = !fallbackMove;
+    blockJamBoard?.classList.toggle('blockjam-board--frozen', blockJamState.isGameOver);
 }
 
 function initialiseBlockJamMode() {
@@ -3473,15 +3782,18 @@ function initialiseBlockJamMode() {
     blockJamBoard?.addEventListener('click', handleBlockJamBoardClick);
     blockJamPieces?.addEventListener('click', handleBlockJamPieceClick);
     blockJamResetButton?.addEventListener('click', () => {
-        resetBlockJamGame();
+        resetBlockJamGame({ resetQuestions: true });
     });
     blockJamRotateButton?.addEventListener('click', () => {
-        if (blockJamState.selectedIndex !== null) {
+        const activePiece = getActiveBlockJamPiece();
+        if (blockJamState.selectedIndex !== null && activePiece && (!activePiece.question || activePiece.question.answered)) {
             rotateBlockJamPiece(blockJamState.selectedIndex, 1);
         }
     });
     document.addEventListener('keydown', handleBlockJamHotkeys);
     resetBlockJamGame({ announce: false });
+    setBlockJamWaitingState(true);
+    updateBlockJamQuizEmptyState(true, 'Sukurk PDF test\u0105 ir saldiniai klausimai atsiras \u010dia.');
     blockJamInitialised = true;
 }
 
@@ -3503,6 +3815,17 @@ flashcardNextBtn?.addEventListener('click', () => {
 
 flashcardShuffleBtn?.addEventListener('click', () => {
     shuffleFlashcards();
+});
+
+blockJamQuestionOptions?.addEventListener('click', (event) => {
+    const button = event.target instanceof Element ? event.target.closest('.blockjam-answer') : null;
+    if (!button) {
+        return;
+    }
+    const optionIndex = Number.parseInt(button.dataset.index || '', 10);
+    if (Number.isFinite(optionIndex)) {
+        handleBlockJamAnswerSelection(optionIndex);
+    }
 });
 
 quizStartButton?.addEventListener('click', () => {
