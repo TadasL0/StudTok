@@ -1621,7 +1621,6 @@ async function refreshImportantDates(force = false) {
         if (importantDatesToggleEmbedBtn && importantDatesEmbed) {
             importantDatesEmbed.hidden = false;
             importantDatesToggleEmbedBtn.setAttribute('aria-expanded', 'true');
-            importantDatesToggleEmbedBtn.textContent = 'Slėpti įterptą lentelę';
         }
     } finally {
         importantDatesState.loading = false;
