@@ -153,6 +153,26 @@ const BLOCKJAM_CANDY_LABELS = {
     'candy-cocoa': 'kakavos plytel\u0117',
 };
 const BLOCKJAM_COLOR_KEYS = Object.keys(BLOCKJAM_CANDY_LABELS);
+const BLOCKJAM_DEMO_QUIZ = [
+    {
+        question: 'Kiek laiko trunka 90 minu\u010di\u0173 paskaita?',
+        options: ['45 min', '60 min', '1 val. 30 min', '2 val.'],
+        correctIndex: 2,
+        explanation: '90 minu\u010di\u0173 tai 1 valanda ir 30 minu\u010di\u0173.',
+    },
+    {
+        question: 'Kokios spalvos yra Emilijos Block Jam saldainiai?',
+        options: ['Tik m\u0117lyni', 'Ro\u017einiai ir \u0161okoladiniai', 'Geltoni', 'Tik juodi'],
+        correctIndex: 1,
+        explanation: 'Tematika paremta bra\u0161ki\u0173 glajumi ir \u0161okoladu.',
+    },
+    {
+        question: 'Kiek blokeli\u0173 rinkin\u012f gauna Emilija vienu metu?',
+        options: ['1', '2', '3', '5'],
+        correctIndex: 2,
+        explanation: 'Kaip originaliame Block Jam, vienu metu rodomi 3 blokai.',
+    },
+];
 const BLOCKJAM_SHAPES = [
     {
         id: 'berry-line',
@@ -296,6 +316,7 @@ const blockJamState = {
     answeredCount: 0,
     hasQuiz: false,
     victoryNotified: false,
+    demoActive: false,
 };
 let blockJamInitialised = false;
 const blockJamDangerTimers = new Map();
@@ -303,11 +324,18 @@ const blockJamStatusDefaultText = blockJamStatusText?.textContent || BLOCKJAM_DE
 const blockJamHintDefaultText = blockJamHintText?.textContent || '';
 
 function blockJamHasQuiz() {
-    return blockJamState.hasQuiz && blockJamState.questionPool.length > 0;
+    return (blockJamState.hasQuiz || blockJamState.demoActive) && blockJamState.questionPool.length > 0;
 }
 
 function setBlockJamWaitingState(waiting) {
     blockJamShell?.classList.toggle('blockjam--waiting', waiting);
+}
+
+function loadBlockJamDemoQuiz() {
+    if (!blockJamIsReady()) {
+        return;
+    }
+    syncBlockJamWithQuizQuestions(BLOCKJAM_DEMO_QUIZ, { isDemo: true });
 }
 
 let generationBusy = false;
@@ -3402,7 +3430,7 @@ function updateBlockJamScore(placedCount, clearedInfo) {
     const lineBonus = clearedLines * 12 + (clearedInfo?.cells || 0);
     const gain = Math.max(1, Math.round((placedCount + lineBonus) * blockJamState.combo));
     blockJamState.score += gain;
-    if (blockJamState.score >= blockJamState.nextRewardAt) {
+    if (!blockJamState.demoActive && blockJamState.score >= blockJamState.nextRewardAt) {
         awardReward('blockjam');
         blockJamState.nextRewardAt += 150;
     }
@@ -3592,7 +3620,7 @@ function handleBlockJamHotkeys(event) {
     }
 }
 
-function syncBlockJamWithQuizQuestions(baseQuestions) {
+function syncBlockJamWithQuizQuestions(baseQuestions, { isDemo = false } = {}) {
     if (!blockJamIsReady()) {
         return;
     }
@@ -3605,7 +3633,8 @@ function syncBlockJamWithQuizQuestions(baseQuestions) {
         placed: false,
     }));
     blockJamState.questionPool = decorated;
-    blockJamState.hasQuiz = decorated.length > 0;
+    blockJamState.hasQuiz = !isDemo && decorated.length > 0;
+    blockJamState.demoActive = isDemo && decorated.length > 0;
     blockJamState.answeredCount = 0;
     resetBlockJamGame({ resetQuestions: true, announce: false });
     if (!blockJamHasQuiz()) {
@@ -3621,8 +3650,14 @@ function syncBlockJamWithQuizQuestions(baseQuestions) {
     updateBlockJamHud();
     updateBlockJamQuestionProgress();
     renderBlockJamQuestion(null);
-    updateBlockJamStatus('Pasirink blok\u0105, atsakyk klausim\u0105 ir pad\u0117k j\u012f lentoje.', 'info');
-    updateBlockJamHint('Kiekvienas blokas slepia klausim\u0105 i\u0161 tavo PDF testuko.');
+    const statusMessage = isDemo
+        ? 'Demo r\u0117\u017eimas: atsakyk \u012f pavyzdinius klausimus ir pad\u0117k blok\u0105.'
+        : 'Pasirink blok\u0105, atsakyk klausim\u0105 ir pad\u0117k j\u012f lentoje.';
+    const hintMessage = isDemo
+        ? 'Kai sugeneruosi PDF ABCD test\u0105, demo klausimai bus pakeisti tavo med\u017eiaga.'
+        : 'Kiekvienas blokas slepia klausim\u0105 i\u0161 tavo PDF testuko.';
+    updateBlockJamStatus(statusMessage, 'info');
+    updateBlockJamHint(hintMessage);
 }
 
 function clearBlockJamQuizBridge() {
@@ -3644,6 +3679,7 @@ function clearBlockJamQuizBridge() {
     updateBlockJamHud();
     updateBlockJamStatus(BLOCKJAM_DEFAULT_STATUS);
     updateBlockJamHint(blockJamHintDefaultText);
+    loadBlockJamDemoQuiz();
 }
 
 function refillBlockJamQueue(force = false) {
@@ -3794,6 +3830,7 @@ function initialiseBlockJamMode() {
     resetBlockJamGame({ announce: false });
     setBlockJamWaitingState(true);
     updateBlockJamQuizEmptyState(true, 'Sukurk PDF test\u0105 ir saldiniai klausimai atsiras \u010dia.');
+    loadBlockJamDemoQuiz();
     blockJamInitialised = true;
 }
 
