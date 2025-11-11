@@ -2848,6 +2848,8 @@ document.addEventListener('visibilitychange', () => {
 });
 showScreen('intro');
 scheduleSplashHide();
-ensureNotepadPlaceholder(true);
+if (typeof ensureNotepadPlaceholder === 'function') {
+    ensureNotepadPlaceholder(true);
+}
 scheduleLayoutTopSync();
 
