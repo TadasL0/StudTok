@@ -71,6 +71,16 @@ const quizEmptyDefaultText = quizEmpty?.textContent || '';
 const quizNotSelectedText = 'Testas nebuvo pasirinktas. Pa\u017Eym\u0117k "ABCD test\u0105", jei jo reikia.';
 const quizTimerValue = document.getElementById('quiz-timer');
 const quizScoreValue = document.getElementById('quiz-score');
+const blockJamCard = document.querySelector('.blockjam-card');
+const blockJamBoard = document.getElementById('blockjam-board');
+const blockJamPieces = document.getElementById('blockjam-pieces');
+const blockJamScoreValue = document.getElementById('blockjam-score');
+const blockJamComboValue = document.getElementById('blockjam-combo');
+const blockJamMovesValue = document.getElementById('blockjam-moves');
+const blockJamStatusText = document.getElementById('blockjam-status');
+const blockJamHintText = document.getElementById('blockjam-hint');
+const blockJamResetButton = document.getElementById('blockjam-reset');
+const blockJamRotateButton = document.getElementById('blockjam-rotate');
 
 const pdfFileNameEmptyText = pdfFileName?.dataset?.empty || 'Failas nepasirinktas';
 const PASSCODE = 'differentdimension';
@@ -121,7 +131,166 @@ const generationState = {
     modeTouched: false,
 };
 
+const BLOCKJAM_BOARD_SIZE = 8;
+const BLOCKJAM_SET_SIZE = 3;
+const BLOCKJAM_CLEAR_DELAY_MS = 340;
+const BLOCKJAM_DEFAULT_STATUS = 'Pasirink saldaini\u0173 fig\u016br\u0105 ir bakstelk lent\u0105.';
+const BLOCKJAM_CANDY_LABELS = {
+    'candy-berry': 'bra\u0161kinis saldainis',
+    'candy-sherbet': 'sherbet\u0173 gabal\u0117lis',
+    'candy-grape': 'vynuoginis kubelis',
+    'candy-mint': 'm\u0117tinis trapukas',
+    'candy-caramel': 'karamelinis blokelis',
+    'candy-cocoa': 'kakavos plytel\u0117',
+};
+const BLOCKJAM_COLOR_KEYS = Object.keys(BLOCKJAM_CANDY_LABELS);
+const BLOCKJAM_SHAPES = [
+    {
+        id: 'berry-line',
+        name: 'Bra\u0161ki\u0173 juosta',
+        color: 'candy-berry',
+        cells: [
+            [0, 0],
+            [1, 0],
+            [2, 0],
+            [3, 0],
+        ],
+    },
+    {
+        id: 'mint-square',
+        name: 'M\u0117tin\u0117 plytel\u0117',
+        color: 'candy-mint',
+        cells: [
+            [0, 0],
+            [1, 0],
+            [0, 1],
+            [1, 1],
+        ],
+    },
+    {
+        id: 'caramel-elbow',
+        name: 'Karamelin\u0117 L',
+        color: 'candy-caramel',
+        cells: [
+            [0, 0],
+            [0, 1],
+            [0, 2],
+            [1, 2],
+        ],
+    },
+    {
+        id: 'cocoa-t',
+        name: 'Kakavos T',
+        color: 'candy-cocoa',
+        cells: [
+            [0, 0],
+            [1, 0],
+            [2, 0],
+            [1, 1],
+        ],
+    },
+    {
+        id: 'sherbet-z',
+        name: 'Serbent\u0173 zigzagas',
+        color: 'candy-sherbet',
+        cells: [
+            [0, 0],
+            [1, 0],
+            [1, 1],
+            [2, 1],
+        ],
+    },
+    {
+        id: 'grape-plus',
+        name: 'Vynuoginis pliusas',
+        color: 'candy-grape',
+        cells: [
+            [1, 0],
+            [0, 1],
+            [1, 1],
+            [2, 1],
+            [1, 2],
+        ],
+    },
+    {
+        id: 'mint-hook',
+        name: 'M\u0117tin\u0117 kab\u0117',
+        color: 'candy-mint',
+        cells: [
+            [0, 0],
+            [1, 0],
+            [2, 0],
+            [2, 1],
+        ],
+    },
+    {
+        id: 'berry-corner',
+        name: 'Bra\u0161ki\u0173 kampas',
+        color: 'candy-berry',
+        cells: [
+            [0, 0],
+            [0, 1],
+            [1, 1],
+            [2, 1],
+        ],
+    },
+    {
+        id: 'caramel-bar',
+        name: 'Karamelinis baton\u0117lis',
+        color: 'candy-caramel',
+        cells: [
+            [0, 0],
+            [1, 0],
+            [2, 0],
+            [0, 1],
+            [1, 1],
+            [2, 1],
+        ],
+    },
+    {
+        id: 'cocoa-long',
+        name: 'Kakavos kolona',
+        color: 'candy-cocoa',
+        cells: [
+            [0, 0],
+            [0, 1],
+            [0, 2],
+            [0, 3],
+            [1, 3],
+        ],
+    },
+    {
+        id: 'sherbet-u',
+        name: 'Sherbet\u0173 U',
+        color: 'candy-sherbet',
+        cells: [
+            [0, 0],
+            [0, 1],
+            [1, 1],
+            [2, 1],
+            [2, 0],
+        ],
+    },
+];
+const blockJamCells = [];
+const blockJamState = {
+    board: [],
+    queue: [],
+    selectedIndex: null,
+    ghostCells: [],
+    latestHover: null,
+    isGameOver: false,
+    score: 0,
+    combo: 1,
+    nextRewardAt: 150,
+};
+let blockJamInitialised = false;
+const blockJamDangerTimers = new Map();
+const blockJamStatusDefaultText = blockJamStatusText?.textContent || BLOCKJAM_DEFAULT_STATUS;
+const blockJamHintDefaultText = blockJamHintText?.textContent || '';
+
 let generationBusy = false;
+let flashcardForceFront = false;
 let flashcardForceFront = false;
 const REWARD_STORAGE_KEY = 'pinkStudy.rewards';
 const rewardState = {
@@ -2636,6 +2805,686 @@ if (window.pdfjsLib && pdfjsLib.GlobalWorkerOptions) {
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.6.172/pdf.worker.min.js';
 }
 
+function blockJamIsReady() {
+    return Boolean(blockJamBoard && blockJamPieces);
+}
+
+function createBlockJamBoardMatrix() {
+    return Array.from({ length: BLOCKJAM_BOARD_SIZE }, () => Array(BLOCKJAM_BOARD_SIZE).fill(null));
+}
+
+function buildBlockJamBoardElements() {
+    if (!blockJamBoard || blockJamCells.length) {
+        return;
+    }
+    blockJamBoard.innerHTML = '';
+    for (let row = 0; row < BLOCKJAM_BOARD_SIZE; row += 1) {
+        const rowCells = [];
+        for (let col = 0; col < BLOCKJAM_BOARD_SIZE; col += 1) {
+            const cell = document.createElement('button');
+            cell.type = 'button';
+            cell.className = 'blockjam-cell';
+            cell.dataset.row = String(row);
+            cell.dataset.col = String(col);
+            cell.setAttribute('aria-label', formatBlockJamCellLabel(row, col));
+            blockJamBoard.appendChild(cell);
+            rowCells.push(cell);
+        }
+        blockJamCells.push(rowCells);
+    }
+}
+
+function formatBlockJamCellLabel(row, col, colorKey) {
+    const position = (row + 1) + ' eilut\u0117je, ' + (col + 1) + ' stulpelyje';
+    if (colorKey && BLOCKJAM_CANDY_LABELS[colorKey]) {
+        return BLOCKJAM_CANDY_LABELS[colorKey] + ' ' + position;
+    }
+    return 'Tu\u0161\u010Dia vieta ' + position;
+}
+
+function renderBlockJamBoard() {
+    if (!blockJamIsReady()) {
+        return;
+    }
+    for (let row = 0; row < BLOCKJAM_BOARD_SIZE; row += 1) {
+        for (let col = 0; col < BLOCKJAM_BOARD_SIZE; col += 1) {
+            const state = blockJamState.board[row]?.[col];
+            paintBlockJamCell(row, col, state);
+        }
+    }
+}
+
+function paintBlockJamCell(row, col, cellState) {
+    const cell = blockJamCells[row]?.[col];
+    if (!cell) {
+        return;
+    }
+    removeBlockJamCellColor(cell);
+    if (cellState && cellState.color) {
+        cell.classList.add('blockjam-cell--filled', 'blockjam-cell--' + cellState.color);
+        cell.setAttribute('aria-label', formatBlockJamCellLabel(row, col, cellState.color));
+    } else {
+        cell.setAttribute('aria-label', formatBlockJamCellLabel(row, col));
+    }
+}
+
+function removeBlockJamCellColor(cell) {
+    cell.classList.remove('blockjam-cell--filled', 'blockjam-cell--clearing');
+    BLOCKJAM_COLOR_KEYS.forEach((colorKey) => {
+        cell.classList.remove('blockjam-cell--' + colorKey);
+    });
+}
+
+function clearBlockJamGhost() {
+    if (!Array.isArray(blockJamState.ghostCells)) {
+        blockJamState.ghostCells = [];
+        return;
+    }
+    blockJamState.ghostCells.forEach(({ row, col }) => {
+        const cell = blockJamCells[row]?.[col];
+        if (cell) {
+            cell.classList.remove('blockjam-cell--ghost-valid', 'blockjam-cell--ghost-invalid');
+        }
+    });
+    blockJamState.ghostCells = [];
+}
+
+function blockJamCellFromEvent(event) {
+    if (!event) {
+        return null;
+    }
+    const target = event.target instanceof Element ? event.target : null;
+    if (!target) {
+        return null;
+    }
+    if (!blockJamBoard?.contains(target)) {
+        return null;
+    }
+    return target.closest('.blockjam-cell');
+}
+
+function handleBlockJamBoardHover(event) {
+    const cell = blockJamCellFromEvent(event);
+    if (!cell) {
+        return;
+    }
+    const row = Number.parseInt(cell.dataset.row || '', 10);
+    const col = Number.parseInt(cell.dataset.col || '', 10);
+    if (!Number.isFinite(row) || !Number.isFinite(col)) {
+        return;
+    }
+    blockJamState.latestHover = { row, col };
+    updateBlockJamGhost(row, col);
+}
+
+function handleBlockJamBoardLeave(event) {
+    if (event?.type === 'focusout') {
+        const next = event.relatedTarget;
+        if (next && blockJamBoard?.contains(next)) {
+            return;
+        }
+    }
+    blockJamState.latestHover = null;
+    clearBlockJamGhost();
+}
+
+function handleBlockJamBoardClick(event) {
+    if (blockJamState.isGameOver) {
+        return;
+    }
+    const cell = blockJamCellFromEvent(event);
+    if (!cell) {
+        return;
+    }
+    const row = Number.parseInt(cell.dataset.row || '', 10);
+    const col = Number.parseInt(cell.dataset.col || '', 10);
+    if (!Number.isFinite(row) || !Number.isFinite(col)) {
+        return;
+    }
+    placeBlockJamPiece(row, col);
+}
+
+function selectBlockJamPiece(index) {
+    if (!Array.isArray(blockJamState.queue) || index < 0 || index >= blockJamState.queue.length) {
+        blockJamState.selectedIndex = null;
+    } else {
+        const candidate = blockJamState.queue[index];
+        blockJamState.selectedIndex = candidate && !candidate.used ? index : null;
+    }
+    clearBlockJamGhost();
+    renderBlockJamPieces();
+    updateBlockJamHud();
+    if (blockJamState.selectedIndex === null) {
+        updateBlockJamStatus(BLOCKJAM_DEFAULT_STATUS);
+    } else {
+        const piece = blockJamState.queue[blockJamState.selectedIndex];
+        updateBlockJamStatus('Pasirinkta: ' + piece.name + '.');
+        if (blockJamState.latestHover) {
+            updateBlockJamGhost(blockJamState.latestHover.row, blockJamState.latestHover.col);
+        }
+    }
+}
+
+function rotateBlockJamPiece(index, direction = 1) {
+    if (typeof index !== 'number' || index < 0 || index >= blockJamState.queue.length) {
+        return;
+    }
+    const piece = blockJamState.queue[index];
+    if (!piece || piece.used) {
+        return;
+    }
+    const turns = ((direction % 4) + 4) % 4;
+    if (turns === 0) {
+        return;
+    }
+    piece.cells = rotateBlockJamCells(piece.cells, turns);
+    const size = deriveBlockJamPieceSize(piece.cells);
+    piece.width = size.width;
+    piece.height = size.height;
+    renderBlockJamPieces();
+    if (blockJamState.selectedIndex === index && blockJamState.latestHover) {
+        updateBlockJamGhost(blockJamState.latestHover.row, blockJamState.latestHover.col);
+    }
+}
+
+function rotateBlockJamCells(cells, turns = 1) {
+    if (!Array.isArray(cells) || cells.length === 0) {
+        return [];
+    }
+    let rotated = normaliseBlockJamCells(cells);
+    const safeTurns = ((turns % 4) + 4) % 4;
+    for (let i = 0; i < safeTurns; i += 1) {
+        const height = Math.max(...rotated.map(([, y]) => y)) + 1;
+        rotated = rotated.map(([x, y]) => [height - 1 - y, x]);
+        rotated = normaliseBlockJamCells(rotated);
+    }
+    return rotated;
+}
+
+function normaliseBlockJamCells(cells) {
+    if (!Array.isArray(cells) || cells.length === 0) {
+        return [];
+    }
+    let minX = Number.POSITIVE_INFINITY;
+    let minY = Number.POSITIVE_INFINITY;
+    cells.forEach(([x, y]) => {
+        if (x < minX) minX = x;
+        if (y < minY) minY = y;
+    });
+    return cells.map(([x, y]) => [x - minX, y - minY]);
+}
+
+function deriveBlockJamPieceSize(cells) {
+    if (!Array.isArray(cells) || cells.length === 0) {
+        return { width: 0, height: 0 };
+    }
+    const maxX = Math.max(...cells.map(([x]) => x));
+    const maxY = Math.max(...cells.map(([, y]) => y));
+    return {
+        width: maxX + 1,
+        height: maxY + 1,
+    };
+}
+
+function getBlockJamPlacement(piece, startRow, startCol) {
+    if (!piece) {
+        return { valid: false, cells: [] };
+    }
+    const placementCells = piece.cells.map(([x, y]) => ({
+        row: startRow + y,
+        col: startCol + x,
+    }));
+    const withinBounds = placementCells.every(
+        ({ row, col }) =>
+            row >= 0 && row < BLOCKJAM_BOARD_SIZE && col >= 0 && col < BLOCKJAM_BOARD_SIZE
+    );
+    if (!withinBounds) {
+        return { valid: false, cells: placementCells };
+    }
+    const fits = placementCells.every(({ row, col }) => !blockJamState.board[row][col]);
+    return { valid: fits, cells: placementCells };
+}
+
+function canPlaceBlockJamPiece(piece, row, col) {
+    const placement = getBlockJamPlacement(piece, row, col);
+    return placement.valid;
+}
+
+function blockJamPieceHasValidMove(piece) {
+    if (!piece || piece.used) {
+        return false;
+    }
+    const fallbackSize = deriveBlockJamPieceSize(piece.cells);
+    const pieceHeight = Number.isFinite(piece.height) ? piece.height : fallbackSize.height;
+    const pieceWidth = Number.isFinite(piece.width) ? piece.width : fallbackSize.width;
+    const rowLimit = BLOCKJAM_BOARD_SIZE - pieceHeight;
+    const colLimit = BLOCKJAM_BOARD_SIZE - pieceWidth;
+    if (rowLimit < 0 || colLimit < 0) {
+        return false;
+    }
+    for (let row = 0; row <= rowLimit; row += 1) {
+        for (let col = 0; col <= colLimit; col += 1) {
+            if (canPlaceBlockJamPiece(piece, row, col)) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+function updateBlockJamGhost(row, col) {
+    if (blockJamState.selectedIndex === null) {
+        clearBlockJamGhost();
+        return;
+    }
+    const piece = blockJamState.queue[blockJamState.selectedIndex];
+    if (!piece || piece.used) {
+        clearBlockJamGhost();
+        return;
+    }
+    const placement = getBlockJamPlacement(piece, row, col);
+    clearBlockJamGhost();
+    const validClass = placement.valid ? 'blockjam-cell--ghost-valid' : 'blockjam-cell--ghost-invalid';
+    const nextGhostCells = [];
+    placement.cells.forEach(({ row: r, col: c }) => {
+        if (r < 0 || r >= BLOCKJAM_BOARD_SIZE || c < 0 || c >= BLOCKJAM_BOARD_SIZE) {
+            return;
+        }
+        const cell = blockJamCells[r]?.[c];
+        if (!cell) {
+            return;
+        }
+        cell.classList.add(validClass);
+        nextGhostCells.push({ row: r, col: c });
+    });
+    blockJamState.ghostCells = nextGhostCells;
+}
+
+function flashBlockJamPieceWarning(index) {
+    if (!blockJamPieces) {
+        return;
+    }
+    const selector = '.blockjam-piece[data-index="' + index + '"]';
+    const card = blockJamPieces.querySelector(selector);
+    if (!card) {
+        return;
+    }
+    card.classList.add('blockjam-piece--shake');
+    const existingTimer = blockJamDangerTimers.get(card);
+    if (existingTimer) {
+        clearTimeout(existingTimer);
+    }
+    const timeoutId = setTimeout(() => {
+        card.classList.remove('blockjam-piece--shake');
+        blockJamDangerTimers.delete(card);
+    }, 420);
+    blockJamDangerTimers.set(card, timeoutId);
+}
+
+function placeBlockJamPiece(row, col) {
+    if (blockJamState.selectedIndex === null) {
+        updateBlockJamStatus('Pirma pasirink blok\u0105 apa\u010dioje.', 'warning');
+        return;
+    }
+    const piece = blockJamState.queue[blockJamState.selectedIndex];
+    if (!piece || piece.used) {
+        updateBlockJamStatus('Tas saldainis jau panaudotas. Pasirink kit\u0105.', 'warning');
+        blockJamState.selectedIndex = null;
+        renderBlockJamPieces();
+        return;
+    }
+    const placement = getBlockJamPlacement(piece, row, col);
+    if (!placement.valid) {
+        flashBlockJamPieceWarning(blockJamState.selectedIndex);
+        updateBlockJamStatus('Ten netelpa. Pam\u0117gink kit\u0105 viet\u0105!', 'warning');
+        return;
+    }
+    applyBlockJamPlacement(piece, placement.cells);
+}
+
+function applyBlockJamPlacement(piece, placementCells) {
+    placementCells.forEach(({ row, col }) => {
+        blockJamState.board[row][col] = { color: piece.color };
+        const cell = blockJamCells[row]?.[col];
+        if (cell) {
+            cell.classList.remove('blockjam-cell--ghost-valid', 'blockjam-cell--ghost-invalid');
+            cell.classList.add('blockjam-cell--filled', 'blockjam-cell--' + piece.color);
+            cell.setAttribute('aria-label', formatBlockJamCellLabel(row, col, piece.color));
+        }
+    });
+    piece.used = true;
+    blockJamState.selectedIndex = null;
+    clearBlockJamGhost();
+    const cleared = clearCompletedBlockJamLines();
+    updateBlockJamScore(piece.cells.length, cleared);
+    refillBlockJamQueue();
+    renderBlockJamPieces();
+    updateBlockJamHud();
+    checkBlockJamForGameOver();
+    const clearedLines = (cleared.rows || 0) + (cleared.cols || 0);
+    if (clearedLines > 0) {
+        updateBlockJamStatus('Nuostabu! I\u0161valytos ' + clearedLines + ' linijos.', 'success');
+    } else {
+        updateBlockJamStatus('Sutalpinta ' + piece.cells.length + ' saldaini\u0173.');
+    }
+}
+
+function clearCompletedBlockJamLines() {
+    const rowsToClear = [];
+    const colsToClear = [];
+    for (let row = 0; row < BLOCKJAM_BOARD_SIZE; row += 1) {
+        if (blockJamState.board[row].every(Boolean)) {
+            rowsToClear.push(row);
+        }
+    }
+    for (let col = 0; col < BLOCKJAM_BOARD_SIZE; col += 1) {
+        let filled = true;
+        for (let row = 0; row < BLOCKJAM_BOARD_SIZE; row += 1) {
+            if (!blockJamState.board[row][col]) {
+                filled = false;
+                break;
+            }
+        }
+        if (filled) {
+            colsToClear.push(col);
+        }
+    }
+    if (!rowsToClear.length && !colsToClear.length) {
+        return { rows: 0, cols: 0, cells: 0 };
+    }
+    const toClear = [];
+    rowsToClear.forEach((row) => {
+        for (let col = 0; col < BLOCKJAM_BOARD_SIZE; col += 1) {
+            toClear.push({ row, col });
+        }
+    });
+    colsToClear.forEach((col) => {
+        for (let row = 0; row < BLOCKJAM_BOARD_SIZE; row += 1) {
+            if (!toClear.some((cell) => cell.row === row && cell.col === col)) {
+                toClear.push({ row, col });
+            }
+        }
+    });
+    toClear.forEach(({ row, col }) => {
+        const cell = blockJamCells[row]?.[col];
+        if (cell) {
+            cell.classList.add('blockjam-cell--clearing');
+        }
+    });
+    setTimeout(() => {
+        toClear.forEach(({ row, col }) => {
+            blockJamState.board[row][col] = null;
+            const cell = blockJamCells[row]?.[col];
+            if (cell) {
+                removeBlockJamCellColor(cell);
+                cell.classList.remove('blockjam-cell--clearing');
+                cell.setAttribute('aria-label', formatBlockJamCellLabel(row, col));
+            }
+        });
+    }, BLOCKJAM_CLEAR_DELAY_MS);
+    return { rows: rowsToClear.length, cols: colsToClear.length, cells: toClear.length };
+}
+
+function updateBlockJamScore(placedCount, clearedInfo) {
+    const clearedLines = (clearedInfo?.rows || 0) + (clearedInfo?.cols || 0);
+    if (clearedLines > 0) {
+        blockJamState.combo = Math.min(5, blockJamState.combo + 1);
+    } else {
+        blockJamState.combo = 1;
+    }
+    const lineBonus = clearedLines * 12 + (clearedInfo?.cells || 0);
+    const gain = Math.max(1, Math.round((placedCount + lineBonus) * blockJamState.combo));
+    blockJamState.score += gain;
+    if (blockJamState.score >= blockJamState.nextRewardAt) {
+        awardReward('blockjam');
+        blockJamState.nextRewardAt += 150;
+    }
+}
+
+function updateBlockJamHud() {
+    if (blockJamScoreValue) {
+        blockJamScoreValue.textContent = String(blockJamState.score);
+    }
+    if (blockJamComboValue) {
+        blockJamComboValue.textContent = 'x' + Math.max(1, blockJamState.combo);
+    }
+    if (blockJamMovesValue) {
+        const remaining = blockJamState.queue.filter((piece) => !piece.used).length;
+        blockJamMovesValue.textContent = String(remaining || BLOCKJAM_SET_SIZE);
+    }
+    if (blockJamRotateButton) {
+        blockJamRotateButton.disabled = blockJamState.selectedIndex === null || blockJamState.isGameOver;
+    }
+}
+
+function updateBlockJamStatus(message, mood = 'info') {
+    if (!blockJamStatusText) {
+        return;
+    }
+    const text = message && message.length ? message : blockJamStatusDefaultText;
+    blockJamStatusText.textContent = text;
+    blockJamStatusText.classList.remove('blockjam__status-text--success', 'blockjam__status-text--warning');
+    if (mood === 'success') {
+        blockJamStatusText.classList.add('blockjam__status-text--success');
+    } else if (mood === 'warning') {
+        blockJamStatusText.classList.add('blockjam__status-text--warning');
+    }
+}
+
+function updateBlockJamHint(message) {
+    if (!blockJamHintText) {
+        return;
+    }
+    blockJamHintText.textContent = message && message.length ? message : blockJamHintDefaultText;
+}
+
+function renderBlockJamPieces() {
+    if (!blockJamPieces) {
+        return;
+    }
+    blockJamPieces.innerHTML = '';
+    blockJamState.queue.forEach((piece, index) => {
+        const card = document.createElement('div');
+        card.className = 'blockjam-piece';
+        card.dataset.index = String(index);
+        card.setAttribute('role', 'listitem');
+        if (piece.used) {
+            card.classList.add('blockjam-piece--disabled');
+        }
+        if (!piece.used && blockJamState.selectedIndex === index) {
+            card.classList.add('blockjam-piece--selected');
+        }
+        if (!piece.used && !blockJamPieceHasValidMove(piece)) {
+            card.classList.add('blockjam-piece--danger');
+        }
+        const bodyButton = document.createElement('button');
+        bodyButton.type = 'button';
+        bodyButton.className = 'blockjam-piece__body';
+        bodyButton.dataset.index = String(index);
+        bodyButton.dataset.action = 'select';
+        bodyButton.disabled = piece.used;
+        bodyButton.setAttribute(
+            'aria-label',
+            piece.used ? piece.name + ' jau i\u0161naudota.' : 'Pasirink ' + piece.name
+        );
+        const grid = document.createElement('div');
+        grid.className = 'blockjam-piece__grid';
+        grid.style.setProperty('--cols', String(piece.width));
+        piece.cells.forEach(([x, y]) => {
+            const cell = document.createElement('span');
+            cell.className = 'blockjam-piece__cell blockjam-piece__cell--' + piece.color;
+            cell.style.gridColumnStart = String(x + 1);
+            cell.style.gridRowStart = String(y + 1);
+            grid.appendChild(cell);
+        });
+        bodyButton.appendChild(grid);
+        card.appendChild(bodyButton);
+
+        const footer = document.createElement('div');
+        footer.className = 'blockjam-piece__footer';
+        const label = document.createElement('span');
+        label.className = 'blockjam-piece__label';
+        label.textContent = piece.name;
+        footer.appendChild(label);
+
+        const controls = document.createElement('div');
+        controls.className = 'blockjam-piece__controls';
+        const rotateBtn = document.createElement('button');
+        rotateBtn.type = 'button';
+        rotateBtn.className = 'blockjam-piece__rotate';
+        rotateBtn.dataset.index = String(index);
+        rotateBtn.dataset.action = 'rotate';
+        rotateBtn.disabled = piece.used;
+        rotateBtn.setAttribute('aria-label', 'Pasukti ' + piece.name);
+        rotateBtn.textContent = '\u21bb';
+        controls.appendChild(rotateBtn);
+        footer.appendChild(controls);
+        card.appendChild(footer);
+        blockJamPieces.appendChild(card);
+    });
+}
+
+function handleBlockJamPieceClick(event) {
+    const rotateBtn = event.target instanceof Element ? event.target.closest('.blockjam-piece__rotate') : null;
+    if (rotateBtn) {
+        const index = Number.parseInt(rotateBtn.dataset.index || '', 10);
+        if (Number.isFinite(index)) {
+            rotateBlockJamPiece(index, 1);
+        }
+        return;
+    }
+    const selectBtn = event.target instanceof Element ? event.target.closest('.blockjam-piece__body') : null;
+    if (selectBtn) {
+        const index = Number.parseInt(selectBtn.dataset.index || '', 10);
+        if (Number.isFinite(index)) {
+            selectBlockJamPiece(index);
+        }
+    }
+}
+
+function blockJamIsVisible() {
+    return Boolean(blockJamCard && !blockJamCard.hidden && blockJamCard.offsetParent !== null);
+}
+
+function handleBlockJamHotkeys(event) {
+    if (!blockJamIsVisible()) {
+        return;
+    }
+    const target = event.target;
+    if (
+        target &&
+        (target.tagName === 'INPUT' ||
+            target.tagName === 'TEXTAREA' ||
+            target.tagName === 'SELECT' ||
+            target.isContentEditable)
+    ) {
+        return;
+    }
+    if ((event.key === 'r' || event.key === 'R') && blockJamState.selectedIndex !== null) {
+        event.preventDefault();
+        rotateBlockJamPiece(blockJamState.selectedIndex, 1);
+    }
+    if (event.key === 'Escape' && blockJamState.selectedIndex !== null) {
+        event.preventDefault();
+        blockJamState.selectedIndex = null;
+        clearBlockJamGhost();
+        renderBlockJamPieces();
+        updateBlockJamHud();
+        updateBlockJamStatus(BLOCKJAM_DEFAULT_STATUS);
+    }
+}
+
+function refillBlockJamQueue(force = false) {
+    const unused = blockJamState.queue.filter((piece) => !piece.used);
+    if (!force && unused.length > 0) {
+        return;
+    }
+    blockJamState.queue = Array.from({ length: BLOCKJAM_SET_SIZE }, () => buildRandomBlockJamPiece());
+}
+
+function buildRandomBlockJamPiece() {
+    const shape = BLOCKJAM_SHAPES[Math.floor(Math.random() * BLOCKJAM_SHAPES.length)];
+    const rotation = Math.floor(Math.random() * 4);
+    const rotatedCells = rotateBlockJamCells(shape.cells, rotation);
+    const size = deriveBlockJamPieceSize(rotatedCells);
+    return {
+        id: shape.id + '-' + Date.now().toString(36) + '-' + Math.floor(Math.random() * 1000),
+        name: shape.name,
+        color: shape.color,
+        cells: rotatedCells,
+        width: size.width,
+        height: size.height,
+        used: false,
+    };
+}
+
+function resetBlockJamGame(options = {}) {
+    if (!blockJamIsReady()) {
+        return;
+    }
+    blockJamState.board = createBlockJamBoardMatrix();
+    blockJamState.queue = [];
+    blockJamState.selectedIndex = null;
+    blockJamState.ghostCells = [];
+    blockJamState.latestHover = null;
+    blockJamState.isGameOver = false;
+    blockJamState.score = 0;
+    blockJamState.combo = 1;
+    blockJamState.nextRewardAt = 150;
+    blockJamDangerTimers.forEach((timer) => clearTimeout(timer));
+    blockJamDangerTimers.clear();
+    clearBlockJamGhost();
+    renderBlockJamBoard();
+    refillBlockJamQueue(true);
+    renderBlockJamPieces();
+    updateBlockJamHud();
+    updateBlockJamStatus(
+        options?.announce === false ? BLOCKJAM_DEFAULT_STATUS : 'Saldaini\u0173 partija prad\u0117ta!'
+    );
+    updateBlockJamHint('');
+    blockJamBoard?.classList.remove('blockjam-board--frozen');
+    checkBlockJamForGameOver();
+}
+
+function checkBlockJamForGameOver() {
+    if (!blockJamIsReady()) {
+        return;
+    }
+    const hasMove = blockJamState.queue.some((piece) => !piece.used && blockJamPieceHasValidMove(piece));
+    blockJamState.isGameOver = !hasMove;
+    blockJamBoard?.classList.toggle('blockjam-board--frozen', blockJamState.isGameOver);
+    if (blockJamState.isGameOver) {
+        updateBlockJamStatus('Neb\u0117ra vietos! Spausk "Restartuoti" ir gauk nauj\u0105 partij\u0105.', 'warning');
+        updateBlockJamHint('Neb\u0117ra \u0117jim\u0173. Restartuok ir tegul saldainiai gr\u012F\u017Eta.');
+    } else {
+        updateBlockJamHint('');
+    }
+}
+
+function initialiseBlockJamMode() {
+    if (blockJamInitialised || !blockJamIsReady()) {
+        return;
+    }
+    buildBlockJamBoardElements();
+    blockJamBoard?.addEventListener('pointerover', handleBlockJamBoardHover);
+    blockJamBoard?.addEventListener('pointerleave', handleBlockJamBoardLeave);
+    blockJamBoard?.addEventListener('focusin', handleBlockJamBoardHover);
+    blockJamBoard?.addEventListener('focusout', handleBlockJamBoardLeave);
+    blockJamBoard?.addEventListener('click', handleBlockJamBoardClick);
+    blockJamPieces?.addEventListener('click', handleBlockJamPieceClick);
+    blockJamResetButton?.addEventListener('click', () => {
+        resetBlockJamGame();
+    });
+    blockJamRotateButton?.addEventListener('click', () => {
+        if (blockJamState.selectedIndex !== null) {
+            rotateBlockJamPiece(blockJamState.selectedIndex, 1);
+        }
+    });
+    document.addEventListener('keydown', handleBlockJamHotkeys);
+    resetBlockJamGame({ announce: false });
+    blockJamInitialised = true;
+}
+
 flashcardCard?.addEventListener('click', toggleFlashcardFace);
 flashcardCard?.addEventListener('keydown', (event) => {
     if (event.key === 'Enter' || event.key === ' ') {
@@ -2851,5 +3700,5 @@ scheduleSplashHide();
 if (typeof ensureNotepadPlaceholder === 'function') {
     ensureNotepadPlaceholder(true);
 }
+initialiseBlockJamMode();
 scheduleLayoutTopSync();
-

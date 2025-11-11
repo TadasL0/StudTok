@@ -295,6 +295,57 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="card blockjam-card" aria-live="polite">
+                    <div class="blockjam-card__header">
+                        <div>
+                            <h3 class="card__title" id="blockjam-title">Block Jam 3D testukai</h3>
+                            <p class="blockjam-card__tagline">Mimikuojame mobil&#371;j&#303; Block Jam 3D &ndash; tik su bra&#353;ki&#371; glajumi ir &#353;okolado blokais.</p>
+                        </div>
+                        <button id="blockjam-reset" type="button" class="btn btn--secondary btn--tiny" aria-label="Prad&#279;ti Block Jam 3D i&#353; naujo">
+                            Restartuoti
+                        </button>
+                    </div>
+                    <div class="blockjam" aria-labelledby="blockjam-title">
+                        <div class="blockjam__status-bar">
+                            <div class="blockjam__meter">
+                                <span class="blockjam__meter-label">Ta&#353;kai</span>
+                                <strong id="blockjam-score" class="blockjam__meter-value">0</strong>
+                            </div>
+                            <div class="blockjam__meter">
+                                <span class="blockjam__meter-label">Combo</span>
+                                <strong id="blockjam-combo" class="blockjam__meter-value">x1</strong>
+                            </div>
+                            <div class="blockjam__meter">
+                                <span class="blockjam__meter-label">Blokai</span>
+                                <strong id="blockjam-moves" class="blockjam__meter-value">3</strong>
+                            </div>
+                        </div>
+                        <div class="blockjam__playfield">
+                            <div
+                                id="blockjam-board"
+                                class="blockjam-board"
+                                role="grid"
+                                aria-label="Block Jam 3D saldaini&#371; lenta"
+                                aria-live="polite"
+                            ></div>
+                            <div class="blockjam-board__shadow" aria-hidden="true"></div>
+                        </div>
+                        <div class="blockjam__pieces-shell">
+                            <div class="blockjam__pieces-header">
+                                <p class="blockjam__pieces-label">Pasirink sald&#371; blok&#261; (3 vienu metu kaip &#382;aidime).</p>
+                                <button id="blockjam-rotate" type="button" class="btn btn--secondary btn--tiny" aria-label="Pasukti pasirinkt&#261; blok&#261;">
+                                    Pasukti (R)
+                                </button>
+                            </div>
+                            <div id="blockjam-pieces" class="blockjam-pieces" role="list" aria-live="polite"></div>
+                        </div>
+                        <p id="blockjam-status" class="blockjam__status-text" role="status">Pasirink saldaini&#371; fig&#363;r&#261; ir bakstelk lent&#261;.</p>
+                        <p id="blockjam-hint" class="blockjam__hint">
+                            U&#382;pildyk eiles ar stulpelius, kad jie i&#353;tirpt&#371;. Paspausk R arba mygtuk&#261;, jei reikia pasukti pasirinkt&#261; blok&#261;, Esc &ndash; at&#353;aukti pasirinkim&#261;.
+                        </p>
+                    </div>
+                </div>
             </div>
         </section>
 
