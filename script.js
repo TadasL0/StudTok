@@ -1621,7 +1621,7 @@ async function refreshImportantDates(force = false) {
         if (importantDatesToggleEmbedBtn && importantDatesEmbed) {
             importantDatesEmbed.hidden = false;
             importantDatesToggleEmbedBtn.setAttribute('aria-expanded', 'true');
-            importantDatesToggleEmbedBtn.textContent = 'Sl\u0117pti \u012fterpt\u0105 lentel\u0119';
+            importantDatesToggleEmbedBtn.textContent = 'Slėpti įterptą lentelę';
         }
     } finally {
         importantDatesState.loading = false;
@@ -1667,8 +1667,8 @@ function initImportantDatesSection() {
             importantDatesEmbed.hidden = !hidden;
             importantDatesToggleEmbedBtn.setAttribute('aria-expanded', String(hidden));
             importantDatesToggleEmbedBtn.textContent = hidden
-                ? 'Sl\u0117pti \u012fterpt\u0105 lentel\u0119'
-                : 'Rodyti \u012fterpt\u0105 lentel\u0119';
+                ? 'Slėpti įterptą lentelę'
+                : 'Rodyti įterptą lentelę';
         });
     }
     refreshImportantDates(true);
