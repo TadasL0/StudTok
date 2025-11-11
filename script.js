@@ -340,7 +340,6 @@ function loadBlockJamDemoQuiz() {
 
 let generationBusy = false;
 let flashcardForceFront = false;
-let flashcardForceFront = false;
 const REWARD_STORAGE_KEY = 'pinkStudy.rewards';
 const rewardState = {
     count: 0,
