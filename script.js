@@ -143,6 +143,7 @@ const generationState = {
 const BLOCKJAM_BOARD_SIZE = 8;
 const BLOCKJAM_SET_SIZE = 3;
 const BLOCKJAM_CLEAR_DELAY_MS = 340;
+const BLOCKJAM_MATCH_MIN = 3;
 const BLOCKJAM_DEFAULT_STATUS = 'Pasirink saldaini\u0173 fig\u016br\u0105 ir bakstelk lent\u0105.';
 const BLOCKJAM_CANDY_LABELS = {
     'candy-berry': 'bra\u0161kinis saldainis',
@@ -3365,7 +3366,9 @@ function applyBlockJamPlacement(piece, placementCells) {
     }
     blockJamState.selectedIndex = null;
     clearBlockJamGhost();
-    const cleared = clearCompletedBlockJamLines();
+    const matchClears = clearBlockJamMatches();
+    const lineClears = clearCompletedBlockJamLines();
+    const cleared = mergeBlockJamClearStats(lineClears, matchClears);
     updateBlockJamScore(piece.cells.length, cleared);
     refillBlockJamQueue();
     renderBlockJamPieces();
@@ -3374,11 +3377,100 @@ function applyBlockJamPlacement(piece, placementCells) {
     updateBlockJamQuestionProgress();
     checkBlockJamForGameOver();
     const clearedLines = (cleared.rows || 0) + (cleared.cols || 0);
-    if (clearedLines > 0) {
+    const clearedClusters = cleared.clusters || 0;
+    if (clearedClusters > 0 && clearedLines > 0) {
+        updateBlockJamStatus('Saldi lavina! ' + clearedClusters + ' grup\u0117s ir ' + clearedLines + ' linijos i\u0161nyko.', 'success');
+    } else if (clearedClusters > 0) {
+        updateBlockJamStatus('Palietus susilyd\u0117 ' + clearedClusters + ' saldaini\u0173 grup\u0117s!', 'success');
+    } else if (clearedLines > 0) {
         updateBlockJamStatus('Nuostabu! I\u0161valytos ' + clearedLines + ' linijos.', 'success');
     } else {
         updateBlockJamStatus('Sutalpinta ' + piece.cells.length + ' saldaini\u0173.');
     }
+}
+
+function findBlockJamMatches() {
+    const visited = Array.from({ length: BLOCKJAM_BOARD_SIZE }, () => Array(BLOCKJAM_BOARD_SIZE).fill(false));
+    const matches = [];
+    for (let row = 0; row < BLOCKJAM_BOARD_SIZE; row += 1) {
+        for (let col = 0; col < BLOCKJAM_BOARD_SIZE; col += 1) {
+            const cellState = blockJamState.board[row]?.[col];
+            if (!cellState || visited[row][col]) {
+                continue;
+            }
+            const stack = [{ row, col }];
+            const cluster = [];
+            visited[row][col] = true;
+            while (stack.length) {
+                const current = stack.pop();
+                cluster.push(current);
+                const neighbours = [
+                    { row: current.row - 1, col: current.col },
+                    { row: current.row + 1, col: current.col },
+                    { row: current.row, col: current.col - 1 },
+                    { row: current.row, col: current.col + 1 },
+                ];
+                neighbours.forEach(({ row: nRow, col: nCol }) => {
+                    if (nRow < 0 || nRow >= BLOCKJAM_BOARD_SIZE || nCol < 0 || nCol >= BLOCKJAM_BOARD_SIZE) {
+                        return;
+                    }
+                    if (visited[nRow][nCol]) {
+                        return;
+                    }
+                    const neighbourState = blockJamState.board[nRow]?.[nCol];
+                    if (neighbourState && neighbourState.color === cellState.color) {
+                        visited[nRow][nCol] = true;
+                        stack.push({ row: nRow, col: nCol });
+                    }
+                });
+            }
+            if (cluster.length >= BLOCKJAM_MATCH_MIN) {
+                matches.push({
+                    color: cellState.color,
+                    cells: cluster,
+                });
+            }
+        }
+    }
+    return matches;
+}
+
+function clearBlockJamMatches() {
+    const matches = findBlockJamMatches();
+    if (!matches.length) {
+        return { clusters: 0, cells: 0 };
+    }
+    const toClear = [];
+    matches.forEach((match) => {
+        match.cells.forEach(({ row, col }) => {
+            toClear.push({ row, col });
+            blockJamState.board[row][col] = null;
+            const cell = blockJamCells[row]?.[col];
+            if (cell) {
+                cell.classList.add('blockjam-cell--clearing');
+            }
+        });
+    });
+    setTimeout(() => {
+        toClear.forEach(({ row, col }) => {
+            const cell = blockJamCells[row]?.[col];
+            if (cell) {
+                removeBlockJamCellColor(cell);
+                cell.classList.remove('blockjam-cell--clearing');
+                cell.setAttribute('aria-label', formatBlockJamCellLabel(row, col));
+            }
+        });
+    }, BLOCKJAM_CLEAR_DELAY_MS);
+    return { clusters: matches.length, cells: toClear.length };
+}
+
+function mergeBlockJamClearStats(lineInfo = {}, matchInfo = {}) {
+    return {
+        rows: lineInfo.rows || 0,
+        cols: lineInfo.cols || 0,
+        cells: (lineInfo.cells || 0) + (matchInfo.cells || 0),
+        clusters: matchInfo.clusters || 0,
+    };
 }
 
 function clearCompletedBlockJamLines() {
@@ -3439,13 +3531,17 @@ function clearCompletedBlockJamLines() {
 
 function updateBlockJamScore(placedCount, clearedInfo) {
     const clearedLines = (clearedInfo?.rows || 0) + (clearedInfo?.cols || 0);
-    if (clearedLines > 0) {
+    const clearedClusters = clearedInfo?.clusters || 0;
+    if (clearedLines > 0 || clearedClusters > 0) {
         blockJamState.combo = Math.min(5, blockJamState.combo + 1);
     } else {
         blockJamState.combo = 1;
     }
-    const lineBonus = clearedLines * 12 + (clearedInfo?.cells || 0);
-    const gain = Math.max(1, Math.round((placedCount + lineBonus) * blockJamState.combo));
+    const clearedCells = clearedInfo?.cells || 0;
+    const lineBonus = clearedLines * 12;
+    const clusterBonus = clearedClusters * 8;
+    const gainBase = placedCount + clearedCells + lineBonus + clusterBonus;
+    const gain = Math.max(1, Math.round(gainBase * blockJamState.combo));
     blockJamState.score += gain;
     if (!blockJamState.demoActive && blockJamState.score >= blockJamState.nextRewardAt) {
         awardReward('blockjam');
@@ -3670,9 +3766,10 @@ function syncBlockJamWithQuizQuestions(baseQuestions, { isDemo = false } = {}) {
     const statusMessage = isDemo
         ? 'Demo r\u0117\u017eimas: atsakyk \u012f pavyzdinius klausimus ir pad\u0117k blok\u0105.'
         : 'Pasirink blok\u0105, atsakyk klausim\u0105 ir pad\u0117k j\u012f lentoje.';
+    const sharedHint = ' Sujunk bent tris tos pa\u010dios spalvos saldainius, kad jie susilydyt\u0173.';
     const hintMessage = isDemo
-        ? 'Kai sugeneruosi PDF ABCD test\u0105, demo klausimai bus pakeisti tavo med\u017eiaga.'
-        : 'Kiekvienas blokas slepia klausim\u0105 i\u0161 tavo PDF testuko.';
+        ? 'Kai sugeneruosi PDF ABCD test\u0105, demo klausimai bus pakeisti tavo med\u017eiaga.' + sharedHint
+        : 'Kiekvienas blokas slepia klausim\u0105 i\u0161 tavo PDF testuko.' + sharedHint;
     updateBlockJamStatus(statusMessage, 'info');
     updateBlockJamHint(hintMessage);
 }
