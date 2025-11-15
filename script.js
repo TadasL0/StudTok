@@ -307,6 +307,7 @@ const blockJamState = {
     queue: [],
     selectedIndex: null,
     ghostCells: [],
+    ghostSignature: null,
     latestHover: null,
     isGameOver: false,
     score: 0,
@@ -2928,7 +2929,6 @@ function removeBlockJamCellColor(cell) {
 function clearBlockJamGhost() {
     if (!Array.isArray(blockJamState.ghostCells)) {
         blockJamState.ghostCells = [];
-        return;
     }
     blockJamState.ghostCells.forEach(({ row, col }) => {
         const cell = blockJamCells[row]?.[col];
@@ -2937,6 +2937,7 @@ function clearBlockJamGhost() {
         }
     });
     blockJamState.ghostCells = [];
+    blockJamState.ghostSignature = null;
 }
 
 function blockJamCellFromEvent(event) {
@@ -3264,7 +3265,6 @@ function updateBlockJamGhost(row, col) {
         return;
     }
     const placement = getBlockJamPlacement(piece, row, col);
-    clearBlockJamGhost();
     const validClass = placement.valid ? 'blockjam-cell--ghost-valid' : 'blockjam-cell--ghost-invalid';
     const nextGhostCells = [];
     placement.cells.forEach(({ row: r, col: c }) => {
@@ -3275,10 +3275,28 @@ function updateBlockJamGhost(row, col) {
         if (!cell) {
             return;
         }
-        cell.classList.add(validClass);
         nextGhostCells.push({ row: r, col: c });
     });
+    if (nextGhostCells.length === 0) {
+        clearBlockJamGhost();
+        return;
+    }
+    const pieceKey = piece?.id || 'piece-' + blockJamState.selectedIndex;
+    const coordsKey = nextGhostCells.map(({ row: r, col: c }) => `${r}-${c}`).join('|');
+    const nextSignature = [pieceKey, placement.valid ? '1' : '0', coordsKey].join(':');
+    if (blockJamState.ghostSignature === nextSignature) {
+        return;
+    }
+    clearBlockJamGhost();
+    nextGhostCells.forEach(({ row: r, col: c }) => {
+        const cell = blockJamCells[r]?.[c];
+        if (!cell) {
+            return;
+        }
+        cell.classList.add(validClass);
+    });
     blockJamState.ghostCells = nextGhostCells;
+    blockJamState.ghostSignature = nextSignature;
 }
 
 function flashBlockJamPieceWarning(index) {
@@ -3400,6 +3418,7 @@ function clearCompletedBlockJamLines() {
         }
     });
     toClear.forEach(({ row, col }) => {
+        blockJamState.board[row][col] = null;
         const cell = blockJamCells[row]?.[col];
         if (cell) {
             cell.classList.add('blockjam-cell--clearing');
@@ -3407,7 +3426,6 @@ function clearCompletedBlockJamLines() {
     });
     setTimeout(() => {
         toClear.forEach(({ row, col }) => {
-            blockJamState.board[row][col] = null;
             const cell = blockJamCells[row]?.[col];
             if (cell) {
                 removeBlockJamCellColor(cell);
