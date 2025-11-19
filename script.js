@@ -69,7 +69,7 @@ const quizStopButton = document.getElementById('quiz-stop');
 const quizRestartButton = document.getElementById('quiz-restart');
 const quizEmptyDefaultText = quizEmpty?.textContent || '';
 const quizNotSelectedText = 'Testas nebuvo pasirinktas. Pa\u017Eym\u0117k "ABCD test\u0105", jei jo reikia.';
-const quizTimerValue = document.getElementById('quiz-timer');
+const quizComfortValue = document.getElementById('quiz-comfort');
 const quizScoreValue = document.getElementById('quiz-score');
 const blockJamCard = document.querySelector('.blockjam-card');
 const blockJamShell = document.querySelector('.blockjam');
@@ -115,9 +115,12 @@ const flashcardState = {
 };
 const flashcardHistory = new Set();
 
-const QUIZ_ROUND_DURATION_SECONDS = 60;
 const QUIZ_AUTO_ADVANCE_DELAY_MS = 750;
-const QUIZ_TIMER_WARNING_THRESHOLD = 10;
+const QUIZ_COMFORT_MESSAGES = {
+    idle: 'Prad\u0117k, kai pasiruo\u0161i.',
+    active: 'Ramiai spr\u0119sk \u2013 \u010dia be laikma\u010dio.',
+    complete: 'Puiku! Pails\u0117k prie\u0161 kit\u0105 bandym\u0105.',
+};
 
 const quizState = {
     baseQuestions: [],
@@ -127,8 +130,6 @@ const quizState = {
     answered: false,
     completedRun: false,
     roundActive: false,
-    timeLeft: QUIZ_ROUND_DURATION_SECONDS,
-    timerId: null,
     autoAdvanceId: null,
     answeredCount: 0,
 };
@@ -680,13 +681,6 @@ function registerQuizCompletion() {
     }
 }
 
-function stopQuizTimer() {
-    if (quizState.timerId) {
-        clearInterval(quizState.timerId);
-        quizState.timerId = null;
-    }
-}
-
 function clearQuizAutoAdvance() {
     if (quizState.autoAdvanceId) {
         clearTimeout(quizState.autoAdvanceId);
@@ -694,19 +688,18 @@ function clearQuizAutoAdvance() {
     }
 }
 
-function updateQuizTimerDisplay() {
-    if (!quizTimerValue) {
+function updateQuizComfortIndicator() {
+    if (!quizComfortValue) {
         return;
     }
-    const seconds = Math.max(0, Math.floor(quizState.timeLeft));
-    quizTimerValue.textContent = `${seconds}s`;
-    const timerHolder = quizTimerValue.closest('.quiz-widget__status-item');
-    if (timerHolder) {
-        timerHolder.classList.toggle(
-            'quiz-widget__status-item--warning',
-            quizState.roundActive && seconds <= QUIZ_TIMER_WARNING_THRESHOLD
-        );
+    let mode = 'idle';
+    if (quizState.roundActive) {
+        mode = 'active';
+    } else if (quizState.completedRun) {
+        mode = 'complete';
     }
+    const text = QUIZ_COMFORT_MESSAGES[mode] || QUIZ_COMFORT_MESSAGES.idle;
+    quizComfortValue.textContent = text;
 }
 
 function updateQuizScoreboard() {
@@ -722,7 +715,7 @@ function updateQuizControlAvailability() {
     const hasQuestions = quizState.baseQuestions.length > 0;
     if (quizStartButton) {
         quizStartButton.disabled = !hasQuestions || quizState.roundActive;
-        quizStartButton.textContent = quizState.roundActive ? 'Vyksta...' : 'Startuoti (60 s)';
+        quizStartButton.textContent = quizState.roundActive ? 'Vyksta...' : 'Startuoti';
     }
     if (quizStopButton) {
         quizStopButton.disabled = !quizState.roundActive;
@@ -732,13 +725,11 @@ function updateQuizControlAvailability() {
     }
 }
 
-function resetTimedQuiz(message = '') {
-    stopQuizTimer();
+function resetQuizRound(message = '') {
     clearQuizAutoAdvance();
     quizState.roundActive = false;
     quizState.answered = false;
     quizState.completedRun = false;
-    quizState.timeLeft = QUIZ_ROUND_DURATION_SECONDS;
     quizState.score = 0;
     quizState.answeredCount = 0;
     if (quizState.baseQuestions.length > 0) {
@@ -748,14 +739,14 @@ function resetTimedQuiz(message = '') {
         quizState.questions = [];
         quizState.index = 0;
     }
-    updateQuizTimerDisplay();
+    updateQuizComfortIndicator();
     updateQuizScoreboard();
     renderQuizQuestion();
     if (quizFeedback) {
         quizFeedback.textContent = message
             ? message
             : quizState.baseQuestions.length > 0
-            ? 'Paspausk "Startuoti (60 s)" ir rink ta\u0161kus.'
+            ? 'Paspausk "Startuoti" ir rink ta\u0161kus.'
             : '';
     }
     updateQuizControlAvailability();
@@ -765,41 +756,31 @@ function startQuizRound() {
     if (quizState.baseQuestions.length === 0) {
         return;
     }
-    stopQuizTimer();
     clearQuizAutoAdvance();
     quizState.roundActive = true;
     quizState.completedRun = false;
-    quizState.timeLeft = QUIZ_ROUND_DURATION_SECONDS;
     quizState.score = 0;
     quizState.answeredCount = 0;
     quizState.index = 0;
     quizState.questions = buildShuffledQuizQuestions(quizState.baseQuestions);
     quizState.answered = false;
-    updateQuizTimerDisplay();
+    updateQuizComfortIndicator();
     updateQuizScoreboard();
     renderQuizQuestion();
     if (quizFeedback) {
-        quizFeedback.textContent = 'Skub\u0117k ir rink ta\u0161kus per 60 sekund\u017Ei\u0173!';
+        quizFeedback.textContent = 'Spr\u0119sk savo tempu ir stabtel\u0117k, kai norisi.';
     }
     updateQuizControlAvailability();
-
-    quizState.timerId = setInterval(() => {
-        quizState.timeLeft -= 1;
-        updateQuizTimerDisplay();
-        if (quizState.timeLeft <= 0) {
-            endQuizRound('time');
-        }
-    }, 1000);
 }
 
-function endQuizRound(reason = 'time') {
+function endQuizRound(reason = 'manual') {
     if (!quizState.baseQuestions.length) {
         return;
     }
-    stopQuizTimer();
     clearQuizAutoAdvance();
     const wasActive = quizState.roundActive;
     quizState.roundActive = false;
+    updateQuizComfortIndicator();
     if (quizOptions) {
         const buttons = quizOptions.querySelectorAll('.quiz-option');
         buttons.forEach((button) => {
@@ -810,12 +791,13 @@ function endQuizRound(reason = 'time') {
     if (wasActive && quizFeedback) {
         const summary =
             reason === 'manual'
-                ? `Sustabdei i\u0161\u0161\u016Bk\u012F. Surinkai ${quizState.score} ta\u0161kus.`
-                : `Laikas! Surinkai ${quizState.score} ta\u0161kus.`;
+                ? `Sustabdei test\u0105. Surinkai ${quizState.score} ta\u0161kus.`
+                : `Puikiai padirb\u0117ta! Surinkai ${quizState.score} ta\u0161kus.`;
         quizFeedback.textContent = summary;
     }
     if (wasActive) {
         registerQuizCompletion();
+        updateQuizComfortIndicator();
     }
     updateQuizControlAvailability();
 }
@@ -2463,7 +2445,6 @@ function clearFlashcardWidget() {
 }
 
 function clearQuizWidget() {
-    stopQuizTimer();
     clearQuizAutoAdvance();
     quizState.baseQuestions = [];
     quizState.questions = [];
@@ -2471,9 +2452,9 @@ function clearQuizWidget() {
     quizState.score = 0;
     quizState.answered = false;
     quizState.roundActive = false;
-    quizState.timeLeft = QUIZ_ROUND_DURATION_SECONDS;
     quizState.answeredCount = 0;
     resetQuizRunState();
+    updateQuizComfortIndicator();
     if (quizWidget) {
         quizWidget.hidden = true;
     }
@@ -2487,7 +2468,6 @@ function clearQuizWidget() {
     if (quizOptions) {
         quizOptions.innerHTML = '';
     }
-    updateQuizTimerDisplay();
     updateQuizScoreboard();
     if (quizFeedback) {
         quizFeedback.textContent = '';
@@ -2613,7 +2593,7 @@ function loadQuizQuestions(questions) {
     }
 
     quizState.baseQuestions = baseQuestions;
-    resetTimedQuiz();
+    resetQuizRound();
     syncBlockJamWithQuizQuestions(baseQuestions);
 
     if (quizEmpty) {
@@ -2629,7 +2609,7 @@ function reshuffleQuizQuestions() {
     if (quizState.baseQuestions.length === 0) {
         return;
     }
-    resetTimedQuiz('Klausimai permai\u0161yti! Paspausk "Startuoti" ir t\u0119sk.');
+    resetQuizRound('Klausimai permai\u0161yti! Paspausk "Startuoti" ir t\u0119sk.');
     updateRegenerateButtonsAvailability();
 }
 
@@ -3994,7 +3974,7 @@ quizRestartButton?.addEventListener('click', () => {
     if (quizState.baseQuestions.length === 0) {
         return;
     }
-    resetTimedQuiz('Viskas paruo\u0161ta naujam bandymui! Paspausk "Startuoti".');
+    resetQuizRound('Viskas paruo\u0161ta naujam bandymui! Paspausk "Startuoti".');
 });
 
 shuffleQuizBtn?.addEventListener('click', () => {
