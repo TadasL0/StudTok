@@ -1914,12 +1914,13 @@ const SPLASH_RUNNER_FRAMES = [
 
 const SPLASH_GREETINGS = [
     { salute: 'Labas,', name: '{name}!' },
-    { salute: 'Labukas,', name: 'miela {name}!' },
-    { salute: '\u041f\u0440\u0438\u0432\u0435\u0442\u0438\u043a,', name: '\u0441\u043e\u043b\u043d\u044b\u0448\u043a\u043e {name}!' },
-    { salute: 'Cze\u015b\u0107,', name: 'dzielna {name}!' },
-    { salute: 'Hola,', name: '{name} bonita!' },
-    { salute: 'Ol\u00e1,', name: 'doce {name}!' },
-    { salute: '\u0393\u03b5\u03b9\u03b1 \u03c3\u03bf\u03c5,', name: '\u03b3\u03bb\u03c5\u03ba\u03b9\u03ac {name}!' },
+    { salute: 'Sveika,', name: '{name}!' },
+    { salute: 'Sveika sugr\u012fzai,', name: '{name}!' },
+    { salute: '\u041f\u0440\u0438\u0432\u0435\u0442,', name: '{name}!' },
+    { salute: 'Cze\u015b\u0107,', name: '{name}!' },
+    { salute: 'Hola,', name: '{name}!' },
+    { salute: 'Ol\u00e1,', name: '{name}!' },
+    { salute: '\u0393\u03b5\u03b9\u03b1 \u03c3\u03bf\u03c5,', name: '{name}!' },
 ];
 
 if (splashRunner) {
