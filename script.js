@@ -1904,11 +1904,22 @@ introCredentialInput?.addEventListener('input', () => {
 const splash = document.querySelector('.welcome-splash');
 const splashName = document.getElementById('splash-name');
 const splashRunner = document.querySelector('.welcome-splash__runner');
+const splashSalute = document.querySelector('.welcome-splash__salute');
 
 const SPLASH_RUNNER_FRAMES = [
     'assets/emilija1.png',
     'assets/emilija2.png',
     'assets/emilija3.png',
+];
+
+const SPLASH_GREETINGS = [
+    { salute: 'Labas,', name: '{name}!' },
+    { salute: 'Labukas,', name: 'miela {name}!' },
+    { salute: '\u041f\u0440\u0438\u0432\u0435\u0442\u0438\u043a,', name: '\u0441\u043e\u043b\u043d\u044b\u0448\u043a\u043e {name}!' },
+    { salute: 'Cze\u015b\u0107,', name: 'dzielna {name}!' },
+    { salute: 'Hola,', name: '{name} bonita!' },
+    { salute: 'Ol\u00e1,', name: 'doce {name}!' },
+    { salute: '\u0393\u03b5\u03b9\u03b1 \u03c3\u03bf\u03c5,', name: '\u03b3\u03bb\u03c5\u03ba\u03b9\u03ac {name}!' },
 ];
 
 if (splashRunner) {
@@ -1979,9 +1990,25 @@ function showScreen(id) {
     }
 }
 
+function pickSplashGreeting() {
+    if (!SPLASH_GREETINGS.length) {
+        return { salute: 'Labas,', name: `${state.name}!` };
+    }
+    const index = Math.floor(Math.random() * SPLASH_GREETINGS.length);
+    return SPLASH_GREETINGS[index];
+}
+
+function formatSplashText(text, fallback) {
+    return (text || fallback).replace(/\{name\}/g, state.name);
+}
+
 function updateGreetingNames() {
+    const greeting = pickSplashGreeting();
+    if (splashSalute) {
+        splashSalute.textContent = formatSplashText(greeting.salute, 'Labas,');
+    }
     if (splashName) {
-        splashName.textContent = `${state.name}!`;
+        splashName.textContent = formatSplashText(greeting.name, `${state.name}!`);
     }
 }
 
