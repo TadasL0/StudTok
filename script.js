@@ -101,7 +101,7 @@ const STUDY_BACKEND_ENDPOINT =
     DEFAULT_BACKEND_ENDPOINT;
 
 const state = {
-    name: 'Emilija',
+    name: '',
     apiKey: '',
     activeCredential: '',
 };
@@ -1914,8 +1914,6 @@ const SPLASH_RUNNER_FRAMES = [
 
 const SPLASH_GREETINGS = [
     { salute: 'Labas,', name: '{name}!' },
-    { salute: 'Sveika,', name: '{name}!' },
-    { salute: 'Sveika sugr\u012fzai,', name: '{name}!' },
     { salute: '\u041f\u0440\u0438\u0432\u0435\u0442,', name: '{name}!' },
     { salute: 'Cze\u015b\u0107,', name: '{name}!' },
     { salute: 'Hola,', name: '{name}!' },
@@ -2826,7 +2824,7 @@ introForm?.addEventListener('submit', (event) => {
         introCredentialInput.setCustomValidity('');
     }
 
-    state.name = 'Emilija';
+    state.name = '';
     const storedCredential = isPasscode ? PASSCODE : cleanedCredential;
     state.activeCredential = storedCredential;
     state.apiKey = isPasscode ? '' : cleanedCredential;
