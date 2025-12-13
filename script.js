@@ -3373,7 +3373,7 @@ function applyBlockJamPlacement(piece, placementCells) {
     }
     blockJamState.selectedIndex = null;
     clearBlockJamGhost();
-    const matchClears = clearBlockJamMatches();
+    const matchClears = clearBlockJamMatches(placementCells);
     const lineClears = clearCompletedBlockJamLines();
     const cleared = mergeBlockJamClearStats(lineClears, matchClears);
     updateBlockJamScore(piece.cells.length, cleared);
@@ -3442,13 +3442,29 @@ function findBlockJamMatches() {
     return matches;
 }
 
-function clearBlockJamMatches() {
+function clearBlockJamMatches(recentPlacement = []) {
     const matches = findBlockJamMatches();
     if (!matches.length) {
         return { clusters: 0, cells: 0 };
     }
+    const recentSet = new Set(
+        Array.isArray(recentPlacement)
+            ? recentPlacement.map(({ row, col }) => `${row}-${col}`)
+            : []
+    );
+    const eligibleMatches =
+        recentSet.size === 0
+            ? matches
+            : matches.filter((match) => {
+                  // Skip clearing clusters made only from the freshly placed piece.
+                  const allFromRecent = match.cells.every(({ row, col }) => recentSet.has(`${row}-${col}`));
+                  return !allFromRecent;
+              });
+    if (!eligibleMatches.length) {
+        return { clusters: 0, cells: 0 };
+    }
     const toClear = [];
-    matches.forEach((match) => {
+    eligibleMatches.forEach((match) => {
         match.cells.forEach(({ row, col }) => {
             toClear.push({ row, col });
             blockJamState.board[row][col] = null;
@@ -3468,7 +3484,7 @@ function clearBlockJamMatches() {
             }
         });
     }, BLOCKJAM_CLEAR_DELAY_MS);
-    return { clusters: matches.length, cells: toClear.length };
+    return { clusters: eligibleMatches.length, cells: toClear.length };
 }
 
 function mergeBlockJamClearStats(lineInfo = {}, matchInfo = {}) {
