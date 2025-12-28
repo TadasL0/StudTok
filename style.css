@@ -10,6 +10,10 @@
     --cream: #fff8ef;
     --mint: #b8f0e3;
     --caramel: #d69a73;
+    --holiday-red: #e05563;
+    --holiday-green: #58c79d;
+    --holiday-gold: #f4d38b;
+    --holiday-ice: rgba(255, 255, 255, 0.85);
     --text-dark: #44263f;
     --text-muted: rgba(68, 38, 63, 0.7);
     --card-shadow: 0 25px 55px rgba(255, 79, 161, 0.15);
@@ -61,6 +65,86 @@ body, h1, h2, h3, h4, h5, h6, p, span, label, li {
     background-size: 80px 80px, 120px 120px;
     opacity: 0.6;
     animation: shimmer 18s linear infinite;
+}
+
+.christmas-lights,
+.christmas-snow {
+    position: fixed;
+    left: 0;
+    right: 0;
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 320ms ease, visibility 320ms ease;
+}
+
+body.christmas-theme .christmas-lights,
+body.christmas-theme .christmas-snow {
+    opacity: 1;
+    visibility: visible;
+}
+
+.christmas-lights {
+    top: 0;
+    height: 90px;
+    z-index: 3;
+    background-image:
+        radial-gradient(circle at 24px 40px, var(--holiday-red) 0 4px, transparent 5px),
+        radial-gradient(circle at 64px 30px, var(--holiday-green) 0 4px, transparent 5px),
+        radial-gradient(circle at 108px 44px, var(--holiday-gold) 0 4px, transparent 5px),
+        radial-gradient(circle at 150px 28px, rgba(180, 230, 255, 0.9) 0 4px, transparent 5px);
+    background-size: 180px 70px;
+    background-repeat: repeat-x;
+    filter: drop-shadow(0 6px 8px rgba(255, 205, 225, 0.45));
+    animation: lightsGlow 5.4s ease-in-out infinite;
+}
+
+.christmas-lights::before {
+    content: '';
+    position: absolute;
+    left: -20px;
+    right: -20px;
+    top: 24px;
+    height: 2px;
+    background: linear-gradient(90deg, rgba(68, 38, 63, 0) 0%, rgba(68, 38, 63, 0.4) 22%, rgba(68, 38, 63, 0.3) 78%, rgba(68, 38, 63, 0) 100%);
+    opacity: 0.5;
+}
+
+.christmas-snow {
+    inset: 0;
+    z-index: 2;
+    background-image:
+        radial-gradient(2px 2px at 20px 30px, var(--holiday-ice) 0 2px, transparent 2.4px),
+        radial-gradient(1.5px 1.5px at 80px 80px, rgba(255, 255, 255, 0.7) 0 1.5px, transparent 2px),
+        radial-gradient(1px 1px at 140px 60px, rgba(255, 255, 255, 0.6) 0 1px, transparent 1.6px);
+    background-size: 200px 200px, 220px 220px, 240px 240px;
+    background-position: 0 -220px, 0 -140px, 0 -180px;
+    animation: snowFallNear 24s linear infinite;
+    opacity: 0.55;
+}
+
+.christmas-snow::before,
+.christmas-snow::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+        radial-gradient(1.2px 1.2px at 60px 40px, rgba(255, 255, 255, 0.6) 0 1.2px, transparent 1.8px),
+        radial-gradient(1px 1px at 160px 120px, rgba(255, 255, 255, 0.55) 0 1px, transparent 1.6px);
+    background-size: 260px 260px, 280px 280px;
+    background-position: 40px -280px, -20px -200px;
+    animation: snowFallMid 34s linear infinite;
+    opacity: 0.35;
+}
+
+.christmas-snow::after {
+    background-image:
+        radial-gradient(1px 1px at 50px 20px, rgba(255, 255, 255, 0.5) 0 1px, transparent 1.5px),
+        radial-gradient(0.8px 0.8px at 140px 90px, rgba(255, 255, 255, 0.45) 0 0.8px, transparent 1.4px);
+    background-size: 300px 300px, 320px 320px;
+    background-position: -30px -320px, 60px -240px;
+    animation: snowFallFar 44s linear infinite;
+    opacity: 0.25;
 }
 
 .welcome-splash {
@@ -377,6 +461,53 @@ body, h1, h2, h3, h4, h5, h6, p, span, label, li {
     }
     100% {
         transform: translate3d(0, 0, 0) scale(1);
+    }
+}
+
+@keyframes lightsGlow {
+    0%, 100% {
+        opacity: 0.7;
+        filter: drop-shadow(0 6px 8px rgba(255, 205, 225, 0.35));
+    }
+    50% {
+        opacity: 1;
+        filter: drop-shadow(0 8px 12px rgba(255, 215, 235, 0.55));
+    }
+}
+
+@keyframes snowFallNear {
+    from {
+        background-position: 0 -220px, 0 -140px, 0 -180px;
+    }
+    to {
+        background-position: 0 820px, 0 760px, 0 900px;
+    }
+}
+
+@keyframes snowFallMid {
+    from {
+        background-position: 40px -280px, -20px -200px;
+    }
+    to {
+        background-position: 40px 760px, -20px 820px;
+    }
+}
+
+@keyframes snowFallFar {
+    from {
+        background-position: -30px -320px, 60px -240px;
+    }
+    to {
+        background-position: -30px 720px, 60px 780px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .christmas-lights,
+    .christmas-snow,
+    .christmas-snow::before,
+    .christmas-snow::after {
+        animation: none;
     }
 }
 

@@ -155,6 +155,14 @@ let audioContext;
 let stickyNotesState = [];
 let splashTimeout;
 
+function applyChristmasTheme() {
+    const body = document.body;
+    if (!body) return;
+    const month = new Date().getMonth();
+    const isActive = month === 11 || month === 0;
+    body.classList.toggle('christmas-theme', isActive);
+}
+
 function showScreen(id) {
     screens.forEach((screen) => {
         screen.classList.toggle('screen--active', screen.dataset.screen === id);
@@ -853,3 +861,5 @@ updateStickyEmptyState();
 showScreen('intro');
 scheduleSplashHide();
 ensureNotepadPlaceholder(true);
+applyChristmasTheme();
+setInterval(applyChristmasTheme, 60 * 60 * 1000);
