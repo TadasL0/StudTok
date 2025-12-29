@@ -345,6 +345,20 @@ body, h1, h2, h3, h4, h5, h6, p, span, label, li {
     animation: shimmer 18s linear infinite;
 }
 
+#snowCanvas {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 2;
+    display: none;
+}
+
+body.season-christmas #snowCanvas {
+    display: block;
+}
+
 body.season-christmas .sparkle-overlay {
     background-image:
         radial-gradient(rgba(255, 255, 255, 0.8) 1px, transparent 3px),

@@ -1015,6 +1015,7 @@ const latestWeekContext = {
     rotationIndex: 0,
     weekStart: null,
 };
+let snowInitialized = false;
 
 function startOfDay(date) {
     const copy = new Date(date);
@@ -1040,6 +1041,76 @@ function isHolidaySeason(date) {
     return date >= start && date <= end;
 }
 
+function initSnowfall() {
+    if (snowInitialized) return;
+
+    const canvas = document.getElementById('snowCanvas');
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    let width = 0;
+    let height = 0;
+    const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const maxFlakes = prefersReducedMotion ? 60 : 140;
+    const flakes = [];
+
+    function resize() {
+        const dpr = window.devicePixelRatio || 1;
+        width = window.innerWidth;
+        height = window.innerHeight;
+        canvas.width = width * dpr;
+        canvas.height = height * dpr;
+        canvas.style.width = `${width}px`;
+        canvas.style.height = `${height}px`;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    function createFlake() {
+        return {
+            x: Math.random() * width,
+            y: Math.random() * height,
+            radius: Math.random() * 2 + 1,
+            speed: Math.random() * (prefersReducedMotion ? 0.4 : 0.9) + 0.3,
+            drift: Math.random() * 0.6 - 0.3,
+            sway: Math.random() * Math.PI * 2,
+        };
+    }
+
+    resize();
+    for (let i = 0; i < maxFlakes; i += 1) {
+        flakes.push(createFlake());
+    }
+
+    function step() {
+        ctx.clearRect(0, 0, width, height);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+
+        for (const flake of flakes) {
+            flake.y += flake.speed;
+            flake.x += flake.drift + Math.sin(flake.sway) * 0.35;
+            flake.sway += 0.01 + flake.speed * 0.02;
+
+            if (flake.y > height + 4) {
+                flake.y = -10;
+                flake.x = Math.random() * width;
+            }
+
+            if (flake.x > width + 10) flake.x = -10;
+            if (flake.x < -10) flake.x = width + 10;
+
+            ctx.beginPath();
+            ctx.arc(flake.x, flake.y, flake.radius, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        requestAnimationFrame(step);
+    }
+
+    window.addEventListener('resize', resize);
+    snowInitialized = true;
+    step();
+}
+
 function applySeasonalTheme(date = new Date()) {
     const body = document.body;
     if (!body) {
@@ -1048,6 +1119,7 @@ function applySeasonalTheme(date = new Date()) {
 
     if (isHolidaySeason(date)) {
         body.classList.add(HOLIDAY_THEME_CLASS);
+        initSnowfall();
         return;
     }
 
