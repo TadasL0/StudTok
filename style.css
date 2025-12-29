@@ -10,6 +10,10 @@
     --cream: #fff8ef;
     --mint: #b8f0e3;
     --caramel: #d69a73;
+    --holiday-red: #e05563;
+    --holiday-green: #58c79d;
+    --holiday-gold: #f4d38b;
+    --holiday-ice: rgba(255, 255, 255, 0.85);
     --text-dark: #44263f;
     --text-muted: rgba(68, 38, 63, 0.7);
     --card-shadow: 0 25px 55px rgba(255, 79, 161, 0.15);

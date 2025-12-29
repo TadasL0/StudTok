@@ -1983,6 +1983,14 @@ const MAX_PDF_SIZE = 8 * 1024 * 1024; // 8 MB
 
 let splashTimeout;
 
+function applyChristmasTheme() {
+    const body = document.body;
+    if (!body) return;
+    const month = new Date().getMonth();
+    const isActive = month === 11 || month === 0;
+    body.classList.toggle('christmas-theme', isActive);
+}
+
 function showScreen(id) {
     screens.forEach((screen) => {
         const isTarget = screen.dataset.screen === id;
@@ -4204,8 +4212,14 @@ document.addEventListener('visibilitychange', () => {
 });
 showScreen('intro');
 scheduleSplashHide();
+<<<<<<< HEAD
 if (typeof ensureNotepadPlaceholder === 'function') {
     ensureNotepadPlaceholder(true);
 }
 initialiseBlockJamMode();
 scheduleLayoutTopSync();
+=======
+ensureNotepadPlaceholder(true);
+applyChristmasTheme();
+setInterval(applyChristmasTheme, 60 * 60 * 1000);
+>>>>>>> christmas
