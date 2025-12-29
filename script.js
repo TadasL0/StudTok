@@ -99,6 +99,7 @@ const STUDY_BACKEND_ENDPOINT =
     window.PINK_STUDY_BACKEND ??
     document.documentElement?.dataset?.studyBackend ??
     DEFAULT_BACKEND_ENDPOINT;
+const HOLIDAY_THEME_CLASS = 'season-christmas';
 
 const state = {
     name: 'Emilija',
@@ -1019,6 +1020,38 @@ function startOfDay(date) {
     const copy = new Date(date);
     copy.setHours(0, 0, 0, 0);
     return copy;
+}
+
+function isHolidaySeason(date) {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const day = date.getDate();
+    let start;
+    let end;
+
+    if (month === 0 || (month === 1 && day <= 1)) {
+        start = new Date(year - 1, 11, 1, 0, 0, 0, 0);
+        end = new Date(year, 1, 1, 23, 59, 59, 999);
+    } else {
+        start = new Date(year, 11, 1, 0, 0, 0, 0);
+        end = new Date(year + 1, 1, 1, 23, 59, 59, 999);
+    }
+
+    return date >= start && date <= end;
+}
+
+function applySeasonalTheme(date = new Date()) {
+    const body = document.body;
+    if (!body) {
+        return;
+    }
+
+    if (isHolidaySeason(date)) {
+        body.classList.add(HOLIDAY_THEME_CLASS);
+        return;
+    }
+
+    body.classList.remove(HOLIDAY_THEME_CLASS);
 }
 
 function getWeekStart(date) {
@@ -4167,12 +4200,14 @@ timetableToggleWeekBtn?.addEventListener('click', () => {
     renderTimetableSection();
 });
 updateWeekIndicator();
+applySeasonalTheme();
 scheduleWeekIndicatorUpdate();
 initImportantDatesSection();
 window.addEventListener('resize', scheduleLayoutTopSync);
 document.addEventListener('visibilitychange', () => {
     if (!document.hidden) {
         updateWeekIndicator();
+        applySeasonalTheme();
     }
 });
 showScreen('intro');
