@@ -351,7 +351,7 @@ body, h1, h2, h3, h4, h5, h6, p, span, label, li {
     width: 100%;
     height: 100%;
     pointer-events: none;
-    z-index: 2;
+    z-index: 6;
     display: none;
 }
 

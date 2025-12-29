@@ -1051,7 +1051,7 @@ function initSnowfall() {
     let width = 0;
     let height = 0;
     const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const maxFlakes = prefersReducedMotion ? 60 : 140;
+    const maxFlakes = prefersReducedMotion ? 90 : 220;
     const flakes = [];
 
     function resize() {
@@ -1069,9 +1069,9 @@ function initSnowfall() {
         return {
             x: Math.random() * width,
             y: Math.random() * height,
-            radius: Math.random() * 2 + 1,
-            speed: Math.random() * (prefersReducedMotion ? 0.4 : 0.9) + 0.3,
-            drift: Math.random() * 0.6 - 0.3,
+            radius: Math.random() * 2.5 + 1,
+            speed: Math.random() * (prefersReducedMotion ? 0.6 : 1.3) + 0.4,
+            drift: Math.random() * 0.8 - 0.4,
             sway: Math.random() * Math.PI * 2,
         };
     }
@@ -1083,12 +1083,12 @@ function initSnowfall() {
 
     function step() {
         ctx.clearRect(0, 0, width, height);
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
 
         for (const flake of flakes) {
             flake.y += flake.speed;
-            flake.x += flake.drift + Math.sin(flake.sway) * 0.35;
-            flake.sway += 0.01 + flake.speed * 0.02;
+            flake.x += flake.drift + Math.sin(flake.sway) * 0.5;
+            flake.sway += 0.015 + flake.speed * 0.02;
 
             if (flake.y > height + 4) {
                 flake.y = -10;
