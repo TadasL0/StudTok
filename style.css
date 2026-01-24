@@ -121,44 +121,6 @@ body.week-indicator-collapsed {
     transition: transform 200ms ease, box-shadow 200ms ease, padding 220ms ease;
 }
 
-body.season-christmas .week-indicator {
-    background: linear-gradient(135deg, rgba(255, 246, 252, 0.96), rgba(255, 229, 244, 0.92), rgba(231, 248, 241, 0.9));
-    box-shadow: 0 18px 40px rgba(208, 92, 130, 0.18);
-}
-
-body.season-christmas .week-indicator::before {
-    content: "";
-    position: absolute;
-    left: clamp(16px, 5vw, 32px);
-    right: clamp(16px, 5vw, 32px);
-    top: 7px;
-    height: 18px;
-    pointer-events: none;
-    border-radius: 999px;
-    background-image:
-        linear-gradient(to right, rgba(120, 80, 90, 0.35), rgba(120, 80, 90, 0.1) 45%, rgba(120, 80, 90, 0.35)),
-        radial-gradient(circle at 10px 9px, rgba(255, 223, 167, 0.95) 0 4px, transparent 5px),
-        radial-gradient(circle at 38px 9px, rgba(255, 151, 176, 0.9) 0 4px, transparent 5px),
-        radial-gradient(circle at 66px 9px, rgba(168, 230, 203, 0.92) 0 4px, transparent 5px),
-        radial-gradient(circle at 94px 9px, rgba(255, 214, 150, 0.9) 0 4px, transparent 5px);
-    background-size:
-        100% 2px,
-        110px 18px,
-        110px 18px,
-        110px 18px,
-        110px 18px;
-    background-position:
-        center 9px,
-        0 0,
-        0 0,
-        0 0,
-        0 0;
-    background-repeat: no-repeat, repeat-x, repeat-x, repeat-x, repeat-x;
-    opacity: 0.92;
-    filter: drop-shadow(0 6px 10px rgba(255, 157, 208, 0.35));
-    animation: garlandGlow 3.6s ease-in-out infinite;
-}
-
 .week-indicator:focus-visible {
     outline: 3px solid rgba(255, 79, 161, 0.45);
     outline-offset: 4px;
@@ -234,21 +196,6 @@ body.season-christmas .week-indicator::before {
     .week-indicator__chevron {
         width: 11px;
         height: 11px;
-    }
-}
-
-@media (max-width: 640px) {
-    body.season-christmas .week-indicator::before {
-        left: 12px;
-        right: 12px;
-        top: 6px;
-        height: 16px;
-        background-size:
-            100% 2px,
-            90px 16px,
-            90px 16px,
-            90px 16px,
-            90px 16px;
     }
 }
 
@@ -398,14 +345,28 @@ body, h1, h2, h3, h4, h5, h6, p, span, label, li {
     animation: shimmer 18s linear infinite;
 }
 
+#snowCanvas {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 6;
+    display: none;
+}
+
+body.season-christmas #snowCanvas {
+    display: block;
+}
+
 body.season-christmas .sparkle-overlay {
     background-image:
         radial-gradient(rgba(255, 255, 255, 0.8) 1px, transparent 3px),
         radial-gradient(rgba(255, 228, 242, 0.55) 1px, transparent 3px),
         radial-gradient(rgba(205, 243, 233, 0.45) 1px, transparent 3px);
-    background-size: 70px 70px, 110px 110px, 150px 150px;
-    opacity: 0.8;
-    animation: holidaySnow 22s linear infinite;
+    background-size: 120px 120px, 180px 180px, 240px 240px;
+    opacity: 0.5;
+    animation: holidaySnow 26s linear infinite;
 }
 
 .welcome-splash {
@@ -739,21 +700,8 @@ body.season-christmas .sparkle-overlay {
     }
 }
 
-@keyframes garlandGlow {
-    0%,
-    100% {
-        filter: drop-shadow(0 6px 10px rgba(255, 157, 208, 0.3));
-        opacity: 0.85;
-    }
-    50% {
-        filter: drop-shadow(0 8px 14px rgba(168, 230, 203, 0.45));
-        opacity: 1;
-    }
-}
-
 @media (prefers-reduced-motion: reduce) {
-    body.season-christmas .sparkle-overlay,
-    body.season-christmas .week-indicator::before {
+    body.season-christmas .sparkle-overlay {
         animation: none;
     }
 }
@@ -1032,15 +980,6 @@ body.season-christmas .hero::after {
     padding: 12px 20px;
     background: rgba(255, 157, 208, 0.25);
     color: var(--text-dark);
-}
-
-body.season-christmas .btn--primary {
-    background: linear-gradient(135deg, #ff6f93, #f5c46a);
-    color: white;
-}
-
-body.season-christmas .btn--pill {
-    background: rgba(184, 232, 215, 0.5);
 }
 
 .layout {
@@ -2370,6 +2309,14 @@ body.season-christmas .btn--pill {
     gap: 20px;
 }
 
+.blockjam--dragging .blockjam-board {
+    box-shadow: 0 26px 60px rgba(255, 79, 161, 0.18), 0 0 0 3px rgba(255, 157, 208, 0.22);
+}
+
+.blockjam--dragging .blockjam-cell {
+    cursor: grabbing;
+}
+
 .blockjam--waiting .blockjam-board,
 .blockjam--waiting .blockjam__pieces-shell,
 .blockjam--waiting .blockjam__status-bar {
@@ -2409,6 +2356,10 @@ body.season-christmas .btn--pill {
     color: var(--text-dark);
 }
 
+.blockjam__meter-value--pulse {
+    animation: blockjamMeterPulse 420ms ease;
+}
+
 .blockjam__playfield {
     position: relative;
     isolation: isolate;
@@ -2424,6 +2375,10 @@ body.season-christmas .btn--pill {
     background: var(--blockjam-board-bg);
     border: 2px solid var(--blockjam-board-border);
     box-shadow: 0 22px 55px rgba(255, 79, 161, 0.12);
+}
+
+.blockjam-board--celebrate {
+    animation: blockjamSparkle 520ms ease;
 }
 
 .blockjam-board--frozen .blockjam-cell {
@@ -2508,6 +2463,33 @@ body.season-christmas .btn--pill {
     }
 }
 
+@keyframes blockjamSparkle {
+    0% {
+        transform: translateY(0);
+        box-shadow: 0 22px 55px rgba(255, 79, 161, 0.12);
+    }
+    45% {
+        transform: translateY(-2px);
+        box-shadow: 0 28px 60px rgba(255, 79, 161, 0.22), 0 0 0 6px rgba(255, 157, 208, 0.25);
+    }
+    100% {
+        transform: translateY(0);
+        box-shadow: 0 22px 55px rgba(255, 79, 161, 0.12);
+    }
+}
+
+@keyframes blockjamMeterPulse {
+    0% {
+        transform: scale(1);
+    }
+    45% {
+        transform: scale(1.12);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
 .blockjam__pieces-shell {
     padding: clamp(14px, 3vw, 22px);
     border-radius: 26px;
@@ -2549,6 +2531,12 @@ body.season-christmas .btn--pill {
     transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
 }
 
+.blockjam-piece--dragging {
+    border-color: rgba(255, 79, 161, 0.7);
+    box-shadow: 0 20px 44px rgba(255, 79, 161, 0.25);
+    transform: translateY(-4px) scale(1.02);
+}
+
 .blockjam-piece--selected {
     border-color: rgba(255, 79, 161, 0.6);
     box-shadow: 0 18px 40px rgba(255, 79, 161, 0.2);
@@ -2566,10 +2554,14 @@ body.season-christmas .btn--pill {
     background: rgba(255, 255, 255, 0.92);
     padding: 12px;
     display: block;
-    cursor: pointer;
+    cursor: grab;
     width: 100%;
     box-shadow: inset 0 6px 14px rgba(255, 255, 255, 0.4), 0 9px 20px rgba(68, 38, 63, 0.08);
     transition: transform 140ms ease, box-shadow 140ms ease;
+}
+
+.blockjam--dragging .blockjam-piece__body {
+    cursor: grabbing;
 }
 
 .blockjam-piece__body:focus-visible {

@@ -146,7 +146,8 @@ const BLOCKJAM_BOARD_SIZE = 8;
 const BLOCKJAM_SET_SIZE = 3;
 const BLOCKJAM_CLEAR_DELAY_MS = 340;
 const BLOCKJAM_MATCH_MIN = 3;
-const BLOCKJAM_DEFAULT_STATUS = 'Pasirink saldaini\u0173 fig\u016br\u0105 ir bakstelk lent\u0105.';
+const BLOCKJAM_DRAG_THRESHOLD = 6;
+const BLOCKJAM_DEFAULT_STATUS = 'Pasirink saldaini\u0173 fig\u016br\u0105 ir vilk arba bakstelk lent\u0105.';
 const BLOCKJAM_CANDY_LABELS = {
     'candy-berry': 'bra\u0161kinis saldainis',
     'candy-sherbet': 'sherbet\u0173 gabal\u0117lis',
@@ -312,6 +313,7 @@ const blockJamState = {
     ghostCells: [],
     ghostSignature: null,
     latestHover: null,
+    keyboardAnchor: null,
     isGameOver: false,
     score: 0,
     combo: 1,
@@ -324,6 +326,9 @@ const blockJamState = {
 };
 let blockJamInitialised = false;
 const blockJamDangerTimers = new Map();
+let blockJamDragState = null;
+let blockJamComboPulseTimer = null;
+let blockJamSparkleTimer = null;
 const blockJamStatusDefaultText = blockJamStatusText?.textContent || BLOCKJAM_DEFAULT_STATUS;
 const blockJamHintDefaultText = blockJamHintText?.textContent || '';
 
@@ -333,6 +338,115 @@ function blockJamHasQuiz() {
 
 function setBlockJamWaitingState(waiting) {
     blockJamShell?.classList.toggle('blockjam--waiting', waiting);
+}
+
+function setBlockJamDraggingState(isDragging, index = null) {
+    blockJamShell?.classList.toggle('blockjam--dragging', isDragging);
+    if (!blockJamPieces) {
+        return;
+    }
+    blockJamPieces.querySelectorAll('.blockjam-piece--dragging').forEach((card) => {
+        card.classList.remove('blockjam-piece--dragging');
+    });
+    if (isDragging && typeof index === 'number') {
+        const card = blockJamPieces.querySelector('.blockjam-piece[data-index="' + index + '"]');
+        if (card) {
+            card.classList.add('blockjam-piece--dragging');
+        }
+    }
+}
+
+function resetBlockJamDragState() {
+    if (blockJamDragState) {
+        setBlockJamDraggingState(false);
+        blockJamDragState = null;
+        return;
+    }
+    setBlockJamDraggingState(false);
+}
+
+function resetBlockJamCelebrations() {
+    if (blockJamComboPulseTimer) {
+        clearTimeout(blockJamComboPulseTimer);
+        blockJamComboPulseTimer = null;
+    }
+    if (blockJamSparkleTimer) {
+        clearTimeout(blockJamSparkleTimer);
+        blockJamSparkleTimer = null;
+    }
+    blockJamComboValue?.classList.remove('blockjam__meter-value--pulse');
+    blockJamBoard?.classList.remove('blockjam-board--celebrate');
+}
+
+function pulseBlockJamCombo() {
+    if (!blockJamComboValue) {
+        return;
+    }
+    blockJamComboValue.classList.remove('blockjam__meter-value--pulse');
+    void blockJamComboValue.offsetWidth;
+    blockJamComboValue.classList.add('blockjam__meter-value--pulse');
+    if (blockJamComboPulseTimer) {
+        clearTimeout(blockJamComboPulseTimer);
+    }
+    blockJamComboPulseTimer = setTimeout(() => {
+        blockJamComboValue.classList.remove('blockjam__meter-value--pulse');
+        blockJamComboPulseTimer = null;
+    }, 420);
+}
+
+function sparkleBlockJamBoard() {
+    if (!blockJamBoard) {
+        return;
+    }
+    blockJamBoard.classList.remove('blockjam-board--celebrate');
+    void blockJamBoard.offsetWidth;
+    blockJamBoard.classList.add('blockjam-board--celebrate');
+    if (blockJamSparkleTimer) {
+        clearTimeout(blockJamSparkleTimer);
+    }
+    blockJamSparkleTimer = setTimeout(() => {
+        blockJamBoard.classList.remove('blockjam-board--celebrate');
+        blockJamSparkleTimer = null;
+    }, 520);
+}
+
+function getBlockJamCellFromPoint(x, y) {
+    const target = document.elementFromPoint(x, y);
+    if (!target) {
+        return null;
+    }
+    const cell = target instanceof Element ? target.closest('.blockjam-cell') : null;
+    if (!cell || !blockJamBoard?.contains(cell)) {
+        return null;
+    }
+    return cell;
+}
+
+function findBlockJamDefaultAnchor(piece) {
+    if (!piece) {
+        return { row: 0, col: 0 };
+    }
+    const fallbackSize = deriveBlockJamPieceSize(piece.cells);
+    const pieceHeight = Number.isFinite(piece.height) ? piece.height : fallbackSize.height;
+    const pieceWidth = Number.isFinite(piece.width) ? piece.width : fallbackSize.width;
+    const rowLimit = BLOCKJAM_BOARD_SIZE - pieceHeight;
+    const colLimit = BLOCKJAM_BOARD_SIZE - pieceWidth;
+    for (let row = 0; row <= rowLimit; row += 1) {
+        for (let col = 0; col <= colLimit; col += 1) {
+            if (canPlaceBlockJamPiece(piece, row, col)) {
+                return { row, col };
+            }
+        }
+    }
+    return { row: 0, col: 0 };
+}
+
+function setBlockJamKeyboardAnchor(row, col) {
+    const nextRow = Math.max(0, Math.min(BLOCKJAM_BOARD_SIZE - 1, row));
+    const nextCol = Math.max(0, Math.min(BLOCKJAM_BOARD_SIZE - 1, col));
+    blockJamState.keyboardAnchor = { row: nextRow, col: nextCol };
+    blockJamState.latestHover = { row: nextRow, col: nextCol };
+    updateBlockJamGhost(nextRow, nextCol);
 }
 
 function loadBlockJamDemoQuiz() {
@@ -905,6 +1019,10 @@ const TIMETABLE_DATA = {
                 lecturer: 'Doc. Dr. Nikolaj \u0160e\u0161ok',
                 type: 'Paskaitos',
             },
+            {
+                title: 'Suvirinimo technologijos (MEMKB93005)',
+                note: 'Laikas nenustatytas',
+            },
         ],
         Penktadienis: [
             {
@@ -976,6 +1094,10 @@ const TIMETABLE_DATA = {
                 lecturer: 'Doc. Dr. Nikolaj \u0160e\u0161ok',
                 type: 'Paskaitos',
             },
+            {
+                title: 'Suvirinimo technologijos (MEMKB93005)',
+                note: 'Laikas nenustatytas',
+            },
         ],
         Penktadienis: [
             {
@@ -1015,6 +1137,7 @@ const latestWeekContext = {
     rotationIndex: 0,
     weekStart: null,
 };
+let snowInitialized = false;
 
 function startOfDay(date) {
     const copy = new Date(date);
@@ -1040,6 +1163,76 @@ function isHolidaySeason(date) {
     return date >= start && date <= end;
 }
 
+function initSnowfall() {
+    if (snowInitialized) return;
+
+    const canvas = document.getElementById('snowCanvas');
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    let width = 0;
+    let height = 0;
+    const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const maxFlakes = prefersReducedMotion ? 90 : 220;
+    const flakes = [];
+
+    function resize() {
+        const dpr = window.devicePixelRatio || 1;
+        width = window.innerWidth;
+        height = window.innerHeight;
+        canvas.width = width * dpr;
+        canvas.height = height * dpr;
+        canvas.style.width = `${width}px`;
+        canvas.style.height = `${height}px`;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    function createFlake() {
+        return {
+            x: Math.random() * width,
+            y: Math.random() * height,
+            radius: Math.random() * 2.5 + 1,
+            speed: Math.random() * (prefersReducedMotion ? 0.6 : 1.3) + 0.4,
+            drift: Math.random() * 0.8 - 0.4,
+            sway: Math.random() * Math.PI * 2,
+        };
+    }
+
+    resize();
+    for (let i = 0; i < maxFlakes; i += 1) {
+        flakes.push(createFlake());
+    }
+
+    function step() {
+        ctx.clearRect(0, 0, width, height);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+
+        for (const flake of flakes) {
+            flake.y += flake.speed;
+            flake.x += flake.drift + Math.sin(flake.sway) * 0.5;
+            flake.sway += 0.015 + flake.speed * 0.02;
+
+            if (flake.y > height + 4) {
+                flake.y = -10;
+                flake.x = Math.random() * width;
+            }
+
+            if (flake.x > width + 10) flake.x = -10;
+            if (flake.x < -10) flake.x = width + 10;
+
+            ctx.beginPath();
+            ctx.arc(flake.x, flake.y, flake.radius, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        requestAnimationFrame(step);
+    }
+
+    window.addEventListener('resize', resize);
+    snowInitialized = true;
+    step();
+}
+
 function applySeasonalTheme(date = new Date()) {
     const body = document.body;
     if (!body) {
@@ -1048,6 +1241,7 @@ function applySeasonalTheme(date = new Date()) {
 
     if (isHolidaySeason(date)) {
         body.classList.add(HOLIDAY_THEME_CLASS);
+        initSnowfall();
         return;
     }
 
@@ -2981,6 +3175,7 @@ function handleBlockJamBoardHover(event) {
         return;
     }
     blockJamState.latestHover = { row, col };
+    blockJamState.keyboardAnchor = { row, col };
     updateBlockJamGhost(row, col);
 }
 
@@ -3139,6 +3334,9 @@ function selectBlockJamPiece(index) {
         const candidate = blockJamState.queue[index];
         blockJamState.selectedIndex = candidate && !candidate.used ? index : null;
     }
+    if (blockJamState.selectedIndex === null) {
+        blockJamState.keyboardAnchor = null;
+    }
     clearBlockJamGhost();
     renderBlockJamPieces();
     updateBlockJamHud();
@@ -3151,12 +3349,17 @@ function selectBlockJamPiece(index) {
     if (piece.question && !piece.question.answered) {
         updateBlockJamStatus('Atrakinam: ' + (piece.question.label || piece.name), 'info');
         renderBlockJamQuestion(piece);
+        blockJamState.keyboardAnchor = null;
     } else {
         updateBlockJamStatus('Pasirinkta: ' + piece.name + '. Pad\u0117k j\u012f lenteleje.');
         renderBlockJamQuestion(null);
-        if (blockJamState.latestHover) {
-            updateBlockJamGhost(blockJamState.latestHover.row, blockJamState.latestHover.col);
-        }
+        const anchor =
+            blockJamState.latestHover ||
+            blockJamState.keyboardAnchor ||
+            findBlockJamDefaultAnchor(piece);
+        blockJamState.keyboardAnchor = anchor;
+        blockJamState.latestHover = anchor;
+        updateBlockJamGhost(anchor.row, anchor.col);
     }
 }
 
@@ -3380,6 +3583,7 @@ function applyBlockJamPlacement(piece, placementCells) {
         piece.question.placed = true;
     }
     blockJamState.selectedIndex = null;
+    blockJamState.keyboardAnchor = null;
     clearBlockJamGhost();
     const matchClears = clearBlockJamMatches(placementCells);
     const lineClears = clearCompletedBlockJamLines();
@@ -3578,6 +3782,10 @@ function updateBlockJamScore(placedCount, clearedInfo) {
         awardReward('blockjam');
         blockJamState.nextRewardAt += 150;
     }
+    if (clearedLines > 0 || clearedClusters > 0) {
+        pulseBlockJamCombo();
+        sparkleBlockJamBoard();
+    }
 }
 
 function updateBlockJamHud() {
@@ -3731,6 +3939,91 @@ function handleBlockJamPieceClick(event) {
     }
 }
 
+function handleBlockJamPiecePointerDown(event) {
+    if (!blockJamIsReady() || blockJamState.isGameOver) {
+        return;
+    }
+    if (typeof event.button === 'number' && event.button !== 0) {
+        return;
+    }
+    const body = event.target instanceof Element ? event.target.closest('.blockjam-piece__body') : null;
+    if (!body || !blockJamPieces?.contains(body)) {
+        return;
+    }
+    const index = Number.parseInt(body.dataset.index || '', 10);
+    if (!Number.isFinite(index)) {
+        return;
+    }
+    const piece = blockJamState.queue[index];
+    if (!piece || piece.used) {
+        return;
+    }
+    if (piece.question && !piece.question.answered) {
+        selectBlockJamPiece(index);
+        return;
+    }
+    blockJamDragState = {
+        index,
+        pointerId: event.pointerId,
+        startX: event.clientX,
+        startY: event.clientY,
+        dragging: false,
+    };
+}
+
+function handleBlockJamDragMove(event) {
+    if (!blockJamDragState || blockJamDragState.pointerId !== event.pointerId) {
+        return;
+    }
+    const dx = event.clientX - blockJamDragState.startX;
+    const dy = event.clientY - blockJamDragState.startY;
+    const distance = Math.hypot(dx, dy);
+    if (!blockJamDragState.dragging) {
+        if (distance < BLOCKJAM_DRAG_THRESHOLD) {
+            return;
+        }
+        blockJamDragState.dragging = true;
+        selectBlockJamPiece(blockJamDragState.index);
+        setBlockJamDraggingState(true, blockJamDragState.index);
+    }
+    event.preventDefault();
+    const cell = getBlockJamCellFromPoint(event.clientX, event.clientY);
+    if (!cell) {
+        clearBlockJamGhost();
+        return;
+    }
+    const row = Number.parseInt(cell.dataset.row || '', 10);
+    const col = Number.parseInt(cell.dataset.col || '', 10);
+    if (!Number.isFinite(row) || !Number.isFinite(col)) {
+        return;
+    }
+    blockJamState.latestHover = { row, col };
+    blockJamState.keyboardAnchor = { row, col };
+    updateBlockJamGhost(row, col);
+}
+
+function handleBlockJamDragEnd(event) {
+    if (!blockJamDragState || blockJamDragState.pointerId !== event.pointerId) {
+        return;
+    }
+    const wasDragging = blockJamDragState.dragging;
+    const cell = wasDragging ? getBlockJamCellFromPoint(event.clientX, event.clientY) : null;
+    resetBlockJamDragState();
+    if (!wasDragging) {
+        return;
+    }
+    if (!cell) {
+        clearBlockJamGhost();
+        return;
+    }
+    const row = Number.parseInt(cell.dataset.row || '', 10);
+    const col = Number.parseInt(cell.dataset.col || '', 10);
+    if (!Number.isFinite(row) || !Number.isFinite(col)) {
+        return;
+    }
+    placeBlockJamPiece(row, col);
+}
+
 function blockJamIsVisible() {
     return Boolean(blockJamCard && !blockJamCard.hidden && blockJamCard.offsetParent !== null);
 }
@@ -3749,13 +4042,68 @@ function handleBlockJamHotkeys(event) {
     ) {
         return;
     }
-    if ((event.key === 'r' || event.key === 'R') && blockJamState.selectedIndex !== null) {
+    const activePiece = getActiveBlockJamPiece();
+    const canControl = Boolean(activePiece) && !blockJamState.isGameOver;
+    const isUnlocked = canControl && (!activePiece.question || activePiece.question.answered);
+
+    if ((event.key === 'r' || event.key === 'R') && blockJamState.selectedIndex !== null && isUnlocked) {
         event.preventDefault();
         rotateBlockJamPiece(blockJamState.selectedIndex, 1);
+        return;
+    }
+    if ((event.key === ' ' || event.key === 'Spacebar') && blockJamState.selectedIndex !== null && isUnlocked) {
+        event.preventDefault();
+        rotateBlockJamPiece(blockJamState.selectedIndex, 1);
+        return;
+    }
+    if (
+        event.key === 'ArrowUp' ||
+        event.key === 'ArrowDown' ||
+        event.key === 'ArrowLeft' ||
+        event.key === 'ArrowRight'
+    ) {
+        if (!canControl) {
+            return;
+        }
+        event.preventDefault();
+        if (!isUnlocked) {
+            updateBlockJamStatus('Pirmiausia atrakink blok\u0105 atsakydama klausim\u0105.', 'warning');
+            renderBlockJamQuestion(activePiece);
+            return;
+        }
+        const anchor =
+            blockJamState.keyboardAnchor ||
+            blockJamState.latestHover ||
+            findBlockJamDefaultAnchor(activePiece);
+        let nextRow = anchor.row;
+        let nextCol = anchor.col;
+        if (event.key === 'ArrowUp') nextRow -= 1;
+        if (event.key === 'ArrowDown') nextRow += 1;
+        if (event.key === 'ArrowLeft') nextCol -= 1;
+        if (event.key === 'ArrowRight') nextCol += 1;
+        setBlockJamKeyboardAnchor(nextRow, nextCol);
+        return;
+    }
+    if (event.key === 'Enter' && canControl) {
+        event.preventDefault();
+        if (!isUnlocked) {
+            updateBlockJamStatus('Pirmiausia atrakink blok\u0105 atsakydama klausim\u0105.', 'warning');
+            renderBlockJamQuestion(activePiece);
+            return;
+        }
+        const anchor =
+            blockJamState.keyboardAnchor ||
+            blockJamState.latestHover ||
+            findBlockJamDefaultAnchor(activePiece);
+        setBlockJamKeyboardAnchor(anchor.row, anchor.col);
+        placeBlockJamPiece(anchor.row, anchor.col);
+        return;
     }
     if (event.key === 'Escape' && blockJamState.selectedIndex !== null) {
         event.preventDefault();
         blockJamState.selectedIndex = null;
+        blockJamState.keyboardAnchor = null;
+        resetBlockJamDragState();
         clearBlockJamGhost();
         renderBlockJamPieces();
         updateBlockJamHud();
@@ -3797,7 +4145,8 @@ function syncBlockJamWithQuizQuestions(baseQuestions, { isDemo = false } = {}) {
     const statusMessage = isDemo
         ? 'Demo r\u0117\u017eimas: atsakyk \u012f pavyzdinius klausimus ir pad\u0117k blok\u0105.'
         : 'Pasirink blok\u0105, atsakyk klausim\u0105 ir pad\u0117k j\u012f lentoje.';
-    const sharedHint = ' Sujunk bent tris tos pa\u010dios spalvos saldainius, kad jie susilydyt\u0173.';
+    const sharedHint =
+        ' Vilk blok\u0105 ant lentos arba naudok rodykles + Enter. Sujunk bent tris tos pa\u010dios spalvos saldainius, kad jie susilydyt\u0173.';
     const hintMessage = isDemo
         ? 'Kai sugeneruosi PDF ABCD test\u0105, demo klausimai bus pakeisti tavo med\u017eiaga.' + sharedHint
         : 'Kiekvienas blokas slepia klausim\u0105 i\u0161 tavo PDF testuko.' + sharedHint;
@@ -3809,11 +4158,15 @@ function clearBlockJamQuizBridge() {
     blockJamState.questionPool = [];
     blockJamState.queue = [];
     blockJamState.selectedIndex = null;
+    blockJamState.latestHover = null;
+    blockJamState.keyboardAnchor = null;
     blockJamState.hasQuiz = false;
     blockJamState.answeredCount = 0;
     blockJamState.score = 0;
     blockJamState.combo = 1;
     blockJamState.victoryNotified = false;
+    resetBlockJamDragState();
+    resetBlockJamCelebrations();
     updateBlockJamQuizEmptyState(true, 'Sukurk PDF test\u0105 ir saldiniai klausimai atsiras \u010dia.');
     setBlockJamWaitingState(true);
     clearBlockJamGhost();
@@ -3873,6 +4226,7 @@ function resetBlockJamGame(options = {}) {
     blockJamState.selectedIndex = null;
     blockJamState.ghostCells = [];
     blockJamState.latestHover = null;
+    blockJamState.keyboardAnchor = null;
     blockJamState.isGameOver = false;
     blockJamState.score = 0;
     blockJamState.combo = 1;
@@ -3888,6 +4242,8 @@ function resetBlockJamGame(options = {}) {
     }
     blockJamDangerTimers.forEach((timer) => clearTimeout(timer));
     blockJamDangerTimers.clear();
+    resetBlockJamDragState();
+    resetBlockJamCelebrations();
     clearBlockJamGhost();
     renderBlockJamBoard();
     refillBlockJamQueue(true);
@@ -3962,6 +4318,10 @@ function initialiseBlockJamMode() {
     blockJamBoard?.addEventListener('focusout', handleBlockJamBoardLeave);
     blockJamBoard?.addEventListener('click', handleBlockJamBoardClick);
     blockJamPieces?.addEventListener('click', handleBlockJamPieceClick);
+    blockJamPieces?.addEventListener('pointerdown', handleBlockJamPiecePointerDown);
+    document.addEventListener('pointermove', handleBlockJamDragMove, { passive: false });
+    document.addEventListener('pointerup', handleBlockJamDragEnd);
+    document.addEventListener('pointercancel', handleBlockJamDragEnd);
     blockJamResetButton?.addEventListener('click', () => {
         resetBlockJamGame({ resetQuestions: true });
     });
