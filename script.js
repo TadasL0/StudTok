@@ -823,6 +823,7 @@ function advanceQuizQuestion() {
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 const WEEK_LENGTH_DAYS = 7;
 const WEEK_ROTATION_LENGTH = 2;
+const WEEK_ROTATION_OFFSET = 1;
 let weekIndicatorTimeoutId = null;
 const TIMETABLE_CURRENT_LABEL = '\u0160ios savait\u0117s paskaitos';
 const TIMETABLE_NEXT_LABEL = 'Ateinan\u010Dios savait\u0117s paskaitos';
@@ -1156,7 +1157,9 @@ function getWeekRotationIndex(date) {
     const semesterStart = getCurrentSemesterStart(date);
     const elapsedDays = Math.floor((startOfDay(date) - semesterStart) / MS_PER_DAY);
     const fullWeeksSinceStart = Math.floor(elapsedDays / WEEK_LENGTH_DAYS);
-    const rotationIndex = ((fullWeeksSinceStart % WEEK_ROTATION_LENGTH) + WEEK_ROTATION_LENGTH) % WEEK_ROTATION_LENGTH;
+    const adjustedWeeksSinceStart = fullWeeksSinceStart + WEEK_ROTATION_OFFSET;
+    const rotationIndex =
+        ((adjustedWeeksSinceStart % WEEK_ROTATION_LENGTH) + WEEK_ROTATION_LENGTH) % WEEK_ROTATION_LENGTH;
     return rotationIndex;
 }
 
