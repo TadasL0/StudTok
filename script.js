@@ -1026,13 +1026,6 @@ const TIMETABLE_DATA = {
         ],
         Penktadienis: [
             {
-                time: '08:30-10:05',
-                title: 'Biomechanini\u0173 sistem\u0173 projektavimas taikant CAD/CAM/CAE',
-                location: 'P2 504',
-                lecturer: 'Dr. Oleg Ardatov',
-                type: 'Laboratoriniai darbai',
-            },
-            {
                 time: '10:20-11:55',
                 title: 'Biomechanini\u0173 sistem\u0173 projektavimas taikant CAD/CAM/CAE',
                 location: 'P2 504',
