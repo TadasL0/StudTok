@@ -1,0 +1,3 @@
+[submodule "StudTok"]
+	path = StudTok
+	url = https://github.com/TadasL0/StudTok.git
