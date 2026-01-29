@@ -1020,25 +1020,14 @@ const TIMETABLE_DATA = {
                 type: 'Paskaitos',
             },
             {
-                title: 'Suvirinimo technologijos (MEMKB93005)',
-                note: 'Laikas nenustatytas',
-            },
-        ],
-        Penktadienis: [
-            {
-                time: '10:20-11:55',
+                time: '14:30-16:05',
                 title: 'Biomechanini\u0173 sistem\u0173 projektavimas taikant CAD/CAM/CAE',
-                location: 'P2 504',
-                lecturer: 'Dr. Oleg Ardatov',
-                type: 'Laboratoriniai darbai',
-            },
-            {
-                time: '12:10-13:45',
-                title: 'Biomechanini\u0173 sistem\u0173 projektavimas taikant CAD/CAM/CAE',
-                location: 'P2 512',
+                location: 'P2 510',
                 lecturer: 'Dr. Oleg Ardatov',
                 type: 'Paskaitos',
             },
+        ],
+        Penktadienis: [
             {
                 time: '14:30-16:05',
                 title: '\u017Dmogaus anatomija',
@@ -1046,10 +1035,24 @@ const TIMETABLE_DATA = {
                 lecturer: 'Dr. R\u016Bta Dadelien\u0117',
                 type: 'Paskaitos',
             },
+            {
+                time: '16:20-17:55',
+                title: '\u017Dmogaus anatomija',
+                location: 'P1 324',
+                lecturer: 'Dr. R\u016Bta Dadelien\u0117',
+                type: 'Pratybos',
+            },
         ],
     },
     2: {
         Tre\u010diadienis: [
+            {
+                time: '08:30-10:05',
+                title: 'Biomechanini\u0173 sistem\u0173 projektavimas taikant CAD/CAM/CAE',
+                location: 'P2 505',
+                lecturer: 'Dr. Oleg Ardatov',
+                type: 'Laboratoriniai darbai',
+            },
             {
                 time: '10:20-11:55',
                 title: 'Med\u017Eiag\u0173 mechanika 2',
@@ -1088,8 +1091,11 @@ const TIMETABLE_DATA = {
                 type: 'Paskaitos',
             },
             {
-                title: 'Suvirinimo technologijos (MEMKB93005)',
-                note: 'Laikas nenustatytas',
+                time: '14:30-16:05',
+                title: 'Biomechanini\u0173 sistem\u0173 projektavimas taikant CAD/CAM/CAE',
+                location: 'P2 504',
+                lecturer: 'Dr. Oleg Ardatov',
+                type: 'Laboratoriniai darbai',
             },
         ],
         Penktadienis: [
@@ -1113,13 +1119,6 @@ const TIMETABLE_DATA = {
                 location: 'P1 324',
                 lecturer: 'Dr. R\u016Bta Dadelien\u0117',
                 type: 'Paskaitos',
-            },
-            {
-                time: '16:20-17:55',
-                title: '\u017Dmogaus anatomija',
-                location: 'P1 324',
-                lecturer: 'Dr. R\u016Bta Dadelien\u0117',
-                type: 'Pratybos',
             },
         ],
     },
