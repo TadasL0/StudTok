@@ -1026,6 +1026,10 @@ const TIMETABLE_DATA = {
                 lecturer: 'Doc. Dr. Nikolaj Šešok',
                 type: 'Paskaitos',
             },
+            {
+                title: 'Suvirinimo technologijos (MEMKB93005)',
+                note: 'Laikas nenustatytas',
+            },
         ],
         Penktadienis: [
             {
@@ -1096,6 +1100,10 @@ const TIMETABLE_DATA = {
                 location: 'P2 157',
                 lecturer: 'Doc. Dr. Nikolaj Šešok',
                 type: 'Paskaitos',
+            },
+            {
+                title: 'Suvirinimo technologijos (MEMKB93005)',
+                note: 'Laikas nenustatytas',
             },
         ],
         Penktadienis: [
