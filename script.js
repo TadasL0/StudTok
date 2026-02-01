@@ -1259,19 +1259,14 @@ function getWeekStart(date) {
 
 function getCurrentSemesterStart(date) {
     const year = date.getFullYear();
-    const febStart = new Date(year, 1, 1);
+    const febStart = new Date(year, 1, 2);
     const septStart = new Date(year, 8, 1);
     febStart.setHours(0, 0, 0, 0);
     septStart.setHours(0, 0, 0, 0);
     if (date >= septStart) {
         return septStart;
     }
-    if (date >= febStart) {
-        return febStart;
-    }
-    const prevSept = new Date(year - 1, 8, 1);
-    prevSept.setHours(0, 0, 0, 0);
-    return prevSept;
+    return febStart;
 }
 
 function getWeekRotationIndex(date) {
