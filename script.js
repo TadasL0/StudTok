@@ -1266,12 +1266,7 @@ function getCurrentSemesterStart(date) {
     if (date >= septStart) {
         return septStart;
     }
-    if (date >= febStart) {
-        return febStart;
-    }
-    const prevSept = new Date(year - 1, 8, 1);
-    prevSept.setHours(0, 0, 0, 0);
-    return prevSept;
+    return febStart;
 }
 
 function getWeekRotationIndex(date) {
