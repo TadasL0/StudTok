@@ -1259,7 +1259,7 @@ function getWeekStart(date) {
 
 function getCurrentSemesterStart(date) {
     const year = date.getFullYear();
-    const febStart = new Date(year, 1, 1);
+    const febStart = new Date(year, 1, 2);
     const septStart = new Date(year, 8, 1);
     febStart.setHours(0, 0, 0, 0);
     septStart.setHours(0, 0, 0, 0);
