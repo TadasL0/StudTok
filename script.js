@@ -1039,13 +1039,6 @@ const TIMETABLE_DATA = {
                 lecturer: 'Dr. Rūta Dadelienė',
                 type: 'Paskaitos',
             },
-            {
-                time: '16:20-17:55',
-                title: 'Žmogaus anatomija',
-                location: 'P1 324',
-                lecturer: 'Dr. Rūta Dadelienė',
-                type: 'Pratybos',
-            },
         ],
     },
     2: {
@@ -1127,6 +1120,13 @@ const TIMETABLE_DATA = {
                 location: 'P1 324',
                 lecturer: 'Dr. Rūta Dadelienė',
                 type: 'Paskaitos',
+            },
+            {
+                time: '16:20-17:55',
+                title: 'Žmogaus anatomija',
+                location: 'P1 324',
+                lecturer: 'Dr. Rūta Dadelienė',
+                type: 'Pratybos',
             },
         ],
     },
