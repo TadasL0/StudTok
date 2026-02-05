@@ -1027,8 +1027,10 @@ const TIMETABLE_DATA = {
                 type: 'Paskaitos',
             },
             {
+                time: '14:30-16:05',
                 title: 'Suvirinimo technologijos (MEMKB93005)',
-                note: 'Laikas nenustatytas',
+                type: 'Paskaitos',
+                note: 'Laboratoriniai darbai po teorijos užsiėmimo tik balandžio 16 ir balandžio 30 d.',
             },
         ],
         Penktadienis: [
@@ -1093,10 +1095,6 @@ const TIMETABLE_DATA = {
                 location: 'P2 157',
                 lecturer: 'Doc. Dr. Nikolaj Šešok',
                 type: 'Paskaitos',
-            },
-            {
-                title: 'Suvirinimo technologijos (MEMKB93005)',
-                note: 'Laikas nenustatytas',
             },
         ],
         Penktadienis: [
