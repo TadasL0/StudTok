@@ -1004,7 +1004,7 @@ const TIMETABLE_DATA = {
                 type: 'Paskaitos',
             },
             {
-                time: '14:30-16:05',
+                time: '14:10-15:45',
                 title: 'Specialybės anglų kalba',
                 location: 'P2 527',
                 lecturer: 'Lina Valatkienė',
@@ -1067,7 +1067,7 @@ const TIMETABLE_DATA = {
                 type: 'Paskaitos',
             },
             {
-                time: '14:30-16:05',
+                time: '14:10-15:45',
                 title: 'Specialybės anglų kalba',
                 location: 'P2 527',
                 lecturer: 'Lina Valatkienė',
