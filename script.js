@@ -99,7 +99,7 @@ const STUDY_BACKEND_ENDPOINT =
     window.PINK_STUDY_BACKEND ??
     document.documentElement?.dataset?.studyBackend ??
     DEFAULT_BACKEND_ENDPOINT;
-const HOLIDAY_THEME_CLASS = 'season-christmas';
+const SPRING_THEME_CLASS = 'season-spring';
 
 const state = {
     name: 'Emilija',
@@ -1004,7 +1004,7 @@ const TIMETABLE_DATA = {
                 type: 'Paskaitos',
             },
             {
-                time: '14:10-15:45',
+                time: '14:30-16:05',
                 title: 'Specialybės anglų kalba',
                 location: 'P2 527',
                 lecturer: 'Lina Valatkienė',
@@ -1067,7 +1067,7 @@ const TIMETABLE_DATA = {
                 type: 'Paskaitos',
             },
             {
-                time: '14:10-15:45',
+                time: '14:30-16:05',
                 title: 'Specialybės anglų kalba',
                 location: 'P2 527',
                 lecturer: 'Lina Valatkienė',
@@ -1135,7 +1135,7 @@ const latestWeekContext = {
     rotationIndex: 0,
     weekStart: null,
 };
-let snowInitialized = false;
+let springOverlayInitialized = false;
 
 function startOfDay(date) {
     const copy = new Date(date);
@@ -1143,26 +1143,15 @@ function startOfDay(date) {
     return copy;
 }
 
-function isHolidaySeason(date) {
+function isSpringSeason(date) {
     const year = date.getFullYear();
-    const month = date.getMonth();
-    const day = date.getDate();
-    let start;
-    let end;
-
-    if (month === 0 || (month === 1 && day <= 1)) {
-        start = new Date(year - 1, 11, 1, 0, 0, 0, 0);
-        end = new Date(year, 1, 1, 23, 59, 59, 999);
-    } else {
-        start = new Date(year, 11, 1, 0, 0, 0, 0);
-        end = new Date(year + 1, 1, 1, 23, 59, 59, 999);
-    }
-
+    const start = new Date(year, 2, 1, 0, 0, 0, 0);
+    const end = new Date(year, 4, 31, 23, 59, 59, 999);
     return date >= start && date <= end;
 }
 
-function initSnowfall() {
-    if (snowInitialized) return;
+function initSpringDrift() {
+    if (springOverlayInitialized) return;
 
     const canvas = document.getElementById('snowCanvas');
     if (!canvas) return;
@@ -1171,8 +1160,14 @@ function initSnowfall() {
     let width = 0;
     let height = 0;
     const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const maxFlakes = prefersReducedMotion ? 90 : 220;
-    const flakes = [];
+    const maxPetals = prefersReducedMotion ? 40 : 110;
+    const petals = [];
+    const petalPalette = [
+        'rgba(255, 170, 209, 0.82)',
+        'rgba(255, 207, 231, 0.8)',
+        'rgba(193, 238, 211, 0.78)',
+        'rgba(255, 239, 176, 0.72)',
+    ];
 
     function resize() {
         const dpr = window.devicePixelRatio || 1;
@@ -1185,49 +1180,58 @@ function initSnowfall() {
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     }
 
-    function createFlake() {
+    function createPetal() {
         return {
             x: Math.random() * width,
             y: Math.random() * height,
-            radius: Math.random() * 2.5 + 1,
-            speed: Math.random() * (prefersReducedMotion ? 0.6 : 1.3) + 0.4,
-            drift: Math.random() * 0.8 - 0.4,
+            width: Math.random() * 6 + 4,
+            height: Math.random() * 3 + 2,
+            speed: Math.random() * (prefersReducedMotion ? 0.45 : 0.95) + 0.25,
+            drift: Math.random() * 0.7 - 0.35,
             sway: Math.random() * Math.PI * 2,
+            rotation: Math.random() * Math.PI * 2,
+            spin: (Math.random() * 0.02 + 0.008) * (Math.random() > 0.5 ? 1 : -1),
+            color: petalPalette[Math.floor(Math.random() * petalPalette.length)],
         };
     }
 
     resize();
-    for (let i = 0; i < maxFlakes; i += 1) {
-        flakes.push(createFlake());
+    for (let i = 0; i < maxPetals; i += 1) {
+        petals.push(createPetal());
     }
 
     function step() {
         ctx.clearRect(0, 0, width, height);
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
 
-        for (const flake of flakes) {
-            flake.y += flake.speed;
-            flake.x += flake.drift + Math.sin(flake.sway) * 0.5;
-            flake.sway += 0.015 + flake.speed * 0.02;
+        for (const petal of petals) {
+            petal.y += petal.speed;
+            petal.x += petal.drift + Math.sin(petal.sway) * 0.45;
+            petal.sway += 0.01 + petal.speed * 0.02;
+            petal.rotation += petal.spin;
 
-            if (flake.y > height + 4) {
-                flake.y = -10;
-                flake.x = Math.random() * width;
+            if (petal.y > height + 10) {
+                petal.y = -12;
+                petal.x = Math.random() * width;
             }
 
-            if (flake.x > width + 10) flake.x = -10;
-            if (flake.x < -10) flake.x = width + 10;
+            if (petal.x > width + 12) petal.x = -12;
+            if (petal.x < -12) petal.x = width + 12;
 
+            ctx.save();
+            ctx.translate(petal.x, petal.y);
+            ctx.rotate(petal.rotation);
+            ctx.fillStyle = petal.color;
             ctx.beginPath();
-            ctx.arc(flake.x, flake.y, flake.radius, 0, Math.PI * 2);
+            ctx.ellipse(0, 0, petal.width, petal.height, 0, 0, Math.PI * 2);
             ctx.fill();
+            ctx.restore();
         }
 
         requestAnimationFrame(step);
     }
 
     window.addEventListener('resize', resize);
-    snowInitialized = true;
+    springOverlayInitialized = true;
     step();
 }
 
@@ -1237,13 +1241,13 @@ function applySeasonalTheme(date = new Date()) {
         return;
     }
 
-    if (isHolidaySeason(date)) {
-        body.classList.add(HOLIDAY_THEME_CLASS);
-        initSnowfall();
+    if (isSpringSeason(date)) {
+        body.classList.add(SPRING_THEME_CLASS);
+        initSpringDrift();
         return;
     }
 
-    body.classList.remove(HOLIDAY_THEME_CLASS);
+    body.classList.remove(SPRING_THEME_CLASS);
 }
 
 function getWeekStart(date) {
