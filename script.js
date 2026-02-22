@@ -117,6 +117,7 @@ const flashcardState = {
 const flashcardHistory = new Set();
 
 const QUIZ_AUTO_ADVANCE_DELAY_MS = 750;
+const QUIZ_EXPLANATION_FALLBACK = '\u0161is pasirinkimas geriausiai atitinka mokymosi med\u017eiag\u0105.';
 const QUIZ_COMFORT_MESSAGES = {
     idle: 'Prad\u0117k, kai pasiruo\u0161i.',
     active: 'Ramiai spr\u0119sk \u2013 \u010dia be laikma\u010dio.',
@@ -2343,7 +2344,7 @@ async function fetchStudyBundleViaOpenAI(text, apiKey, generationPlan) {
 
     if (includeQuiz) {
         instructionParts.push(
-            `Sudaryk ${quizCount} testinius klausimus, kuri\u0173 kiekvienas turi keturis atsakymo variantus. Klausimus formuluok taip, kad jie b\u016Bt\u0173 vidutinio ar auk\u0161tesnio sud\u0117tingumo ir reikalaut\u0173 keli\u0173 teksto detali\u0173. Kiekvienam klausimui pateik keturis \u012Ftikinamus, pana\u0161aus detali\u0161kumo atsakymo variantus, venk akivaizd\u017Eiai neteising\u0173 formuluo\u010Di\u0173. Variantus pateik lauke "options" (be raid\u017Ei\u0173), o teising\u0105 raid\u0119 (A, B, C arba D) \u012Fra\u0161yk lauke "correctOption". Jei gali, prid\u0117k trump\u0105 paai\u0161kinim\u0105 lauke "explanation".`
+            `Sudaryk ${quizCount} testinius klausimus, kuri\u0173 kiekvienas turi keturis atsakymo variantus. Klausimus formuluok taip, kad jie b\u016Bt\u0173 vidutinio ar auk\u0161tesnio sud\u0117tingumo ir reikalaut\u0173 keli\u0173 teksto detali\u0173. Kiekvienam klausimui pateik keturis \u012Ftikinamus, pana\u0161aus detali\u0161kumo atsakymo variantus, venk akivaizd\u017Eiai neteising\u0173 formuluo\u010Di\u0173. Variantus pateik lauke "options" (be raid\u017Ei\u0173), o teising\u0105 raid\u0119 (A, B, C arba D) \u012Fra\u0161yk lauke "correctOption". Kiekvienam klausimui privalomai prid\u0117k trump\u0105 (vieno sakinio) paai\u0161kinim\u0105 lauke "explanation".`
         );
     } else {
         instructionParts.push(
@@ -2361,7 +2362,7 @@ async function fetchStudyBundleViaOpenAI(text, apiKey, generationPlan) {
         {
             role: 'system',
             content:
-                'Tu esi nuotaikinga mokymosi trener\u0117, kuri atsako tik kompakti\u0161k\u0105 JSON objekt\u0105. Visada gr\u0105\u017Eink du laukus: "flashcards" ir "quizQuestions". "flashcards" yra masyvas su objektais, turin\u010Diais "question", "answer" ir neprivalom\u0105 "tags" masyv\u0105. "quizQuestions" yra masyvas su objektais, turin\u010Diais "question", "options" (keturi \u012Fra\u0161ai) ir "correctOption" (raid\u0117 A, B, C arba D). Galima prid\u0117ti neprivalom\u0105 "explanation". Jei kurio nors turinio nereikia, atitinkam\u0105 masyv\u0105 palik tu\u0161\u010Di\u0105. Visk\u0105 ra\u0161yk lietuvi\u0161kai, be Markdown.',
+                'Tu esi nuotaikinga mokymosi trener\u0117, kuri atsako tik kompakti\u0161k\u0105 JSON objekt\u0105. Visada gr\u0105\u017Eink du laukus: "flashcards" ir "quizQuestions". "flashcards" yra masyvas su objektais, turin\u010Diais "question", "answer" ir neprivalom\u0105 "tags" masyv\u0105. "quizQuestions" yra masyvas su objektais, turin\u010Diais "question", "options" (keturi \u012Fra\u0161ai), "correctOption" (raid\u0117 A, B, C arba D) ir privalom\u0105 trump\u0105 "explanation" (vienas sakinys). Jei kurio nors turinio nereikia, atitinkam\u0105 masyv\u0105 palik tu\u0161\u010Di\u0105. Visk\u0105 ra\u0161yk lietuvi\u0161kai, be Markdown.',
         },
         {
             role: 'user',
@@ -2762,6 +2763,22 @@ function shuffleArray(items) {
     return array;
 }
 
+function normaliseQuizExplanation(value) {
+    if (typeof value !== 'string') {
+        return '';
+    }
+    const compact = value.replace(/\s+/g, ' ').trim();
+    if (!compact) {
+        return '';
+    }
+    const withoutPrefix = compact.replace(/^paai\u0161kinimas:\s*/i, '');
+    const maxLength = 220;
+    if (withoutPrefix.length <= maxLength) {
+        return withoutPrefix;
+    }
+    return withoutPrefix.slice(0, maxLength - 1).trimEnd() + '\u2026';
+}
+
 function prepareBaseQuizQuestions(questions) {
     return questions
         .map((item) => {
@@ -2774,11 +2791,12 @@ function prepareBaseQuizQuestions(questions) {
             if (correctIndex < 0 || correctIndex >= options.length) {
                 return null;
             }
+            const explanation = normaliseQuizExplanation(item.explanation) || QUIZ_EXPLANATION_FALLBACK;
             return {
                 question: item.question,
                 options,
                 correctIndex,
-                explanation: typeof item.explanation === 'string' ? item.explanation : '',
+                explanation,
             };
         })
         .filter(Boolean);
@@ -2964,17 +2982,17 @@ function handleQuizOptionSelect(optionIndex) {
         quizState.score += 1;
         buttons[optionIndex]?.classList.add('quiz-option--correct');
         if (quizFeedback) {
-            quizFeedback.textContent = current.explanation
-                ? `Teisingai! ${current.explanation}`
-                : 'Teisingai!';
+            quizFeedback.textContent = `Teisingai! Paai\u0161kinimas: ${
+                current.explanation || QUIZ_EXPLANATION_FALLBACK
+            }`;
         }
     } else {
         buttons[optionIndex]?.classList.add('quiz-option--wrong');
         buttons[correctIndex]?.classList.add('quiz-option--correct');
         if (quizFeedback) {
-            quizFeedback.textContent = current.explanation
-                ? `Teisingas atsakymas: ${String.fromCharCode(65 + correctIndex)}. ${current.explanation}`
-                : `Teisingas atsakymas: ${String.fromCharCode(65 + correctIndex)}.`;
+            quizFeedback.textContent = `Teisingas atsakymas: ${String.fromCharCode(65 + correctIndex)}. Paai\u0161kinimas: ${
+                current.explanation || QUIZ_EXPLANATION_FALLBACK
+            }`;
         }
     }
 
@@ -3290,7 +3308,11 @@ function renderBlockJamQuestion(piece) {
         blockJamQuestionOptions.appendChild(button);
     });
     if (piece.question.answered) {
-        updateBlockJamQuestionFeedback('Teisingai! Dabar pad\u0117k blok\u0105 lenteleje.', 'success');
+        const explanation = normaliseQuizExplanation(piece.question.explanation) || QUIZ_EXPLANATION_FALLBACK;
+        updateBlockJamQuestionFeedback(
+            `Teisingai! Paai\u0161kinimas: ${explanation} Dabar pad\u0117k blok\u0105 lentel\u0117je.`,
+            'success'
+        );
     } else {
         updateBlockJamQuestionFeedback('Pasirink atsakym\u0105 ir atrakink saldaini\u0173 blok\u0105.');
     }
