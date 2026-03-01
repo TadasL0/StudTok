@@ -494,8 +494,8 @@ body.season-spring .sparkle-overlay {
         radial-gradient(rgba(255, 206, 230, 0.55) 1px, transparent 3px),
         radial-gradient(rgba(194, 234, 209, 0.46) 1px, transparent 3px),
         radial-gradient(rgba(255, 239, 175, 0.38) 1px, transparent 3px);
-    background-size: 110px 110px, 160px 160px, 220px 220px;
-    opacity: 0.58;
+    background-size: 140px 140px, 205px 205px, 280px 280px;
+    opacity: 0.42;
     animation: springGlow 26s linear infinite;
 }
 
