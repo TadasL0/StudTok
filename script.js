@@ -104,6 +104,7 @@ const SPRING_THEME_CLASS = 'season-spring';
 const SPRING_THEME_ALWAYS_ON = true;
 const SPRING_FESTIVAL_MONTH_INDEX = 3;
 const SPRING_FESTIVAL_DAY = 15;
+const SPRING_FESTIVAL_SPECIAL_DAYS = new Set([10, 20, 30, 40]);
 
 const state = {
     name: 'Emilija',
@@ -1167,7 +1168,12 @@ function updateSpringCountdown(reference = new Date()) {
     const today = startOfDay(reference);
     const target = getNextSpringFestivalDate(reference);
     const daysLeft = Math.max(0, Math.round((target - today) / MS_PER_DAY));
-    const dayLabel = daysLeft === 1 ? 'diena' : 'dien\u0173';
+    let dayLabel = 'dienos';
+    if (daysLeft === 1) {
+        dayLabel = 'diena';
+    } else if (SPRING_FESTIVAL_SPECIAL_DAYS.has(daysLeft)) {
+        dayLabel = 'dien\u0173';
+    }
 
     springCountdown.innerHTML = `Iki laukiamiausios pavasario \u0161vent\u0117s liko <strong>${daysLeft}</strong> ${dayLabel}.`;
 }
@@ -1204,7 +1210,7 @@ function initSpringDrift() {
     let width = 0;
     let height = 0;
     const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const maxPetals = prefersReducedMotion ? 40 : 110;
+    const maxPetals = prefersReducedMotion ? 28 : 72;
     const petals = [];
     const petalPalette = [
         'rgba(255, 170, 209, 0.82)',
