@@ -100,6 +100,7 @@ const STUDY_BACKEND_ENDPOINT =
     document.documentElement?.dataset?.studyBackend ??
     DEFAULT_BACKEND_ENDPOINT;
 const SPRING_THEME_CLASS = 'season-spring';
+const SPRING_THEME_ALWAYS_ON = true;
 
 const state = {
     name: 'Emilija',
@@ -1154,7 +1155,7 @@ function isSpringSeason(date) {
 function initSpringDrift() {
     if (springOverlayInitialized) return;
 
-    const canvas = document.getElementById('snowCanvas');
+    const canvas = document.getElementById('springCanvas');
     if (!canvas) return;
 
     const ctx = canvas.getContext('2d');
@@ -1242,7 +1243,7 @@ function applySeasonalTheme(date = new Date()) {
         return;
     }
 
-    if (isSpringSeason(date)) {
+    if (SPRING_THEME_ALWAYS_ON || isSpringSeason(date)) {
         body.classList.add(SPRING_THEME_CLASS);
         initSpringDrift();
         return;

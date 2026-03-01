@@ -10,7 +10,7 @@
         href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:wght@400;500;600;700;900&family=Caveat:wght@400;600;700&family=Quicksand:wght@400;600;700&display=swap"
         rel="stylesheet"
     />
-    <link rel="stylesheet" href="style.css?v=20260102" />
+    <link rel="stylesheet" href="style.css?v=20260301" />
     <link rel="icon" type="image/png" href="assets/favicon.png?v=2" />
     <link rel="shortcut icon" href="assets/favicon.png?v=2" type="image/png" />
     <link rel="apple-touch-icon" href="assets/favicon.png?v=2" />
@@ -37,29 +37,44 @@
             <span id="splash-name" class="welcome-splash__name">Emilija!</span>
         </div>
         <div class="welcome-splash__particles" aria-hidden="true">
-            <span class="welcome-splash__heart" style="--x:8%; --delay:0s; --duration:7s; --size:46px;"></span>
-            <span class="welcome-splash__heart welcome-splash__heart--small" style="--x:22%; --delay:-2s; --duration:8.5s; --size:34px;"></span>
-            <span class="welcome-splash__heart" style="--x:48%; --delay:-1s; --duration:7.8s; --size:40px;"></span>
-            <span class="welcome-splash__heart" style="--x:72%; --delay:-3.4s; --duration:9s; --size:44px;"></span>
-            <span class="welcome-splash__heart welcome-splash__heart--small" style="--x:88%; --delay:-4.1s; --duration:8s; --size:30px;"></span>
-            <span class="welcome-splash__choco welcome-splash__choco--bowtie" style="--x:15%; --delay:-1.6s; --duration:9.4s; --size:46px;"></span>
-            <span class="welcome-splash__choco welcome-splash__choco--heel" style="--x:36%; --delay:-3s; --duration:8.6s; --size:40px;"></span>
-            <span class="welcome-splash__choco welcome-splash__choco--tequila" style="--x:58%; --delay:-2.2s; --duration:7.2s; --size:44px;"></span>
-            <span class="welcome-splash__choco welcome-splash__choco--bowtie" style="--x:79%; --delay:-5s; --duration:8.8s; --size:42px;"></span>
-            <span class="welcome-splash__plush welcome-splash__plush--bunny" style="--x:12%; --delay:-1.8s; --duration:9.2s; --size:60px;"></span>
-            <span class="welcome-splash__plush welcome-splash__plush--bear" style="--x:44%; --delay:-3.6s; --duration:8.4s; --size:56px;"></span>
-            <span class="welcome-splash__plush welcome-splash__plush--bunny" style="--x:66%; --delay:-4.8s; --duration:9.6s; --size:62px;"></span>
-            <span class="welcome-splash__plush welcome-splash__plush--bear" style="--x:90%; --delay:-2.9s; --duration:8.1s; --size:52px;"></span>
-            <span class="welcome-splash__heart" style="--x:30%; --delay:-5.4s; --duration:9.6s; --size:50px;"></span>
-            <span class="welcome-splash__heart welcome-splash__heart--tiny" style="--x:64%; --delay:-6.2s; --duration:7.4s; --size:24px;"></span>
+            <span class="welcome-splash__egg welcome-splash__egg--stripe" style="--x:7%; --delay:0s; --duration:7.4s; --size:38px;"></span>
+            <span class="welcome-splash__egg welcome-splash__egg--dots" style="--x:18%; --delay:-2.4s; --duration:8.8s; --size:32px;"></span>
+            <span class="welcome-splash__rose" style="--x:30%; --delay:-1.6s; --duration:9.1s; --size:40px;"></span>
+            <span class="welcome-splash__bird" style="--x:43%; --delay:-3.2s; --duration:7.8s; --size:42px;"></span>
+            <span class="welcome-splash__cake" style="--x:56%; --delay:-2s; --duration:8.5s; --size:42px;"></span>
+            <span class="welcome-splash__egg welcome-splash__egg--stripe" style="--x:68%; --delay:-4.2s; --duration:9.2s; --size:36px;"></span>
+            <span class="welcome-splash__rose" style="--x:81%; --delay:-5.5s; --duration:8.2s; --size:44px;"></span>
+            <span class="welcome-splash__bird welcome-splash__bird--chirp" style="--x:92%; --delay:-1.3s; --duration:8.6s; --size:38px;"></span>
+            <span class="welcome-splash__cake welcome-splash__cake--tiny" style="--x:12%; --delay:-6.4s; --duration:9.5s; --size:32px;"></span>
+            <span class="welcome-splash__rose welcome-splash__rose--mini" style="--x:24%; --delay:-4.8s; --duration:8.7s; --size:32px;"></span>
+            <span class="welcome-splash__egg welcome-splash__egg--dots" style="--x:37%; --delay:-7.1s; --duration:9.7s; --size:30px;"></span>
+            <span class="welcome-splash__bird" style="--x:50%; --delay:-6.3s; --duration:7.6s; --size:36px;"></span>
+            <span class="welcome-splash__cake" style="--x:63%; --delay:-5.1s; --duration:9.4s; --size:36px;"></span>
+            <span class="welcome-splash__rose" style="--x:76%; --delay:-6.8s; --duration:8.4s; --size:34px;"></span>
+            <span class="welcome-splash__egg welcome-splash__egg--stripe" style="--x:88%; --delay:-7.5s; --duration:9.1s; --size:28px;"></span>
         </div>
     </div>
     <div class="sparkle-overlay" aria-hidden="true"></div>
-    <canvas id="snowCanvas" aria-hidden="true"></canvas>
+    <canvas id="springCanvas" aria-hidden="true"></canvas>
+    <div class="spring-decor" aria-hidden="true">
+        <span class="spring-decor__item spring-decor__item--rose spring-decor__item--rose-a"></span>
+        <span class="spring-decor__item spring-decor__item--rose spring-decor__item--rose-b"></span>
+        <span class="spring-decor__item spring-decor__item--egg spring-decor__item--egg-a"></span>
+        <span class="spring-decor__item spring-decor__item--cake spring-decor__item--cake-a"></span>
+        <span class="spring-decor__item spring-decor__item--bird spring-decor__item--bird-a"></span>
+        <span class="spring-decor__item spring-decor__item--bird spring-decor__item--bird-b"></span>
+    </div>
     <main class="app" role="main">
         <header class="hero">
-            <h1 class="hero__title">Ar pasiruo&#353;usi pasinerti &#303; mokslus?</h1>
-            <p class="hero__tagline">Paversk kiekvien&#261; mokymosi sesij&#261; &#382;aidimu su ro&#382;ine energija ir saldumynais.</p>
+            <span class="hero__badge">Pavasario leidimas</span>
+            <h1 class="hero__title">Pavasario mokymosi sodas jau atidarytas</h1>
+            <p class="hero__tagline">Mokykis tarp margu&#269;i&#371;, torto, ro&#382;i&#371; ir gelton&#371; pauk&#353;teli&#371; nuotaikos.</p>
+            <div class="hero__spring-strip" aria-hidden="true">
+                <span class="hero__spring-pill hero__spring-pill--egg"></span>
+                <span class="hero__spring-pill hero__spring-pill--cake"></span>
+                <span class="hero__spring-pill hero__spring-pill--rose"></span>
+                <span class="hero__spring-pill hero__spring-pill--bird"></span>
+            </div>
         </header>
 
         <section class="screen screen--active" data-screen="intro" aria-labelledby="intro-title">
@@ -379,6 +394,6 @@
     <footer class="footer">
         <span>Sukurta su &hearts;</span>
     </footer>
-    <script src="script.js?v=20260102"></script>
+    <script src="script.js?v=20260301"></script>
 </body>
 </html>
