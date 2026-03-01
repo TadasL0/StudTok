@@ -3,6 +3,7 @@
 const rootElement = document.documentElement;
 const screens = document.querySelectorAll('.screen');
 const hero = document.querySelector('.hero');
+const springCountdown = document.getElementById('spring-countdown');
 const nameInput = document.getElementById('name-input');
 const introForm = document.getElementById('intro-form');
 
@@ -101,6 +102,8 @@ const STUDY_BACKEND_ENDPOINT =
     DEFAULT_BACKEND_ENDPOINT;
 const SPRING_THEME_CLASS = 'season-spring';
 const SPRING_THEME_ALWAYS_ON = true;
+const SPRING_FESTIVAL_MONTH_INDEX = 3;
+const SPRING_FESTIVAL_DAY = 15;
 
 const state = {
     name: 'Emilija',
@@ -1143,6 +1146,45 @@ function startOfDay(date) {
     const copy = new Date(date);
     copy.setHours(0, 0, 0, 0);
     return copy;
+}
+
+function getNextSpringFestivalDate(reference = new Date()) {
+    const year = reference.getFullYear();
+    const today = startOfDay(reference);
+    const targetThisYear = new Date(year, SPRING_FESTIVAL_MONTH_INDEX, SPRING_FESTIVAL_DAY);
+    targetThisYear.setHours(0, 0, 0, 0);
+    if (today > targetThisYear) {
+        return new Date(year + 1, SPRING_FESTIVAL_MONTH_INDEX, SPRING_FESTIVAL_DAY);
+    }
+    return targetThisYear;
+}
+
+function updateSpringCountdown(reference = new Date()) {
+    if (!springCountdown) {
+        return;
+    }
+
+    const today = startOfDay(reference);
+    const target = getNextSpringFestivalDate(reference);
+    const daysLeft = Math.max(0, Math.round((target - today) / MS_PER_DAY));
+    const dayLabel = daysLeft === 1 ? 'diena' : 'dien\u0173';
+
+    springCountdown.innerHTML = `Iki laukiamiausios pavasario \u0161vent\u0117s liko <strong>${daysLeft}</strong> ${dayLabel}.`;
+}
+
+function scheduleSpringCountdown() {
+    updateSpringCountdown();
+    const now = new Date();
+    const nextMidnight = new Date(now);
+    nextMidnight.setHours(24, 0, 0, 0);
+    const firstDelay = Math.max(1000, nextMidnight.getTime() - now.getTime() + 1000);
+
+    window.setTimeout(() => {
+        updateSpringCountdown();
+        window.setInterval(() => {
+            updateSpringCountdown();
+        }, MS_PER_DAY);
+    }, firstDelay);
 }
 
 function isSpringSeason(date) {
@@ -4573,6 +4615,7 @@ timetableToggleWeekBtn?.addEventListener('click', () => {
 });
 updateWeekIndicator();
 applySeasonalTheme();
+scheduleSpringCountdown();
 scheduleWeekIndicatorUpdate();
 initImportantDatesSection();
 window.addEventListener('resize', scheduleLayoutTopSync);
@@ -4580,6 +4623,7 @@ document.addEventListener('visibilitychange', () => {
     if (!document.hidden) {
         updateWeekIndicator();
         applySeasonalTheme();
+        updateSpringCountdown();
     }
 });
 showScreen('intro');

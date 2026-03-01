@@ -941,6 +941,29 @@ body.season-spring .hero::after {
     margin-right: auto;
 }
 
+.hero__countdown {
+    margin: 16px auto 0;
+    display: inline-block;
+    padding: 10px 16px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(255, 173, 209, 0.36);
+    box-shadow: 0 10px 20px rgba(210, 126, 164, 0.16);
+    font-family: 'Quicksand', 'Century Gothic', 'Segoe UI', sans-serif;
+    font-size: clamp(14px, 2.1vw, 18px);
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    color: rgba(95, 46, 72, 0.9);
+}
+
+.hero__countdown strong {
+    color: #b33a6e;
+}
+
+body.season-spring .hero__countdown {
+    background: linear-gradient(140deg, rgba(255, 246, 251, 0.9), rgba(255, 248, 221, 0.88), rgba(236, 251, 241, 0.88));
+}
+
 .hero__spring-strip {
     margin: 20px auto 0;
     display: inline-flex;
