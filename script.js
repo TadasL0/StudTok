@@ -948,6 +948,7 @@ const TIMETABLE_CURRENT_LABEL = '\u0160ios savait\u0117s paskaitos';
 const TIMETABLE_NEXT_LABEL = 'Ateinan\u010Dios savait\u0117s paskaitos';
 const TIMETABLE_WEEK_ORDER = ['Pirmadienis', 'Antradienis', 'Tre\u010diadienis', 'Ketvirtadienis', 'Penktadienis', '\u0160e\u0161tadienis'];
 const TIMETABLE_WEEKDAY_LABELS = ['Sekmadienis', 'Pirmadienis', 'Antradienis', 'Tre\u010diadienis', 'Ketvirtadienis', 'Penktadienis', '\u0160e\u0161tadienis'];
+const ANATOMY_TITLE = '\u017dmogaus anatomija';
 const IMPORTANT_DATES_MONTH_SHORT = ['Sau', 'Vas', 'Kov', 'Bal', 'Geg', 'Bir', 'Lie', 'Rgp', 'Rgs', 'Spa', 'Lap', 'Gru'];
 const IMPORTANT_DATES_WEEKDAY_SHORT = ['Sek', 'Pir', 'Ant', 'Tre', 'Ket', 'Pen', '\u0160e'];
 const IMPORTANT_DATES_MAX_UPCOMING = 6;
@@ -1351,6 +1352,97 @@ function formatMonthDay(date) {
     return month + '-' + day;
 }
 
+function formatDateKey(date) {
+    const year = String(date.getFullYear());
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return year + '-' + month + '-' + day;
+}
+
+function cloneTimetableWeekData(weekData) {
+    if (!weekData || typeof weekData !== 'object') {
+        return null;
+    }
+    return Object.fromEntries(
+        Object.entries(weekData).map(([dayName, sessions]) => [
+            dayName,
+            Array.isArray(sessions) ? sessions.map((session) => ({ ...session })) : [],
+        ])
+    );
+}
+
+function removeAnatomySessions(weekData) {
+    if (!weekData || typeof weekData !== 'object') {
+        return;
+    }
+    Object.keys(weekData).forEach((dayName) => {
+        const sessions = Array.isArray(weekData[dayName]) ? weekData[dayName] : [];
+        weekData[dayName] = sessions.filter((session) => session?.title !== ANATOMY_TITLE);
+    });
+}
+
+function addAnatomySession(weekData, dayName, session) {
+    if (!weekData || !dayName || !session) {
+        return;
+    }
+    const existing = Array.isArray(weekData[dayName]) ? weekData[dayName].slice() : [];
+    existing.push({ ...session });
+    existing.sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+    weekData[dayName] = existing;
+}
+
+function getTimetableWeekData(weekNumber, weekStartDate) {
+    const baseWeekData = TIMETABLE_DATA[weekNumber];
+    if (!baseWeekData) {
+        return null;
+    }
+
+    const weekData = cloneTimetableWeekData(baseWeekData);
+    if (!weekData || !(weekStartDate instanceof Date)) {
+        return weekData;
+    }
+
+    const weekKey = formatDateKey(weekStartDate);
+    const anatomySession = {
+        time: '08:30-10:05',
+        title: ANATOMY_TITLE,
+        location: 'P1 324',
+        lecturer: 'Dr. R\u016bta Dadelien\u0117',
+        type: 'Paskaitos',
+    };
+
+    if (weekKey === '2026-03-02') {
+        removeAnatomySessions(weekData);
+        addAnatomySession(weekData, 'Ketvirtadienis', anatomySession);
+        weekData.Penktadienis = [
+            {
+                time: '12:30-14:05',
+                title: ANATOMY_TITLE,
+                lecturer: 'Dr. R\u016bta Dadelien\u0117',
+                type: 'Paskaitos',
+                note: 'Nuotoliniu b\u016bdu',
+            },
+            {
+                time: '14:20-15:55',
+                title: ANATOMY_TITLE,
+                lecturer: 'Dr. R\u016bta Dadelien\u0117',
+                type: 'Paskaitos',
+                note: 'Nuotoliniu b\u016bdu',
+            },
+        ];
+    }
+
+    if (weekKey === '2026-03-09' || weekKey === '2026-03-16') {
+        removeAnatomySessions(weekData);
+    }
+
+    if (weekKey === '2026-03-30') {
+        addAnatomySession(weekData, 'Ketvirtadienis', anatomySession);
+    }
+
+    return weekData;
+}
+
 function shouldPreferNextWeekView(date) {
     const day = date.getDay();
     const minutes = date.getHours() * 60 + date.getMinutes();
@@ -1428,7 +1520,7 @@ function renderTimetableSection(options = {}) {
     if (timetableWeekRange) {
         timetableWeekRange.textContent = formatMonthDay(displayStart) + ' \u2013 ' + formatMonthDay(displayEnd);
     }
-    const weekData = TIMETABLE_DATA[weekNumber];
+    const weekData = getTimetableWeekData(weekNumber, displayStart);
     timetableWeekContent.innerHTML = '';
     timetableWeekContent.setAttribute('role', 'list');
 
