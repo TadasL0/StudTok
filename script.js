@@ -1391,6 +1391,24 @@ function addAnatomySession(weekData, dayName, session) {
     weekData[dayName] = existing;
 }
 
+function removeMatchingSessions(weekData, dayName, matcher) {
+    if (!weekData || !dayName || typeof matcher !== 'function') {
+        return;
+    }
+    const sessions = Array.isArray(weekData[dayName]) ? weekData[dayName] : [];
+    weekData[dayName] = sessions.filter((session) => !matcher(session));
+}
+
+function addTimetableSession(weekData, dayName, session) {
+    if (!weekData || !dayName || !session) {
+        return;
+    }
+    const existing = Array.isArray(weekData[dayName]) ? weekData[dayName].slice() : [];
+    existing.push({ ...session });
+    existing.sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+    weekData[dayName] = existing;
+}
+
 function getTimetableWeekData(weekNumber, weekStartDate) {
     const baseWeekData = TIMETABLE_DATA[weekNumber];
     if (!baseWeekData) {
@@ -1438,6 +1456,27 @@ function getTimetableWeekData(weekNumber, weekStartDate) {
 
     if (weekKey === '2026-03-30') {
         addAnatomySession(weekData, 'Ketvirtadienis', anatomySession);
+    }
+
+    if (weekKey === '2026-04-27') {
+        removeMatchingSessions(
+            weekData,
+            'Ketvirtadienis',
+            (session) =>
+                session?.time === '10:20-11:55' &&
+                session?.title === 'Matavimų teorija ir praktika (su kursiniu projektu)' &&
+                session?.type === 'Pratybos'
+        );
+    }
+
+    if (weekKey === '2026-05-04') {
+        addTimetableSession(weekData, 'Penktadienis', {
+            time: '08:30-10:05',
+            title: 'Matavimų teorija ir praktika (su kursiniu projektu)',
+            lecturer: 'Ieva Švagždytė',
+            type: 'Pratybos',
+            note: 'Perkelta iš balandžio 30 d. 10:20 užsiėmimo.',
+        });
     }
 
     return weekData;
