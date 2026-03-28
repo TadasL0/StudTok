@@ -96,7 +96,6 @@ const blockJamQuestionFeedback = document.getElementById('blockjam-question-feed
 const pdfFileNameEmptyText = pdfFileName?.dataset?.empty || 'Failas nepasirinktas';
 const PASSCODE = 'differentdimension';
 const ZERO_WIDTH_SPACE_PATTERN = /[\u200B\u200C\u200D\u2060\uFEFF]/g;
-const DEFAULT_BACKEND_ENDPOINT = 'https://pi-proxy.studtok.com/study-bundle';
 const SPRING_THEME_CLASS = 'season-spring';
 const SPRING_THEME_ALWAYS_ON = true;
 const SPRING_FESTIVAL_MONTH_INDEX = 3;
@@ -2526,8 +2525,26 @@ function getStudyBackendCandidates() {
         appendCandidate(new URL('/api/study-bundle', window.location.origin).toString());
     }
 
-    appendCandidate(DEFAULT_BACKEND_ENDPOINT);
     return candidates;
+}
+
+function isSameOriginEndpoint(endpoint) {
+    if (!endpoint || !/^https?:$/i.test(window.location?.protocol || '')) {
+        return false;
+    }
+    try {
+        return new URL(endpoint, window.location.origin).origin === window.location.origin;
+    } catch (error) {
+        return false;
+    }
+}
+
+function buildMissingBackendRouteError(endpoint, responseDetails = '') {
+    const endpointLabel = endpoint ? ` (${endpoint})` : '';
+    const details = responseDetails ? ` ${responseDetails}` : '';
+    return new Error(
+        `StudTok slaptažodžio proxy maršrutas hostinge neveikia${endpointLabel}. Statinis puslapis negali priimti POST užklausos, todėl reikia veikiančio serverio/proxy į ${endpoint || '/study-bundle'}.${details}`
+    );
 }
 
 function buildBackendProxyError(error, endpoint, responseDetails = '') {
@@ -2582,6 +2599,14 @@ async function fetchStudyBundleViaBackend(text, generationPlan) {
 
             if (!response.ok) {
                 const details = await response.text();
+                const responseContentType = response.headers.get('content-type') || '';
+                if (
+                    isSameOriginEndpoint(endpoint) &&
+                    (response.status === 404 || response.status === 405) &&
+                    /text\/html|application\/xhtml\+xml/i.test(responseContentType)
+                ) {
+                    throw buildMissingBackendRouteError(endpoint, details.trim());
+                }
                 lastError = buildBackendProxyError(
                     new Error(`HTTP ${response.status}`),
                     endpoint,
@@ -4742,11 +4767,12 @@ flashcardForm?.addEventListener('submit', async (event) => {
         generationState.lastFileName = file && file.name ? file.name : generationState.lastFileName;
         updateRegenerateButtonsAvailability();
         const { includeFlashcards, includeQuiz } = plan;
+        const providerLabel = shouldUseBackendProxy() ? 'per proxy' : 'per OpenAI';
         const actionLabel = includeFlashcards && includeQuiz
-            ? 'Kuriame korteles ir test\u0105 per OpenAI...'
+            ? `Kuriame korteles ir test\u0105 ${providerLabel}...`
             : includeFlashcards
-            ? 'Kuriame korteles per OpenAI...'
-            : 'Kuriame test\u0105 per OpenAI...';
+            ? `Kuriame korteles ${providerLabel}...`
+            : `Kuriame test\u0105 ${providerLabel}...`;
         setFlashcardStatus(actionLabel, 'pending');
 
         const bundle = await fetchStudyBundleFromApi(text, state.apiKey, plan);
