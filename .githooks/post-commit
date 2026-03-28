@@ -1,0 +1,11 @@
+#!/bin/sh
+
+branch="$(git branch --show-current 2>/dev/null)"
+
+if [ -z "$branch" ]; then
+  echo "post-commit: no current branch, skipping auto-push."
+  exit 0
+fi
+
+echo "post-commit: auto-pushing origin/$branch"
+git push origin "$branch"
