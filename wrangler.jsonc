@@ -1,5 +1,5 @@
 {
-  "name": "studtok-study-bundle",
+  "name": "studtok",
   "main": "worker.mjs",
   "compatibility_date": "2026-03-28",
   "workers_dev": false,
