@@ -50,6 +50,7 @@ const importantDatesRefreshBtn = document.getElementById('important-dates-refres
 const importantDatesFilters = document.getElementById('important-dates-filters');
 const importantDatesToggleEmbedBtn = document.getElementById('important-dates-toggle-embed');
 const importantDatesEmbed = document.getElementById('important-dates-embed');
+const importantDatesHighlightCard = document.getElementById('important-next-card');
 const importantDatesHighlightTitle = document.getElementById('important-next-title');
 const importantDatesHighlightDate = document.getElementById('important-next-date');
 const importantDatesHighlightCountdown = document.getElementById('important-next-countdown');
@@ -96,10 +97,6 @@ const pdfFileNameEmptyText = pdfFileName?.dataset?.empty || 'Failas nepasirinkta
 const PASSCODE = 'differentdimension';
 const ZERO_WIDTH_SPACE_PATTERN = /[\u200B\u200C\u200D\u2060\uFEFF]/g;
 const DEFAULT_BACKEND_ENDPOINT = 'https://pi-proxy.studtok.com/study-bundle';
-const STUDY_BACKEND_ENDPOINT =
-    window.PINK_STUDY_BACKEND ??
-    document.documentElement?.dataset?.studyBackend ??
-    DEFAULT_BACKEND_ENDPOINT;
 const SPRING_THEME_CLASS = 'season-spring';
 const SPRING_THEME_ALWAYS_ON = true;
 const SPRING_FESTIVAL_MONTH_INDEX = 3;
@@ -470,7 +467,7 @@ const rewardState = {
 };
 
 function shouldUseBackendProxy() {
-    return state.activeCredential?.toLowerCase() === PASSCODE.toLowerCase() && Boolean(STUDY_BACKEND_ENDPOINT);
+    return state.activeCredential?.toLowerCase() === PASSCODE.toLowerCase() && getStudyBackendCandidates().length > 0;
 }
 
 function hasGenerationCredential() {
@@ -1455,6 +1452,14 @@ function getTimetableWeekData(weekNumber, weekStartDate) {
     }
 
     if (weekKey === '2026-03-30') {
+        removeMatchingSessions(
+            weekData,
+            'Trečiadienis',
+            (session) =>
+                session?.time === '14:30-16:05' &&
+                session?.title === 'Specialybės anglų kalba' &&
+                session?.type === 'Pratybos'
+        );
         addAnatomySession(weekData, 'Ketvirtadienis', anatomySession);
     }
 
@@ -1941,6 +1946,26 @@ function formatImportantDateMeta(item) {
     return parts.join(' \u2022 ');
 }
 
+function getImportantDateTone(item) {
+    const source = [item?.type, item?.title, item?.note]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+    if (!source) {
+        return 'default';
+    }
+    if (
+        source.includes('atsiskaitym') ||
+        source.includes('kolokv') ||
+        source.includes('egzamin') ||
+        source.includes('testas') ||
+        source.includes('kontrol')
+    ) {
+        return 'assessment';
+    }
+    return 'default';
+}
+
 function getImportantDateCountdown(date) {
     const todayStart = startOfDay(new Date());
     const targetStart = startOfDay(date);
@@ -1964,6 +1989,9 @@ function renderImportantDatesHighlight() {
     const items = importantDatesState.items || [];
     const todayStart = startOfDay(new Date());
     if (items.length === 0) {
+        if (importantDatesHighlightCard) {
+            importantDatesHighlightCard.dataset.tone = 'default';
+        }
         importantDatesHighlightTitle.textContent = 'Kol kas be termin\u0173';
         importantDatesHighlightDate.textContent = '\u2014';
         importantDatesHighlightCountdown.textContent = '\u2014';
@@ -1973,6 +2001,7 @@ function renderImportantDatesHighlight() {
         }
         if (importantDatesHighlightBadge) {
             importantDatesHighlightBadge.textContent = 'Terminas';
+            importantDatesHighlightBadge.dataset.tone = 'default';
         }
         if (importantDatesHighlightNote) {
             importantDatesHighlightNote.textContent = 'Papildyk lentel\u0119, kai atsiras naujos datos.';
@@ -1982,6 +2011,9 @@ function renderImportantDatesHighlight() {
     }
     const upcoming = items.find((item) => startOfDay(item.date) >= todayStart);
     if (!upcoming) {
+        if (importantDatesHighlightCard) {
+            importantDatesHighlightCard.dataset.tone = 'default';
+        }
         importantDatesHighlightTitle.textContent = 'Joki\u0173 termin\u0173 horizonte!';
         importantDatesHighlightDate.textContent = 'Galima atsikv\u0117pti';
         importantDatesHighlightCountdown.textContent = '\u2014';
@@ -1991,6 +2023,7 @@ function renderImportantDatesHighlight() {
         }
         if (importantDatesHighlightBadge) {
             importantDatesHighlightBadge.textContent = 'Laisva diena';
+            importantDatesHighlightBadge.dataset.tone = 'default';
         }
         if (importantDatesHighlightNote) {
             importantDatesHighlightNote.textContent = 'Pasitikrink lentel\u0119, kai atsiras nauji darbai.';
@@ -1999,6 +2032,10 @@ function renderImportantDatesHighlight() {
         return;
     }
     importantDatesState.highlightId = upcoming.id;
+    const tone = getImportantDateTone(upcoming);
+    if (importantDatesHighlightCard) {
+        importantDatesHighlightCard.dataset.tone = tone;
+    }
     importantDatesHighlightTitle.textContent = upcoming.title || 'Be pavadinimo';
     importantDatesHighlightDate.textContent = formatImportantDateHeadline(upcoming.date);
     const countdown = getImportantDateCountdown(upcoming.date);
@@ -2009,6 +2046,7 @@ function renderImportantDatesHighlight() {
     }
     if (importantDatesHighlightBadge) {
         importantDatesHighlightBadge.textContent = upcoming.type || 'Terminas';
+        importantDatesHighlightBadge.dataset.tone = tone;
     }
     if (importantDatesHighlightNote) {
         importantDatesHighlightNote.textContent =
@@ -2062,6 +2100,7 @@ function renderImportantDatesList() {
     filtered.forEach((item) => {
         const listItem = document.createElement('li');
         listItem.className = 'important-dates__item';
+        listItem.dataset.tone = getImportantDateTone(item);
 
         const dateEl = document.createElement('div');
         dateEl.className = 'important-dates__item-date';
@@ -2088,6 +2127,7 @@ function renderImportantDatesList() {
             const badgeEl = document.createElement('span');
             badgeEl.className = 'important-dates__item-badge';
             badgeEl.textContent = item.type;
+            badgeEl.dataset.tone = listItem.dataset.tone;
             topRow.appendChild(badgeEl);
         }
         body.appendChild(topRow);
@@ -2221,6 +2261,7 @@ function setImportantDatesFilter(filterValue) {
         buttons.forEach((button) => {
             const isActive = button.dataset.importantFilter === filterValue;
             button.classList.toggle('chip--active', isActive);
+            button.classList.toggle('important-dates__filter--active', isActive);
         });
     }
     renderImportantDatesList();
@@ -2462,9 +2503,53 @@ async function fetchStudyBundleFromApi(text, apiKey, generationPlan) {
     return fetchStudyBundleViaOpenAI(text, apiKey, generationPlan);
 }
 
+function getStudyBackendCandidates() {
+    const candidates = [];
+    const seen = new Set();
+    const appendCandidate = (value) => {
+        if (!value) {
+            return;
+        }
+        const trimmed = String(value).trim();
+        if (!trimmed || seen.has(trimmed)) {
+            return;
+        }
+        seen.add(trimmed);
+        candidates.push(trimmed);
+    };
+
+    appendCandidate(window.PINK_STUDY_BACKEND);
+    appendCandidate(document.documentElement?.dataset?.studyBackend);
+
+    if (/^https?:$/i.test(window.location?.protocol || '')) {
+        appendCandidate(new URL('/study-bundle', window.location.origin).toString());
+        appendCandidate(new URL('/api/study-bundle', window.location.origin).toString());
+    }
+
+    appendCandidate(DEFAULT_BACKEND_ENDPOINT);
+    return candidates;
+}
+
+function buildBackendProxyError(error, endpoint, responseDetails = '') {
+    const endpointLabel = endpoint ? ` (${endpoint})` : '';
+    if (error instanceof TypeError) {
+        return new Error(
+            `Nepavyko pasiekti korteli\u0173 tarnybos${endpointLabel}. Grei\u010Diausiai proxy blokuoja CORS arba neveikia. Jei naudoji StudTok slapta\u017Eod\u012F, hostinge turi veikti to paties domeno /study-bundle proxy mar\u0161rutas.`
+        );
+    }
+    if (responseDetails) {
+        return new Error(responseDetails);
+    }
+    if (error instanceof Error) {
+        return error;
+    }
+    return new Error('Nepavyko susisiekti su korteli\u0173 tarnyba.');
+}
+
 async function fetchStudyBundleViaBackend(text, generationPlan) {
-    if (!STUDY_BACKEND_ENDPOINT) {
-        throw new Error('Nenurodytas Pi proxy adresas. Patikrink STUDY_BACKEND_ENDPOINT reik\u0161m\u0119.');
+    const endpoints = getStudyBackendCandidates();
+    if (!endpoints.length) {
+        throw new Error('Nenurodytas korteli\u0173 proxy adresas. Patikrink study backend nustatym\u0105.');
     }
     const plan = generationPlan && typeof generationPlan === 'object' ? generationPlan : {};
     const learnerNote = typeof plan.note === 'string' ? plan.note.trim() : '';
@@ -2482,27 +2567,42 @@ async function fetchStudyBundleViaBackend(text, generationPlan) {
         },
     };
 
-    const response = await fetch(STUDY_BACKEND_ENDPOINT, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-Passcode': PASSCODE,
-        },
-        body: JSON.stringify(payload),
-    });
+    let lastError = null;
 
-    if (!response.ok) {
-        const details = await response.text();
-        throw new Error(
-            `Pi proxy klaida (${response.status}). ${details || 'Patikrink, ar tarnyba veikia ir ar IP teisingas.'}`
-        );
+    for (const endpoint of endpoints) {
+        try {
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Passcode': PASSCODE,
+                },
+                body: JSON.stringify(payload),
+            });
+
+            if (!response.ok) {
+                const details = await response.text();
+                lastError = buildBackendProxyError(
+                    new Error(`HTTP ${response.status}`),
+                    endpoint,
+                    `Pi proxy klaida (${response.status})${endpoint ? ` ${endpoint}` : ''}. ${
+                        details || 'Patikrink, ar proxy tarnyba veikia.'
+                    }`
+                );
+                continue;
+            }
+
+            const data = await response.json();
+            return {
+                flashcards: Array.isArray(data.flashcards) ? data.flashcards : [],
+                quizQuestions: Array.isArray(data.quizQuestions) ? data.quizQuestions : [],
+            };
+        } catch (error) {
+            lastError = buildBackendProxyError(error, endpoint);
+        }
     }
 
-    const data = await response.json();
-    return {
-        flashcards: Array.isArray(data.flashcards) ? data.flashcards : [],
-        quizQuestions: Array.isArray(data.quizQuestions) ? data.quizQuestions : [],
-    };
+    throw lastError || new Error('Nepavyko gauti atsakymo i\u0161 korteli\u0173 proxy.');
 }
 
 async function fetchStudyBundleViaOpenAI(text, apiKey, generationPlan) {
