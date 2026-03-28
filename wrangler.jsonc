@@ -1,0 +1,24 @@
+{
+  "name": "studtok-study-bundle",
+  "main": "worker.mjs",
+  "compatibility_date": "2026-03-28",
+  "workers_dev": false,
+  "routes": [
+    {
+      "pattern": "studtok.com/api/*",
+      "zone_name": "studtok.com"
+    },
+    {
+      "pattern": "www.studtok.com/api/*",
+      "zone_name": "studtok.com"
+    },
+    {
+      "pattern": "studtok.com/study-bundle",
+      "zone_name": "studtok.com"
+    },
+    {
+      "pattern": "www.studtok.com/study-bundle",
+      "zone_name": "studtok.com"
+    }
+  ]
+}

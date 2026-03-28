@@ -35,6 +35,25 @@ If something goes wrong the status line under the button will explain whether th
 - Keys are never transmitted anywhere except to your Raspberry Pi proxy (or directly to `api.openai.com` if you choose to enter the key in the browser).
 - Choosing not to tick **Remember this code** means nothing is stored; otherwise the passcode or key is saved under `pinkStudy.credential` in `localStorage` for reuse.
 
+## Server Deploy
+
+GitHub Pages can serve the static files, but it cannot handle the passcode flow because `POST /api/study-bundle` needs a real backend.
+
+This repo now includes:
+
+- `worker.mjs` for a Cloudflare Worker backend
+- `wrangler.jsonc` with routes for `studtok.com/api/*` and `/study-bundle`
+
+To make the passcode mode work with Cloudflare:
+
+1. Keep `studtok.com` inside Cloudflare DNS and make sure the DNS record is `Proxied`, not `DNS only`.
+2. Deploy the Worker with `npx wrangler deploy`.
+3. Add the OpenAI secret with `npx wrangler secret put OPENAI_API_KEY`.
+4. Optionally add `npx wrangler secret put STUDTOK_PASSCODE` if you do not want to use the built-in default.
+5. Optionally add `ALLOW_ORIGIN` or `OPENAI_MODEL` with `npx wrangler secret put ...` or in the Cloudflare dashboard if you need stricter origin control or a different model.
+
+After deploy, the frontend will call `https://studtok.com/api/study-bundle`, and Cloudflare will handle the POST request before it reaches the static origin.
+
 ## Tweaks
 
 - Edit flashcard prompts and limits inside `script.js` (`MAX_PDF_CHARACTERS`, `FLASHCARD_MODEL`, etc.).
