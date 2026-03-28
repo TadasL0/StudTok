@@ -1,3 +1,4 @@
+const DEFAULT_PI_PROXY_URL = 'https://pi-proxy.studtok.com/study-bundle';
 const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
 const OPENAI_MODEL = 'gpt-4.1-mini';
 const DEFAULT_PASSCODE = 'differentdimension';
@@ -26,6 +27,10 @@ function withCorsHeaders(response, origin = '*') {
 
 function getAllowedOrigin(env) {
     return typeof env.ALLOW_ORIGIN === 'string' && env.ALLOW_ORIGIN.trim() ? env.ALLOW_ORIGIN.trim() : '*';
+}
+
+function getPiProxyUrl(env) {
+    return typeof env.PI_PROXY_URL === 'string' && env.PI_PROXY_URL.trim() ? env.PI_PROXY_URL.trim() : DEFAULT_PI_PROXY_URL;
 }
 
 function normalisePlan(plan) {
@@ -173,13 +178,6 @@ async function handleStudyBundle(request, env) {
         return withCorsHeaders(json({ error: 'Unauthorized' }, { status: 401 }), getAllowedOrigin(env));
     }
 
-    if (!env.OPENAI_API_KEY) {
-        return withCorsHeaders(
-            json({ error: 'Missing OPENAI_API_KEY secret in Cloudflare Worker.' }, { status: 500 }),
-            getAllowedOrigin(env)
-        );
-    }
-
     let body;
     try {
         body = await request.json();
@@ -190,6 +188,59 @@ async function handleStudyBundle(request, env) {
     const pdfText = typeof body?.pdf_text === 'string' ? body.pdf_text.trim().slice(0, MAX_PDF_TEXT_LENGTH) : '';
     if (!pdfText) {
         return withCorsHeaders(json({ error: 'Missing pdf_text.' }, { status: 400 }), getAllowedOrigin(env));
+    }
+
+    const piProxyUrl = getPiProxyUrl(env);
+    if (piProxyUrl) {
+        const proxyPasscode =
+            typeof env.PI_PROXY_PASSCODE === 'string' && env.PI_PROXY_PASSCODE.trim()
+                ? env.PI_PROXY_PASSCODE.trim()
+                : expectedPasscode;
+        const proxyPayload = {
+            ...body,
+            pdf_text: pdfText,
+            plan: body?.plan && typeof body.plan === 'object' ? body.plan : {},
+        };
+
+        try {
+            const proxyResponse = await fetch(piProxyUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Passcode': proxyPasscode,
+                },
+                body: JSON.stringify(proxyPayload),
+            });
+            const proxyText = await proxyResponse.text();
+            const contentType = proxyResponse.headers.get('content-type') || 'application/json; charset=utf-8';
+            return withCorsHeaders(
+                new Response(proxyText, {
+                    status: proxyResponse.status,
+                    statusText: proxyResponse.statusText,
+                    headers: {
+                        'Content-Type': contentType,
+                    },
+                }),
+                getAllowedOrigin(env)
+            );
+        } catch (error) {
+            return withCorsHeaders(
+                json(
+                    {
+                        error: `Pi proxy request failed at ${piProxyUrl}. ${error instanceof Error ? error.message : 'Unknown error.'}`,
+                    },
+                    { status: 502 }
+                ),
+                getAllowedOrigin(env)
+            );
+        }
+    }
+
+    if (!env.OPENAI_API_KEY) {
+        return withCorsHeaders(
+            json({ error: 'Missing PI_PROXY_URL target or OPENAI_API_KEY secret in Cloudflare Worker.' }, { status: 500 }),
+            getAllowedOrigin(env)
+        );
     }
 
     const plan = normalisePlan(body.plan);

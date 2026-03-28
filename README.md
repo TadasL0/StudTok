@@ -44,15 +44,17 @@ This repo now includes:
 - `worker.mjs` for a Cloudflare Worker backend
 - `wrangler.jsonc` with routes for `studtok.com/api/*` and `/study-bundle`
 
-To make the passcode mode work with Cloudflare:
+To make the passcode mode work with Cloudflare and a Raspberry Pi proxy:
 
 1. Keep `studtok.com` inside Cloudflare DNS and make sure the DNS record is `Proxied`, not `DNS only`.
-2. Deploy the Worker with `npx wrangler deploy`.
-3. Add the OpenAI secret with `npx wrangler secret put OPENAI_API_KEY`.
+2. Keep the Raspberry Pi endpoint reachable, for example at `https://pi-proxy.studtok.com/study-bundle`.
+3. Deploy the Worker with `npx wrangler deploy`.
 4. Optionally add `npx wrangler secret put STUDTOK_PASSCODE` if you do not want to use the built-in default.
-5. Optionally add `ALLOW_ORIGIN` or `OPENAI_MODEL` with `npx wrangler secret put ...` or in the Cloudflare dashboard if you need stricter origin control or a different model.
+5. Optionally add `npx wrangler secret put PI_PROXY_URL` if the Pi endpoint is not `https://pi-proxy.studtok.com/study-bundle`.
+6. Optionally add `npx wrangler secret put PI_PROXY_PASSCODE` if the Pi expects a different passcode than the site.
+7. `OPENAI_API_KEY` in Cloudflare is only needed if you want Cloudflare itself to call OpenAI as a fallback instead of the Pi.
 
-After deploy, the frontend will call `https://studtok.com/api/study-bundle`, and Cloudflare will handle the POST request before it reaches the static origin.
+After deploy, the frontend will call `https://studtok.com/api/study-bundle`, Cloudflare will receive the POST request, and the Worker will forward it to the Raspberry Pi proxy.
 
 ## Tweaks
 
