@@ -57,6 +57,7 @@ const importantDatesHighlightCountdown = document.getElementById('important-next
 const importantDatesCountdownLabel = document.getElementById('important-next-countdown-label');
 const importantDatesHighlightBadge = document.getElementById('important-next-badge');
 const importantDatesHighlightNote = document.getElementById('important-next-note');
+const importantDatesHighlightList = document.getElementById('important-next-list');
 const importantDatesSheetLink = document.getElementById('important-dates-sheet-link');
 let layoutTopSyncFrameId = null;
 
@@ -948,9 +949,18 @@ const ANATOMY_TITLE = '\u017dmogaus anatomija';
 const IMPORTANT_DATES_MONTH_SHORT = ['Sau', 'Vas', 'Kov', 'Bal', 'Geg', 'Bir', 'Lie', 'Rgp', 'Rgs', 'Spa', 'Lap', 'Gru'];
 const IMPORTANT_DATES_WEEKDAY_SHORT = ['Sek', 'Pir', 'Ant', 'Tre', 'Ket', 'Pen', '\u0160e'];
 const IMPORTANT_DATES_MAX_UPCOMING = 6;
+const IMPORTANT_DATES_HIGHLIGHT_LIMIT = 3;
 const importantDatesCsvUrl = importantDatesEmbed?.dataset?.sheetCsv || '';
 const importantDatesSheetUrl = importantDatesEmbed?.dataset?.sheetUrl || importantDatesSheetLink?.href || '';
 const GOOGLE_VIZ_DEFAULT_TIMEOUT_MS = 12000;
+const IMPORTANT_DATES_ASSESSMENT_KEYWORDS = [
+    'namu darbas',
+    'ataskaita',
+    'koliokvium',
+    'prezentacij',
+    'kontrolinis darbas',
+    'laboratorinis darbas',
+];
 const importantDatesState = {
     items: [],
     filter: 'upcoming',
@@ -2118,17 +2128,82 @@ function getImportantDateCountdown(date) {
     return { value: `${diffDays}`, label: 'dienos' };
 }
 
+function normaliseImportantDateMatchText(value) {
+    return String(value || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim();
+}
+
+function isImportantDateAssessment(item) {
+    const source = normaliseImportantDateMatchText([item?.type, item?.title].filter(Boolean).join(' '));
+    if (!source) {
+        return false;
+    }
+    return IMPORTANT_DATES_ASSESSMENT_KEYWORDS.some((keyword) => source.includes(keyword));
+}
+
+function getUpcomingAssessmentDates(items, limit = IMPORTANT_DATES_HIGHLIGHT_LIMIT) {
+    const todayStart = startOfDay(new Date());
+    return (Array.isArray(items) ? items : [])
+        .filter((item) => startOfDay(item.date) >= todayStart)
+        .filter((item) => isImportantDateAssessment(item))
+        .slice(0, limit);
+}
+
+function renderImportantDatesHighlightList(items) {
+    if (!importantDatesHighlightList) {
+        return;
+    }
+    importantDatesHighlightList.textContent = '';
+    if (!Array.isArray(items) || items.length === 0) {
+        importantDatesHighlightList.hidden = true;
+        return;
+    }
+    const fragment = document.createDocumentFragment();
+    items.forEach((item) => {
+        const tone = getImportantDateTone(item);
+        const listItem = document.createElement('li');
+        listItem.className = 'important-dates__hero-entry';
+        listItem.dataset.tone = tone;
+
+        const main = document.createElement('div');
+        main.className = 'important-dates__hero-entry-main';
+
+        const titleEl = document.createElement('p');
+        titleEl.className = 'important-dates__hero-entry-title';
+        titleEl.textContent = item.title || item.type || 'Atsiskaitymas';
+        main.appendChild(titleEl);
+
+        const metaEl = document.createElement('p');
+        metaEl.className = 'important-dates__hero-entry-meta';
+        metaEl.textContent = formatImportantDateMeta(item);
+        main.appendChild(metaEl);
+
+        const countdown = getImportantDateCountdown(item.date);
+        const countdownEl = document.createElement('span');
+        countdownEl.className = 'important-dates__hero-entry-countdown';
+        countdownEl.textContent = countdown.label ? `${countdown.value} ${countdown.label}` : countdown.value;
+
+        listItem.appendChild(main);
+        listItem.appendChild(countdownEl);
+        fragment.appendChild(listItem);
+    });
+    importantDatesHighlightList.appendChild(fragment);
+    importantDatesHighlightList.hidden = false;
+}
+
 function renderImportantDatesHighlight() {
     if (!importantDatesHighlightTitle || !importantDatesHighlightDate || !importantDatesHighlightCountdown) {
         return;
     }
     const items = importantDatesState.items || [];
-    const todayStart = startOfDay(new Date());
     if (items.length === 0) {
         if (importantDatesHighlightCard) {
             importantDatesHighlightCard.dataset.tone = 'default';
         }
-        importantDatesHighlightTitle.textContent = 'Kol kas be termin\u0173';
+        importantDatesHighlightTitle.textContent = 'Kol kas be atsiskaitym\u0173';
         importantDatesHighlightDate.textContent = '\u2014';
         importantDatesHighlightCountdown.textContent = '\u2014';
         if (importantDatesCountdownLabel) {
@@ -2136,34 +2211,37 @@ function renderImportantDatesHighlight() {
             importantDatesCountdownLabel.hidden = true;
         }
         if (importantDatesHighlightBadge) {
-            importantDatesHighlightBadge.textContent = 'Terminas';
+            importantDatesHighlightBadge.textContent = '3 artimiausi';
             importantDatesHighlightBadge.dataset.tone = 'default';
         }
         if (importantDatesHighlightNote) {
-            importantDatesHighlightNote.textContent = 'Papildyk lentel\u0119, kai atsiras naujos datos.';
+            importantDatesHighlightNote.textContent = 'Rodomi tik nam\u0173 darbai, ataskaitos, koliokviumai, prezentacijos, kontroliniai ir laboratoriniai darbai.';
         }
+        renderImportantDatesHighlightList([]);
         importantDatesState.highlightId = null;
         return;
     }
-    const upcoming = items.find((item) => startOfDay(item.date) >= todayStart);
+    const assessments = getUpcomingAssessmentDates(items);
+    const upcoming = assessments[0];
     if (!upcoming) {
         if (importantDatesHighlightCard) {
             importantDatesHighlightCard.dataset.tone = 'default';
         }
-        importantDatesHighlightTitle.textContent = 'Joki\u0173 termin\u0173 horizonte!';
-        importantDatesHighlightDate.textContent = 'Galima atsikv\u0117pti';
+        importantDatesHighlightTitle.textContent = 'Kol kas n\u0117ra artim\u0173 atsiskaitym\u0173';
+        importantDatesHighlightDate.textContent = 'Bendrame s\u0105ra\u0161e gali b\u016Bti kit\u0173 termin\u0173';
         importantDatesHighlightCountdown.textContent = '\u2014';
         if (importantDatesCountdownLabel) {
             importantDatesCountdownLabel.textContent = '';
             importantDatesCountdownLabel.hidden = true;
         }
         if (importantDatesHighlightBadge) {
-            importantDatesHighlightBadge.textContent = 'Laisva diena';
+            importantDatesHighlightBadge.textContent = 'Atsiskaitymai';
             importantDatesHighlightBadge.dataset.tone = 'default';
         }
         if (importantDatesHighlightNote) {
-            importantDatesHighlightNote.textContent = 'Pasitikrink lentel\u0119, kai atsiras nauji darbai.';
+            importantDatesHighlightNote.textContent = 'Kai atsiras tinkamo tipo darb\u0173, \u010Dia matysis 3 artimiausi pagal dat\u0105.';
         }
+        renderImportantDatesHighlightList([]);
         importantDatesState.highlightId = null;
         return;
     }
@@ -2172,22 +2250,25 @@ function renderImportantDatesHighlight() {
     if (importantDatesHighlightCard) {
         importantDatesHighlightCard.dataset.tone = tone;
     }
-    importantDatesHighlightTitle.textContent = upcoming.title || 'Be pavadinimo';
-    importantDatesHighlightDate.textContent = formatImportantDateHeadline(upcoming.date);
+    importantDatesHighlightTitle.textContent =
+        assessments.length === 1 ? '1 artimiausias atsiskaitymas' : `${assessments.length} artimiausi atsiskaitymai`;
+    importantDatesHighlightDate.textContent = `Artimiausias: ${formatImportantDateHeadline(upcoming.date)}`;
     const countdown = getImportantDateCountdown(upcoming.date);
     importantDatesHighlightCountdown.textContent = countdown.value;
     if (importantDatesCountdownLabel) {
-        importantDatesCountdownLabel.textContent = countdown.label || '';
-        importantDatesCountdownLabel.hidden = !countdown.label;
+        importantDatesCountdownLabel.textContent = countdown.label || 'iki artimiausio';
+        importantDatesCountdownLabel.hidden = false;
     }
     if (importantDatesHighlightBadge) {
-        importantDatesHighlightBadge.textContent = upcoming.type || 'Terminas';
+        importantDatesHighlightBadge.textContent =
+            assessments.length === 1 ? '1 artimiausias' : `${assessments.length} artimiausi`;
         importantDatesHighlightBadge.dataset.tone = tone;
     }
     if (importantDatesHighlightNote) {
         importantDatesHighlightNote.textContent =
-            upcoming.note || 'Nepamir\u0161k pasi\u017Eym\u0117ti kalendoriuje.';
+            'Rodomi tik nam\u0173 darbai, ataskaitos, koliokviumai, prezentacijos, kontroliniai ir laboratoriniai darbai.';
     }
+    renderImportantDatesHighlightList(assessments);
 }
 
 function getFilteredImportantDates() {

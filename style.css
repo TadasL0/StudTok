@@ -1728,6 +1728,72 @@ body.season-spring .hero__badge {
     color: rgba(68, 38, 63, 0.74);
 }
 
+.important-dates__hero-list {
+    list-style: none;
+    margin: 6px 0 0;
+    padding: 0;
+    display: grid;
+    gap: 10px;
+}
+
+.important-dates__hero-entry {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: center;
+    padding: 12px 14px;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.62);
+    box-shadow: inset 0 0 0 1px rgba(255, 157, 208, 0.18);
+}
+
+.important-dates__hero-entry[data-tone='assessment'] {
+    background: rgba(255, 255, 255, 0.72);
+    box-shadow: inset 0 0 0 1px rgba(222, 63, 83, 0.18);
+}
+
+.important-dates__hero-entry-main {
+    display: grid;
+    gap: 4px;
+    min-width: 0;
+}
+
+.important-dates__hero-entry-title {
+    margin: 0;
+    font-family: 'Bodoni Moda', 'Didot', 'Georgia', serif;
+    font-size: 0.98rem;
+    font-weight: 600;
+    color: var(--text-dark);
+}
+
+.important-dates__hero-entry-meta {
+    margin: 0;
+    font-family: 'Quicksand', 'Century Gothic', 'Segoe UI', sans-serif;
+    font-size: 0.8rem;
+    color: rgba(68, 38, 63, 0.7);
+}
+
+.important-dates__hero-entry-countdown {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 78px;
+    padding: 8px 12px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: inset 0 0 0 1px rgba(255, 157, 208, 0.24);
+    font-family: 'Quicksand', 'Century Gothic', 'Segoe UI', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: rgba(129, 47, 95, 0.92);
+    text-align: center;
+}
+
+.important-dates__hero-entry[data-tone='assessment'] .important-dates__hero-entry-countdown {
+    color: #b6233c;
+    box-shadow: inset 0 0 0 1px rgba(222, 63, 83, 0.22);
+}
+
 .important-dates__hero-badge,
 .important-dates__item-badge {
     display: inline-flex;
