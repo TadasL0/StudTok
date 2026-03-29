@@ -950,6 +950,7 @@ const IMPORTANT_DATES_WEEKDAY_SHORT = ['Sek', 'Pir', 'Ant', 'Tre', 'Ket', 'Pen',
 const IMPORTANT_DATES_MAX_UPCOMING = 6;
 const importantDatesCsvUrl = importantDatesEmbed?.dataset?.sheetCsv || '';
 const importantDatesSheetUrl = importantDatesEmbed?.dataset?.sheetUrl || importantDatesSheetLink?.href || '';
+const GOOGLE_VIZ_DEFAULT_TIMEOUT_MS = 12000;
 const importantDatesState = {
     items: [],
     filter: 'upcoming',
@@ -1796,6 +1797,26 @@ function parseCsvRows(text) {
     return rows.filter((cells) => cells.some((cell) => typeof cell === 'string' && cell.trim().length > 0));
 }
 
+function getSheetConfigFromUrl(rawUrl) {
+    if (!rawUrl) {
+        return null;
+    }
+    try {
+        const url = new URL(rawUrl, window.location.href);
+        const match = url.pathname.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+        if (!match) {
+            return null;
+        }
+        const gidValue = url.searchParams.get('gid') || '';
+        return {
+            sheetId: match[1],
+            gid: gidValue,
+        };
+    } catch (error) {
+        return null;
+    }
+}
+
 function findColumnIndex(headers, candidates) {
     if (!Array.isArray(headers)) {
         return -1;
@@ -1866,8 +1887,7 @@ function normaliseExternalUrl(value) {
     return `https://${trimmed}`;
 }
 
-function buildImportantDateEntriesFromCsv(text) {
-    const rows = parseCsvRows(text);
+function buildImportantDateEntriesFromRows(rows) {
     if (!rows || rows.length < 2) {
         return [];
     }
@@ -1911,6 +1931,123 @@ function buildImportantDateEntriesFromCsv(text) {
     });
     items.sort((a, b) => a.date - b.date);
     return items;
+}
+
+function buildImportantDateEntriesFromCsv(text) {
+    return buildImportantDateEntriesFromRows(parseCsvRows(text));
+}
+
+function buildImportantDateEntriesFromGoogleVizTable(table) {
+    const cols = Array.isArray(table?.cols) ? table.cols : [];
+    const rows = Array.isArray(table?.rows) ? table.rows : [];
+    if (cols.length === 0 || rows.length === 0) {
+        return [];
+    }
+    const headerRow = cols.map((col, index) => {
+        const label = typeof col?.label === 'string' ? col.label.trim() : '';
+        if (label) {
+            return label;
+        }
+        return typeof col?.id === 'string' && col.id.trim() ? col.id.trim() : `stulpelis-${index + 1}`;
+    });
+    const dataRows = rows.map((row) =>
+        (Array.isArray(row?.c) ? row.c : []).map((cell) => {
+            if (cell === null || cell === undefined) {
+                return '';
+            }
+            if (cell.f !== undefined && cell.f !== null && String(cell.f).trim()) {
+                return String(cell.f).trim();
+            }
+            if (cell.v === undefined || cell.v === null) {
+                return '';
+            }
+            if (cell.v instanceof Date) {
+                return cell.v.toISOString();
+            }
+            return String(cell.v).trim();
+        })
+    );
+    return buildImportantDateEntriesFromRows([headerRow, ...dataRows]);
+}
+
+function fetchImportantDatesViaGoogleViz(signal) {
+    const sheetConfig = getSheetConfigFromUrl(importantDatesSheetUrl || importantDatesCsvUrl);
+    if (!sheetConfig?.sheetId) {
+        return Promise.reject(new Error('Nepavyko nustatyti Google Sheets lentelės ID.'));
+    }
+    return new Promise((resolve, reject) => {
+        const callbackName = `__importantDatesViz_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+        const script = document.createElement('script');
+        let settled = false;
+        let timeoutId = null;
+
+        const cleanup = () => {
+            settled = true;
+            if (timeoutId) {
+                clearTimeout(timeoutId);
+                timeoutId = null;
+            }
+            if (script.parentNode) {
+                script.parentNode.removeChild(script);
+            }
+            try {
+                delete window[callbackName];
+            } catch (error) {
+                window[callbackName] = undefined;
+            }
+            if (signal) {
+                signal.removeEventListener('abort', handleAbort);
+            }
+        };
+
+        const fail = (error) => {
+            if (settled) {
+                return;
+            }
+            cleanup();
+            reject(error);
+        };
+
+        const handleAbort = () => {
+            fail(new DOMException('Svarbių datų užklausa nutraukta.', 'AbortError'));
+        };
+
+        window[callbackName] = (response) => {
+            if (settled) {
+                return;
+            }
+            const status = String(response?.status || '').toLowerCase();
+            if (status && status !== 'ok') {
+                const details = response?.errors?.[0]?.detailed_message || response?.errors?.[0]?.reason || '';
+                fail(new Error(details || 'Google Sheets duomenų atsakymas neteisingas.'));
+                return;
+            }
+            cleanup();
+            resolve(buildImportantDateEntriesFromGoogleVizTable(response?.table));
+        };
+
+        if (signal?.aborted) {
+            handleAbort();
+            return;
+        }
+
+        script.async = true;
+        script.onerror = () => fail(new Error('Nepavyko pasiekti Google Sheets vizualizacijos duomenų.'));
+        const gvizUrl = new URL(`https://docs.google.com/spreadsheets/d/${sheetConfig.sheetId}/gviz/tq`);
+        if (sheetConfig.gid) {
+            gvizUrl.searchParams.set('gid', sheetConfig.gid);
+        }
+        gvizUrl.searchParams.set('headers', '1');
+        gvizUrl.searchParams.set('tqx', `responseHandler:${callbackName};out:json`);
+        script.src = gvizUrl.toString();
+        timeoutId = window.setTimeout(() => {
+            fail(new Error('Google Sheets duomenų užklausa per ilgai neatsako.'));
+        }, GOOGLE_VIZ_DEFAULT_TIMEOUT_MS);
+        if (signal) {
+            signal.addEventListener('abort', handleAbort, { once: true });
+        }
+        document.head.appendChild(script);
+    });
 }
 
 function setImportantDatesStatus(message, tone = 'muted') {
@@ -2208,22 +2345,37 @@ async function refreshImportantDates(force = false) {
     importantDatesRefreshBtn?.setAttribute('disabled', 'true');
     try {
         setImportantDatesStatus('Kraunama...', 'muted');
-        const response = await fetch(importantDatesCsvUrl, {
-            signal: importantDatesAbortController.signal,
-            cache: 'no-store',
-        });
-        if (!response.ok) {
-            throw new Error('Svarbi\u0173 dat\u0173 lentel\u0117 nepasiekiama.');
+        let items = [];
+        let usedFallback = false;
+        try {
+            const response = await fetch(importantDatesCsvUrl, {
+                signal: importantDatesAbortController.signal,
+                cache: 'no-store',
+            });
+            if (!response.ok) {
+                throw new Error('Svarbi\u0173 dat\u0173 lentel\u0117 nepasiekiama.');
+            }
+            const textContent = await response.text();
+            items = buildImportantDateEntriesFromCsv(textContent);
+        } catch (csvError) {
+            if (csvError.name === 'AbortError') {
+                throw csvError;
+            }
+            console.warn('Svarbių datų CSV įkėlimas nepavyko, bandomas Google Viz kelias.', csvError);
+            items = await fetchImportantDatesViaGoogleViz(importantDatesAbortController.signal);
+            usedFallback = true;
         }
-        const textContent = await response.text();
-        importantDatesState.items = buildImportantDateEntriesFromCsv(textContent);
+        importantDatesState.items = items;
         importantDatesState.lastUpdated = new Date();
         renderImportantDatesSection();
         const timestamp = importantDatesState.lastUpdated.toLocaleTimeString('lt-LT', {
             hour: '2-digit',
             minute: '2-digit',
         });
-        setImportantDatesStatus(`Atnaujinta ${timestamp}`, 'success');
+        setImportantDatesStatus(
+            usedFallback ? `Atnaujinta ${timestamp} per Google Sheets` : `Atnaujinta ${timestamp}`,
+            'success'
+        );
         if (importantDatesState.items.length === 0 && importantDatesEmpty) {
             importantDatesEmpty.hidden = false;
             importantDatesEmpty.textContent = 'Kol kas n\u0117ra svarbi\u0173 dat\u0173.';
