@@ -986,7 +986,7 @@ const TIMETABLE_WEEKDAY_LABELS = ['Sekmadienis', 'Pirmadienis', 'Antradienis', '
 const ANATOMY_TITLE = '\u017dmogaus anatomija';
 const IMPORTANT_DATES_MONTH_SHORT = ['Sau', 'Vas', 'Kov', 'Bal', 'Geg', 'Bir', 'Lie', 'Rgp', 'Rgs', 'Spa', 'Lap', 'Gru'];
 const IMPORTANT_DATES_WEEKDAY_SHORT = ['Sek', 'Pir', 'Ant', 'Tre', 'Ket', 'Pen', '\u0160e'];
-const IMPORTANT_DATES_MAX_UPCOMING = 6;
+const IMPORTANT_DATES_MAX_UPCOMING = 3;
 const IMPORTANT_DATES_HIGHLIGHT_LIMIT = 3;
 const importantDatesCsvUrl = importantDatesEmbed?.dataset?.sheetCsv || '';
 const importantDatesSheetUrl = importantDatesEmbed?.dataset?.sheetUrl || importantDatesSheetLink?.href || '';
@@ -2343,16 +2343,7 @@ function getFilteredImportantDates() {
     }
     const todayStart = startOfDay(new Date());
     const baseItems = items.filter((item) => startOfDay(item.date) >= todayStart);
-    if (importantDatesState.filter === 'month') {
-        const now = new Date();
-        const month = now.getMonth();
-        const year = now.getFullYear();
-        return baseItems.filter((item) => item.date.getMonth() === month && item.date.getFullYear() === year);
-    }
-    if (importantDatesState.filter === 'upcoming') {
-        return baseItems.slice(0, IMPORTANT_DATES_MAX_UPCOMING);
-    }
-    return baseItems;
+    return baseItems.slice(0, IMPORTANT_DATES_MAX_UPCOMING);
 }
 
 function renderImportantDatesList() {
@@ -2547,14 +2538,10 @@ async function refreshImportantDates(force = false) {
             return;
         }
         console.error(error);
-        setImportantDatesStatus('Nepavyko \u012Fkelti duomen\u0173. Atidaryk lentel\u0119 apa\u010Dioje.', 'warning');
+        setImportantDatesStatus('Nepavyko \u012Fkelti duomen\u0173. Bandyk atnaujinti dar kart\u0105.', 'warning');
         if (importantDatesEmpty) {
             importantDatesEmpty.hidden = false;
             importantDatesEmpty.textContent = 'Nepavyko \u012Fkelti svarbi\u0173 dat\u0173. Bandyk dar kart\u0105.';
-        }
-        if (importantDatesToggleEmbedBtn && importantDatesEmbed) {
-            importantDatesEmbed.hidden = false;
-            importantDatesToggleEmbedBtn.setAttribute('aria-expanded', 'true');
         }
     } finally {
         importantDatesState.loading = false;
