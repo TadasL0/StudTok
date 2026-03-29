@@ -961,9 +961,10 @@ const IMPORTANT_DATES_ASSESSMENT_KEYWORDS = [
     'kontrolinis darbas',
     'laboratorinis darbas',
 ];
+const IMPORTANT_DATES_EXCLUDED_KEYWORDS = ['tvarkarascio keitimas'];
 const importantDatesState = {
     items: [],
-    filter: 'upcoming',
+    filter: 'future',
     loading: false,
     lastUpdated: null,
     highlightId: null,
@@ -1956,7 +1957,7 @@ function buildImportantDateEntriesFromRows(rows) {
         });
     });
     items.sort((a, b) => a.date - b.date);
-    return items;
+    return items.filter((item) => !shouldExcludeImportantDate(item));
 }
 
 function buildImportantDateEntriesFromCsv(text) {
@@ -2152,6 +2153,14 @@ function normaliseImportantDateMatchText(value) {
         .trim();
 }
 
+function shouldExcludeImportantDate(item) {
+    const source = normaliseImportantDateMatchText([item?.type, item?.title].filter(Boolean).join(' '));
+    if (!source) {
+        return false;
+    }
+    return IMPORTANT_DATES_EXCLUDED_KEYWORDS.some((keyword) => source.includes(keyword));
+}
+
 function isImportantDateAssessment(item) {
     const source = normaliseImportantDateMatchText([item?.type, item?.title].filter(Boolean).join(' '));
     if (!source) {
@@ -2314,8 +2323,7 @@ function renderImportantDatesList() {
     const filtered = getFilteredImportantDates();
     if (!filtered || filtered.length === 0) {
         if (importantDatesEmpty) {
-        const emptyMessages = {
-                upcoming: 'Joki\u0173 artimiausi\u0173 termin\u0173. Puiki proga pails\u0117ti!',
+            const emptyMessages = {
                 month: '\u0160iame m\u0117nesyje nebeliko termin\u0173.',
                 future: 'Ateinan\u010Di\u0173 svarbi\u0173 dat\u0173 dar n\u0117ra. Papildyk lentel\u0119.',
             };
