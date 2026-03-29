@@ -1819,10 +1819,7 @@ body.season-spring .hero__badge {
 
 .important-dates__countdown {
     min-width: 112px;
-    display: grid;
-    gap: 4px;
-    justify-items: end;
-    text-align: right;
+    display: none;
 }
 
 .important-dates__countdown-value {
@@ -2058,6 +2055,93 @@ body.season-spring .hero__badge {
 
     .important-dates__toolbar {
         align-items: stretch;
+    }
+}
+
+@media (max-width: 560px) {
+    .important-dates {
+        gap: 14px;
+    }
+
+    .important-dates__toolbar {
+        display: grid;
+        gap: 14px;
+    }
+
+    .important-dates__filters {
+        display: flex;
+        flex-wrap: nowrap;
+        gap: 10px;
+        overflow-x: auto;
+        padding-bottom: 4px;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .important-dates__filters::-webkit-scrollbar {
+        display: none;
+    }
+
+    .important-dates__filter {
+        flex: 0 0 auto;
+        min-width: max-content;
+    }
+
+    .important-dates__actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        align-items: stretch;
+    }
+
+    .important-dates__actions > * {
+        width: 100%;
+        min-height: 46px;
+        justify-content: center;
+        text-align: center;
+    }
+
+    .important-dates__link {
+        grid-column: 1 / -1;
+        white-space: normal;
+        line-height: 1.25;
+    }
+
+    .important-dates__status,
+    .important-dates__empty {
+        font-size: 0.98rem;
+        line-height: 1.45;
+    }
+
+    .important-dates__hero {
+        padding: 18px;
+        border-radius: 22px;
+    }
+
+    .important-dates__hero-entry {
+        grid-template-columns: 1fr;
+        justify-items: start;
+    }
+
+    .important-dates__hero-entry-countdown {
+        min-width: 0;
+    }
+
+    .important-dates-shell {
+        padding: 12px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .important-dates-shell::after {
+        inset: 10px;
+    }
+
+    .important-dates-shell__iframe {
+        width: 880px;
+        max-width: none;
+        min-height: 700px;
     }
 }
 

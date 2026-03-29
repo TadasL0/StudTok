@@ -970,6 +970,22 @@ const importantDatesState = {
 };
 let importantDatesAbortController = null;
 let importantDatesCountdownTimeoutId = null;
+
+function getImportantDatesRequestUrls() {
+    const urls = [];
+    const appendCandidate = (value) => {
+        if (!value || urls.includes(value)) {
+            return;
+        }
+        urls.push(value);
+    };
+    if (window.location.protocol === 'http:' || window.location.protocol === 'https:') {
+        appendCandidate(new URL('/api/important-dates', window.location.origin).toString());
+        appendCandidate(new URL('/important-dates', window.location.origin).toString());
+    }
+    appendCandidate(importantDatesCsvUrl);
+    return urls;
+}
 const TIMETABLE_DATA = {
     1: {
         Antradienis: [
@@ -1906,7 +1922,7 @@ function buildImportantDateEntriesFromRows(rows) {
         date: findColumnIndex(headers, ['data', 'deadline', 'termin', 'date']),
         title: findColumnIndex(headers, ['pavadin', 'tema', 'title', 'dalykas']),
         type: findColumnIndex(headers, ['tip', 'kategor', 'type']),
-        note: findColumnIndex(headers, ['pastab', 'note', 'komentar', 'apras']),
+        note: findColumnIndex(headers, ['pastab', 'note', 'komentar', 'apras', 'užraš', 'uzras']),
         url: findColumnIndex(headers, ['nuorod', 'url', 'link']),
         time: findColumnIndex(headers, ['laik', 'time']),
         location: findColumnIndex(headers, ['vieta', 'location', 'auditor']),
@@ -2195,7 +2211,7 @@ function renderImportantDatesHighlightList(items) {
 }
 
 function renderImportantDatesHighlight() {
-    if (!importantDatesHighlightTitle || !importantDatesHighlightDate || !importantDatesHighlightCountdown) {
+    if (!importantDatesHighlightTitle || !importantDatesHighlightDate) {
         return;
     }
     const items = importantDatesState.items || [];
@@ -2277,8 +2293,7 @@ function getFilteredImportantDates() {
         return [];
     }
     const todayStart = startOfDay(new Date());
-    const includePast = importantDatesState.filter === 'all';
-    const baseItems = includePast ? items : items.filter((item) => startOfDay(item.date) >= todayStart);
+    const baseItems = items.filter((item) => startOfDay(item.date) >= todayStart);
     if (importantDatesState.filter === 'month') {
         const now = new Date();
         const month = now.getMonth();
@@ -2299,10 +2314,10 @@ function renderImportantDatesList() {
     const filtered = getFilteredImportantDates();
     if (!filtered || filtered.length === 0) {
         if (importantDatesEmpty) {
-            const emptyMessages = {
+        const emptyMessages = {
                 upcoming: 'Joki\u0173 artimiausi\u0173 termin\u0173. Puiki proga pails\u0117ti!',
                 month: '\u0160iame m\u0117nesyje nebeliko termin\u0173.',
-                all: 'Svarbi\u0173 dat\u0173 dar n\u0117ra. Papildyk lentel\u0119.',
+                future: 'Ateinan\u010Di\u0173 svarbi\u0173 dat\u0173 dar n\u0117ra. Papildyk lentel\u0119.',
             };
             importantDatesEmpty.textContent =
                 emptyMessages[importantDatesState.filter] || 'Kol kas nerasta dat\u0173.';
@@ -2429,15 +2444,33 @@ async function refreshImportantDates(force = false) {
         let items = [];
         let usedFallback = false;
         try {
-            const response = await fetch(importantDatesCsvUrl, {
-                signal: importantDatesAbortController.signal,
-                cache: 'no-store',
-            });
-            if (!response.ok) {
-                throw new Error('Svarbi\u0173 dat\u0173 lentel\u0117 nepasiekiama.');
+            const candidateUrls = getImportantDatesRequestUrls();
+            let lastError = null;
+            for (const candidateUrl of candidateUrls) {
+                try {
+                    const response = await fetch(candidateUrl, {
+                        signal: importantDatesAbortController.signal,
+                        cache: 'no-store',
+                    });
+                    if (!response.ok) {
+                        throw new Error(`Svarbių datų šaltinis nepasiekiamas (${response.status}).`);
+                    }
+                    const textContent = await response.text();
+                    items = buildImportantDateEntriesFromCsv(textContent);
+                    if (items.length > 0 || textContent.trim()) {
+                        lastError = null;
+                        break;
+                    }
+                } catch (candidateError) {
+                    if (candidateError.name === 'AbortError') {
+                        throw candidateError;
+                    }
+                    lastError = candidateError;
+                }
             }
-            const textContent = await response.text();
-            items = buildImportantDateEntriesFromCsv(textContent);
+            if (lastError) {
+                throw lastError;
+            }
         } catch (csvError) {
             if (csvError.name === 'AbortError') {
                 throw csvError;
