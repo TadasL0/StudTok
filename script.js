@@ -66,12 +66,15 @@ const quizEmpty = document.getElementById('quiz-empty');
 const quizQuestion = document.getElementById('quiz-question');
 const quizOptions = document.getElementById('quiz-options');
 const quizProgress = document.getElementById('quiz-progress');
+const quizCurrentValue = document.getElementById('quiz-current');
+const quizQuestionBadge = document.getElementById('quiz-question-badge');
 const quizFeedback = document.getElementById('quiz-feedback');
 const quizStartButton = document.getElementById('quiz-start');
+const quizNextButton = document.getElementById('quiz-next');
 const quizStopButton = document.getElementById('quiz-stop');
 const quizRestartButton = document.getElementById('quiz-restart');
 const quizEmptyDefaultText = quizEmpty?.textContent || '';
-const quizNotSelectedText = 'Testas nebuvo pasirinktas. Pa\u017Eym\u0117k "ABCD test\u0105", jei jo reikia.';
+const quizNotSelectedText = 'Testukai nebuvo pasirinkti. Pa\u017Eym\u0117k "Smagius testukus", jei j\u0173 reikia.';
 const quizComfortValue = document.getElementById('quiz-comfort');
 const quizScoreValue = document.getElementById('quiz-score');
 const blockJamCard = document.querySelector('.blockjam-card');
@@ -118,12 +121,11 @@ const flashcardState = {
 };
 const flashcardHistory = new Set();
 
-const QUIZ_AUTO_ADVANCE_DELAY_MS = 750;
 const QUIZ_EXPLANATION_FALLBACK = '\u0161is pasirinkimas geriausiai atitinka mokymosi med\u017eiag\u0105.';
 const QUIZ_COMFORT_MESSAGES = {
     idle: 'Prad\u0117k, kai pasiruo\u0161i.',
-    active: 'Ramiai spr\u0119sk \u2013 \u010dia be laikma\u010dio.',
-    complete: 'Puiku! Pails\u0117k prie\u0161 kit\u0105 bandym\u0105.',
+    active: 'Ramiai spr\u0119sk \u2013 niekas niekur neskuba.',
+    complete: 'Viskas pereita. Gali pails\u0117ti arba prad\u0117ti i\u0161 naujo.',
 };
 
 const quizState = {
@@ -515,7 +517,7 @@ function updateGenerationModeStyles() {
 function updateGenerateButtonText() {
     if (!generateFlashcardsBtn) return;
     const quizActive = Boolean(generateQuizToggle?.checked) && !Boolean(generateFlashcardsToggle?.checked);
-    generateFlashcardsBtn.textContent = quizActive ? 'Sukurti test\u0105' : 'Sukurti korteles';
+    generateFlashcardsBtn.textContent = quizActive ? 'Sukurti testukus' : 'Sukurti korteles';
 }
 
 function updateQuizPlaceholderOnMode() {
@@ -821,19 +823,52 @@ function updateQuizComfortIndicator() {
 }
 
 function updateQuizScoreboard() {
+    const total = Math.max(0, quizState.baseQuestions.length);
     if (quizScoreValue) {
         quizScoreValue.textContent = String(Math.max(0, quizState.score));
     }
     if (quizProgress) {
-        quizProgress.textContent = String(Math.max(0, quizState.answeredCount));
+        quizProgress.textContent = `${Math.max(0, quizState.answeredCount)} / ${total}`;
     }
+}
+
+function updateQuizQuestionMeta() {
+    const total = quizState.questions.length || quizState.baseQuestions.length;
+    const hasQuestions = total > 0;
+    const currentNumber = hasQuestions ? Math.min(quizState.index + 1, total) : 0;
+
+    if (quizCurrentValue) {
+        quizCurrentValue.textContent = hasQuestions ? `${currentNumber} / ${total}` : '-';
+    }
+    if (!quizQuestionBadge) {
+        return;
+    }
+    if (!hasQuestions) {
+        quizQuestionBadge.textContent = 'Paruo\u0161k testukus';
+        return;
+    }
+    if (quizState.completedRun) {
+        quizQuestionBadge.textContent = `Per\u017Ei\u016Br\u0117ta ${total} / ${total}`;
+        return;
+    }
+    if (!quizState.roundActive) {
+        quizQuestionBadge.textContent = `Pasiruo\u0161imas \u00B7 ${currentNumber} / ${total}`;
+        return;
+    }
+    quizQuestionBadge.textContent = `Klausimas ${currentNumber} i\u0161 ${total}`;
 }
 
 function updateQuizControlAvailability() {
     const hasQuestions = quizState.baseQuestions.length > 0;
     if (quizStartButton) {
         quizStartButton.disabled = !hasQuestions || quizState.roundActive;
-        quizStartButton.textContent = quizState.roundActive ? 'Vyksta...' : 'Startuoti';
+        quizStartButton.textContent = quizState.roundActive ? 'Vyksta...' : 'Prad\u0117ti';
+    }
+    if (quizNextButton) {
+        const isLastQuestion =
+            quizState.questions.length > 0 && quizState.index >= quizState.questions.length - 1;
+        quizNextButton.disabled = !quizState.roundActive || !quizState.answered;
+        quizNextButton.textContent = isLastQuestion ? 'U\u017Ebaigti' : 'Kitas klausimas';
     }
     if (quizStopButton) {
         quizStopButton.disabled = !quizState.roundActive;
@@ -864,7 +899,7 @@ function resetQuizRound(message = '') {
         quizFeedback.textContent = message
             ? message
             : quizState.baseQuestions.length > 0
-            ? 'Paspausk "Startuoti" ir rink ta\u0161kus.'
+            ? 'Paspausk "Prad\u0117ti" ir ramiai pereik per klausimus.'
             : '';
     }
     updateQuizControlAvailability();
@@ -886,7 +921,7 @@ function startQuizRound() {
     updateQuizScoreboard();
     renderQuizQuestion();
     if (quizFeedback) {
-        quizFeedback.textContent = 'Spr\u0119sk savo tempu ir stabtel\u0117k, kai norisi.';
+        quizFeedback.textContent = 'Spr\u0119sk savo tempu. Po atsakymo pati pasirink, kada eiti toliau.';
     }
     updateQuizControlAvailability();
 }
@@ -907,16 +942,18 @@ function endQuizRound(reason = 'manual') {
         });
     }
     if (wasActive && quizFeedback) {
+        const total = Math.max(0, quizState.baseQuestions.length);
         const summary =
             reason === 'manual'
-                ? `Sustabdei test\u0105. Surinkai ${quizState.score} ta\u0161kus.`
-                : `Puikiai padirb\u0117ta! Surinkai ${quizState.score} ta\u0161kus.`;
+                ? `Sustabdei testukus. Kol kas turi ${quizState.score} i\u0161 ${total}.`
+                : `Per\u0117jai visus testukus. Surinkai ${quizState.score} i\u0161 ${total}.`;
         quizFeedback.textContent = summary;
     }
-    if (wasActive) {
+    if (wasActive && reason !== 'manual') {
         registerQuizCompletion();
         updateQuizComfortIndicator();
     }
+    updateQuizQuestionMeta();
     updateQuizControlAvailability();
 }
 
@@ -928,13 +965,14 @@ function advanceQuizQuestion() {
         renderQuizQuestion();
         return;
     }
-    quizState.index += 1;
-    if (quizState.index >= quizState.questions.length) {
-        quizState.questions = buildShuffledQuizQuestions(quizState.baseQuestions);
-        quizState.index = 0;
+    if (quizState.index >= quizState.questions.length - 1) {
+        endQuizRound('complete');
+        return;
     }
+    quizState.index += 1;
     quizState.answered = false;
     renderQuizQuestion();
+    updateQuizControlAvailability();
 }
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
@@ -3299,6 +3337,7 @@ function clearQuizWidget() {
         quizOptions.innerHTML = '';
     }
     updateQuizScoreboard();
+    updateQuizQuestionMeta();
     if (quizFeedback) {
         quizFeedback.textContent = '';
     }
@@ -3441,7 +3480,6 @@ function loadQuizQuestions(questions) {
 
     quizState.baseQuestions = baseQuestions;
     resetQuizRound();
-    syncBlockJamWithQuizQuestions(baseQuestions);
 
     if (quizEmpty) {
         quizEmpty.hidden = true;
@@ -3456,7 +3494,7 @@ function reshuffleQuizQuestions() {
     if (quizState.baseQuestions.length === 0) {
         return;
     }
-    resetQuizRound('Klausimai permai\u0161yti! Paspausk "Startuoti" ir t\u0119sk.');
+    resetQuizRound('Klausimai permai\u0161yti! Paspausk "Prad\u0117ti" ir t\u0119sk.');
     updateRegenerateButtonsAvailability();
 }
 
@@ -3506,14 +3544,14 @@ async function regenerateQuizQuestions() {
             throw new Error('Testo suformuoti nepavyko. Pabandyk dar kart\u0105 su ai\u0161kesniu PDF.');
         }
         loadQuizQuestions(questions);
-        setFlashcardStatus('Naujas testas paruo\u0161tas! Pasitikrink save.', 'success');
+        setFlashcardStatus('Nauji testukai paruo\u0161ti! Pasitikrink save.', 'success');
         generationState.lastPlan = {
             ...regenPlan,
             includeFlashcards: currentPlan.includeFlashcards,
         };
     } catch (error) {
         console.error(error);
-        setFlashcardStatus(error.message || 'Nepavyko atnaujinti testo.', 'error');
+        setFlashcardStatus(error.message || 'Nepavyko atnaujinti testuk\u0173.', 'error');
     } finally {
         setGenerationBusy(false);
     }
@@ -3525,11 +3563,12 @@ function renderQuizQuestion() {
     }
     if (quizState.baseQuestions.length === 0 || quizState.questions.length === 0) {
         if (quizQuestion) {
-            quizQuestion.textContent = quizState.baseQuestions.length === 0 ? '' : 'Pasiruo\u0161usi startui?';
+            quizQuestion.textContent = quizState.baseQuestions.length === 0 ? '' : 'Pasiruo\u0161usi ramiam testuk\u0173 ratui?';
         }
         if (quizOptions) {
             quizOptions.innerHTML = '';
         }
+        updateQuizQuestionMeta();
         return;
     }
 
@@ -3569,6 +3608,7 @@ function renderQuizQuestion() {
             quizOptions.appendChild(button);
         });
     }
+    updateQuizQuestionMeta();
 }
 
 function handleQuizOptionSelect(optionIndex) {
@@ -3591,7 +3631,7 @@ function handleQuizOptionSelect(optionIndex) {
         if (quizFeedback) {
             quizFeedback.textContent = `Teisingai! Paai\u0161kinimas: ${
                 current.explanation || QUIZ_EXPLANATION_FALLBACK
-            }`;
+            } ${quizState.index >= quizState.questions.length - 1 ? 'Jei nori, spausk "U\u017Ebaigti".' : 'Kai b\u016Bsi pasiruo\u0161usi, spausk "Kitas klausimas".'}`;
         }
     } else {
         buttons[optionIndex]?.classList.add('quiz-option--wrong');
@@ -3599,20 +3639,14 @@ function handleQuizOptionSelect(optionIndex) {
         if (quizFeedback) {
             quizFeedback.textContent = `Teisingas atsakymas: ${String.fromCharCode(65 + correctIndex)}. Paai\u0161kinimas: ${
                 current.explanation || QUIZ_EXPLANATION_FALLBACK
-            }`;
+            } ${quizState.index >= quizState.questions.length - 1 ? 'Jei nori, spausk "U\u017Ebaigti".' : 'Kai b\u016Bsi pasiruo\u0161usi, spausk "Kitas klausimas".'}`;
         }
     }
 
     quizState.answered = true;
     quizState.answeredCount += 1;
     updateQuizScoreboard();
-    if (quizState.roundActive) {
-        clearQuizAutoAdvance();
-        quizState.autoAdvanceId = setTimeout(() => {
-            quizState.autoAdvanceId = null;
-            advanceQuizQuestion();
-        }, QUIZ_AUTO_ADVANCE_DELAY_MS);
-    }
+    updateQuizControlAvailability();
 }
 
 introForm?.addEventListener('submit', (event) => {
@@ -4996,6 +5030,13 @@ quizStartButton?.addEventListener('click', () => {
     startQuizRound();
 });
 
+quizNextButton?.addEventListener('click', () => {
+    if (!quizState.roundActive || !quizState.answered) {
+        return;
+    }
+    advanceQuizQuestion();
+});
+
 quizStopButton?.addEventListener('click', () => {
     if (!quizState.roundActive) {
         return;
@@ -5007,7 +5048,7 @@ quizRestartButton?.addEventListener('click', () => {
     if (quizState.baseQuestions.length === 0) {
         return;
     }
-    resetQuizRound('Viskas paruo\u0161ta naujam bandymui! Paspausk "Startuoti".');
+    resetQuizRound('Viskas paruo\u0161ta naujam bandymui! Paspausk "Prad\u0117ti".');
 });
 
 shuffleQuizBtn?.addEventListener('click', () => {
@@ -5112,7 +5153,7 @@ flashcardForm?.addEventListener('submit', async (event) => {
             }
             loadQuizQuestions(quizQuestions);
             statusMessage = includeFlashcards
-                ? 'Kortel\u0117s ir testas paruo\u0161ti! Apversk ir pasitikrink save.'
+                ? 'Kortel\u0117s ir testukai paruo\u0161ti! Apversk ir pasitikrink save.'
                 : 'Testas paruo\u0161tas! Pasitikrink save.';
             if (includeFlashcards && flashcardExtraMessage) {
                 statusMessage += flashcardExtraMessage;

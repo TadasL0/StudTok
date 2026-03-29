@@ -3010,6 +3010,35 @@ body.season-spring .hero__badge {
     gap: 20px;
 }
 
+.quiz-widget__question-shell {
+    display: grid;
+    gap: 12px;
+    padding: 18px;
+    border-radius: 22px;
+    background: rgba(255, 255, 255, 0.75);
+    box-shadow: inset 0 0 0 1px rgba(255, 157, 208, 0.18);
+}
+
+.quiz-widget__question-meta {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+.quiz-widget__question-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border-radius: 999px;
+    background: rgba(255, 200, 230, 0.42);
+    color: var(--text-dark);
+    font-family: 'Quicksand', 'Century Gothic', 'Segoe UI', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+}
+
 .quiz-widget__status {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
@@ -3150,12 +3179,12 @@ body.season-spring .hero__badge {
 }
 
 .quiz-widget__actions--primary {
-    justify-content: space-between;
+    justify-content: flex-start;
     align-items: center;
 }
 
 .quiz-widget__actions--primary .btn {
-    flex: 1 1 180px;
+    flex: 1 1 160px;
 }
 
 .blockjam-card__header {

@@ -217,7 +217,7 @@
                                 </label>
                                 <label class="flashcard-form__toggle">
                                     <input id="mode-quiz" type="checkbox" name="mode-quiz" />
-                                    <span class="flashcard-form__toggle-label">ABCD test&#261;</span>
+                                    <span class="flashcard-form__toggle-label">Smagius testukus</span>
                                 </label>
                             </div>
                             <p class="flashcard-form__hint flashcard-form__hint--inline">Pasirink vien&#261; parinkt&#303;, kad Emilija nepervargt&#371;.</p>
@@ -303,10 +303,10 @@
 
                 <div class="card quiz-card" aria-live="polite">
                     <div class="quiz-card__header">
-                        <h3 class="card__title" id="quiz-title">Ro&#382;inis grei&#269;io testas</h3>
-                        <p class="quiz-card__tagline">Spr&#281;sk saugiu tempu ir rink ta&#353;kus tada, kai jautiesi pasiruo&#353;usi.</p>
+                        <h3 class="card__title" id="quiz-title">Smag&#363;s testukai</h3>
+                        <p class="quiz-card__tagline">Spr&#281;sk savo tempu, per&#382;i&#363;r&#279;k paai&#353;kinim&#261; ir keliauk prie kito klausimo tada, kai pati nori.</p>
                     </div>
-                    <p id="quiz-empty" class="quiz-empty">Sukurk korteles ir &#269;ia atsiras testas.</p>
+                    <p id="quiz-empty" class="quiz-empty">Sukurk testukus ir jie atsiras &#269;ia.</p>
                     <div id="quiz-widget" class="quiz-widget" hidden aria-labelledby="quiz-title">
                         <div class="quiz-widget__status">
                             <div class="quiz-widget__status-item">
@@ -319,10 +319,19 @@
                             </div>
                             <div class="quiz-widget__status-item">
                                 <span class="quiz-widget__status-label">Atsakyta</span>
-                                <span id="quiz-progress" class="quiz-widget__status-value">0</span>
+                                <span id="quiz-progress" class="quiz-widget__status-value">0 / 0</span>
+                            </div>
+                            <div class="quiz-widget__status-item">
+                                <span class="quiz-widget__status-label">Klausimas</span>
+                                <span id="quiz-current" class="quiz-widget__status-value">-</span>
                             </div>
                         </div>
-                        <p id="quiz-question" class="quiz-widget__question"></p>
+                        <div class="quiz-widget__question-shell">
+                            <div class="quiz-widget__question-meta">
+                                <span id="quiz-question-badge" class="quiz-widget__question-badge">Paruo&#353;k testukus</span>
+                            </div>
+                            <p id="quiz-question" class="quiz-widget__question"></p>
+                        </div>
                         <div
                             id="quiz-options"
                             class="quiz-widget__options"
@@ -331,86 +340,15 @@
                         ></div>
                         <p id="quiz-feedback" class="quiz-widget__feedback" role="status"></p>
                         <div class="quiz-widget__actions quiz-widget__actions--primary">
-                            <button id="quiz-start" type="button" class="btn btn--pill" disabled>Startuoti</button>
-                            <button id="quiz-stop" type="button" class="btn btn--secondary btn--tiny" disabled>Baigti anks&#269;iau</button>
+                            <button id="quiz-start" type="button" class="btn btn--pill" disabled>Prad&#279;ti</button>
+                            <button id="quiz-next" type="button" class="btn btn--pill" disabled>Kitas klausimas</button>
+                            <button id="quiz-stop" type="button" class="btn btn--secondary btn--tiny" disabled>Baigti</button>
                         </div>
                         <div class="quiz-widget__actions">
                             <button id="quiz-restart" type="button" class="btn btn--secondary btn--tiny" disabled>I&#353;valyti ir ruo&#353;tis</button>
                             <button id="quiz-shuffle" type="button" class="btn btn--secondary btn--tiny" disabled>I&#353;mai&#353;yti klausimus</button>
-                            <button id="quiz-regenerate" type="button" class="btn btn--secondary btn--tiny" disabled>Sukurti nauj&#261; test&#261;</button>
+                            <button id="quiz-regenerate" type="button" class="btn btn--secondary btn--tiny" disabled>Sukurti nauj&#261; testuk&#261;</button>
                         </div>
-                    </div>
-                </div>
-
-                <div class="card blockjam-card" aria-live="polite">
-                    <div class="blockjam-card__header">
-                        <div>
-                            <h3 class="card__title" id="blockjam-title">Block Jam testukai</h3>
-                        </div>
-                        <button
-                            id="blockjam-reset"
-                            type="button"
-                            class="btn btn--secondary btn--tiny"
-                            aria-label="Prad&#279;ti Block Jam testukus i&#353; naujo"
-                        >
-                            Restartuoti
-                        </button>
-                    </div>
-                    <div class="blockjam" aria-labelledby="blockjam-title">
-                        <div class="blockjam__status-bar">
-                            <div class="blockjam__meter">
-                                <span class="blockjam__meter-label">Ta&#353;kai</span>
-                                <strong id="blockjam-score" class="blockjam__meter-value">0</strong>
-                            </div>
-                            <div class="blockjam__meter">
-                                <span class="blockjam__meter-label">Combo</span>
-                                <strong id="blockjam-combo" class="blockjam__meter-value">x1</strong>
-                            </div>
-                            <div class="blockjam__meter">
-                                <span class="blockjam__meter-label">Blokai</span>
-                                <strong id="blockjam-moves" class="blockjam__meter-value">3</strong>
-                            </div>
-                        </div>
-                        <div class="blockjam__playfield">
-                            <div
-                                id="blockjam-board"
-                                class="blockjam-board"
-                                role="grid"
-                                aria-label="Block Jam testuk&#371; saldaini&#371; lenta"
-                                aria-live="polite"
-                            ></div>
-                            <div class="blockjam-board__shadow" aria-hidden="true"></div>
-                        </div>
-                        <div class="blockjam__pieces-shell">
-                            <div class="blockjam__pieces-header">
-                                <p class="blockjam__pieces-label">Pasirink sald&#371; blok&#261; (3 vienu metu kaip &#382;aidime).</p>
-                                <button id="blockjam-rotate" type="button" class="btn btn--secondary btn--tiny" aria-label="Pasukti pasirinkt&#261; blok&#261;">
-                                    Pasukti (R)
-                                </button>
-                            </div>
-                            <div id="blockjam-pieces" class="blockjam-pieces" role="list" aria-live="polite"></div>
-                        </div>
-                        <div id="blockjam-quiz-panel" class="blockjam-quiz" aria-live="polite">
-                            <p id="blockjam-quiz-empty" class="blockjam-quiz__empty">Sukurk PDF test&#261; ir saldiniai klausimai atsiras &#269;ia.</p>
-                            <div id="blockjam-question" class="blockjam-question" hidden>
-                                <div class="blockjam-question__meta">
-                                    <span id="blockjam-question-label" class="blockjam-question__label"></span>
-                                    <span id="blockjam-question-progress" class="blockjam-question__progress"></span>
-                                </div>
-                                <p id="blockjam-question-text" class="blockjam-question__text"></p>
-                                <div
-                                    id="blockjam-question-options"
-                                    class="blockjam-question__options"
-                                    role="group"
-                                    aria-label="Pasirink teising&#261; atsakym&#261;"
-                                ></div>
-                                <p id="blockjam-question-feedback" class="blockjam-question__feedback" role="status"></p>
-                            </div>
-                        </div>
-                        <p id="blockjam-status" class="blockjam__status-text" role="status">Pasirink saldaini&#371; fig&#363;r&#261; ir vilk arba bakstelk lent&#261;.</p>
-                        <p id="blockjam-hint" class="blockjam__hint">
-                            Vilk blok&#261; ant lentos arba naudok rodykles + Enter. Sujunk bent 3 tos pa&#269;ios spalvos saldainius ir jie i&#353;garuos. Paspausk R arba mygtuk&#261;, jei reikia pasukti pasirinkt&#261; blok&#261;, Esc &ndash; at&#353;aukti pasirinkim&#261;.
-                        </p>
                     </div>
                 </div>
             </div>
