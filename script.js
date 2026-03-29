@@ -988,8 +988,13 @@ const IMPORTANT_DATES_MONTH_SHORT = ['Sau', 'Vas', 'Kov', 'Bal', 'Geg', 'Bir', '
 const IMPORTANT_DATES_WEEKDAY_SHORT = ['Sek', 'Pir', 'Ant', 'Tre', 'Ket', 'Pen', '\u0160e'];
 const IMPORTANT_DATES_MAX_UPCOMING = 3;
 const IMPORTANT_DATES_HIGHLIGHT_LIMIT = 3;
-const importantDatesCsvUrl = importantDatesEmbed?.dataset?.sheetCsv || '';
-const importantDatesSheetUrl = importantDatesEmbed?.dataset?.sheetUrl || importantDatesSheetLink?.href || '';
+const IMPORTANT_DATES_SHEET_URL =
+    'https://docs.google.com/spreadsheets/d/e/2PACX-1vSXYC-ZQPMy3ViRMeLZXHDIkOJx1e6dfVmqWyWkCtWWBuhD06XFycAhdjIKIVA7_L-REJh-qKL1qnS4/pubhtml?gid=1977665068&single=true';
+const IMPORTANT_DATES_CSV_URL =
+    'https://docs.google.com/spreadsheets/d/e/2PACX-1vSXYC-ZQPMy3ViRMeLZXHDIkOJx1e6dfVmqWyWkCtWWBuhD06XFycAhdjIKIVA7_L-REJh-qKL1qnS4/pub?gid=1977665068&single=true&output=csv';
+const importantDatesCsvUrl = importantDatesEmbed?.dataset?.sheetCsv || IMPORTANT_DATES_CSV_URL;
+const importantDatesSheetUrl =
+    importantDatesEmbed?.dataset?.sheetUrl || importantDatesSheetLink?.href || IMPORTANT_DATES_SHEET_URL;
 const GOOGLE_VIZ_DEFAULT_TIMEOUT_MS = 12000;
 const IMPORTANT_DATES_ASSESSMENT_KEYWORDS = [
     'namu darbas',
