@@ -3,6 +3,8 @@ const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
 const OPENAI_MODEL = 'gpt-4.1-mini';
 const DEFAULT_PASSCODE = 'differentdimension';
 const MAX_PDF_TEXT_LENGTH = 9000;
+const DEFAULT_IMPORTANT_DATES_CSV_URL =
+    'https://docs.google.com/spreadsheets/d/e/2PACX-1vSXYC-ZQPMy3ViRMeLZXHDIkOJx1e6dfVmqWyWkCtWWBuhD06XFycAhdjIKIVA7_L-REJh-qKL1qnS4/pub?gid=1977665068&single=true&output=csv';
 
 function json(payload, init = {}) {
     const headers = new Headers(init.headers || {});
@@ -16,7 +18,7 @@ function json(payload, init = {}) {
 function withCorsHeaders(response, origin = '*') {
     const headers = new Headers(response.headers);
     headers.set('Access-Control-Allow-Origin', origin);
-    headers.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     headers.set('Access-Control-Allow-Headers', 'Content-Type, X-Passcode');
     return new Response(response.body, {
         status: response.status,
@@ -31,6 +33,12 @@ function getAllowedOrigin(env) {
 
 function getPiProxyUrl(env) {
     return typeof env.PI_PROXY_URL === 'string' && env.PI_PROXY_URL.trim() ? env.PI_PROXY_URL.trim() : DEFAULT_PI_PROXY_URL;
+}
+
+function getImportantDatesCsvUrl(env) {
+    return typeof env.IMPORTANT_DATES_CSV_URL === 'string' && env.IMPORTANT_DATES_CSV_URL.trim()
+        ? env.IMPORTANT_DATES_CSV_URL.trim()
+        : DEFAULT_IMPORTANT_DATES_CSV_URL;
 }
 
 function normalisePlan(plan) {
@@ -267,12 +275,65 @@ async function handleStudyBundle(request, env) {
     return withCorsHeaders(json(parseStudyBundle(rawContent), { status: 200 }), getAllowedOrigin(env));
 }
 
+async function handleImportantDates(request, env) {
+    if (request.method === 'OPTIONS') {
+        return withCorsHeaders(new Response(null, { status: 204 }), getAllowedOrigin(env));
+    }
+
+    if (request.method !== 'GET') {
+        return withCorsHeaders(json({ error: 'Method Not Allowed' }, { status: 405 }), getAllowedOrigin(env));
+    }
+
+    const targetUrl = getImportantDatesCsvUrl(env);
+    try {
+        const upstreamResponse = await fetch(targetUrl, {
+            method: 'GET',
+            headers: {
+                Accept: 'text/csv,text/plain;q=0.9,*/*;q=0.8',
+            },
+        });
+
+        if (!upstreamResponse.ok) {
+            return withCorsHeaders(
+                json({ error: `Svarbių datų šaltinis nepasiekiamas (${upstreamResponse.status}).` }, { status: 502 }),
+                getAllowedOrigin(env)
+            );
+        }
+
+        const csvText = await upstreamResponse.text();
+        return withCorsHeaders(
+            new Response(csvText, {
+                status: 200,
+                headers: {
+                    'Content-Type': 'text/csv; charset=utf-8',
+                    'Cache-Control': 'no-store',
+                },
+            }),
+            getAllowedOrigin(env)
+        );
+    } catch (error) {
+        return withCorsHeaders(
+            json(
+                {
+                    error: `Nepavyko gauti svarbių datų iš Google Sheets. ${error instanceof Error ? error.message : 'Unknown error.'}`,
+                },
+                { status: 502 }
+            ),
+            getAllowedOrigin(env)
+        );
+    }
+}
+
 export default {
     async fetch(request, env) {
         const url = new URL(request.url);
 
         if (url.pathname === '/api/study-bundle' || url.pathname === '/study-bundle') {
             return handleStudyBundle(request, env);
+        }
+
+        if (url.pathname === '/api/important-dates' || url.pathname === '/important-dates') {
+            return handleImportantDates(request, env);
         }
 
         return new Response('Not Found', { status: 404 });
