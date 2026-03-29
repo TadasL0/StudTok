@@ -1643,7 +1643,7 @@ body.season-spring .hero__badge {
 .timetable-card__iframe {
     display: block;
     width: 100%;
-    min-height: clamp(320px, 45vw, 520px);
+    min-height: clamp(420px, 56vw, 760px);
     border: 0;
 }
 
@@ -2193,6 +2193,22 @@ body.season-spring .hero__badge {
 @media (max-width: 560px) {
     .important-dates {
         gap: 14px;
+    }
+
+    .important-dates-shell {
+        order: 4;
+    }
+
+    .important-dates__status {
+        order: 5;
+    }
+
+    .important-dates__empty {
+        order: 6;
+    }
+
+    .important-dates__list {
+        order: 7;
     }
 
     .important-dates__toolbar {

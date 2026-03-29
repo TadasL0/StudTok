@@ -2542,6 +2542,18 @@ function setImportantDatesFilter(filterValue) {
     renderImportantDatesList();
 }
 
+function syncImportantDatesEmbedState(forceDesktopOpen = false) {
+    if (!importantDatesEmbed || !importantDatesToggleEmbedBtn) {
+        return;
+    }
+    const shouldShowEmbed = forceDesktopOpen || window.matchMedia('(min-width: 721px)').matches;
+    importantDatesEmbed.hidden = !shouldShowEmbed;
+    importantDatesToggleEmbedBtn.setAttribute('aria-expanded', String(shouldShowEmbed));
+    importantDatesToggleEmbedBtn.textContent = shouldShowEmbed
+        ? 'Slėpti įterptą lentelę'
+        : 'Rodyti įterptą lentelę';
+}
+
 function initImportantDatesSection() {
     if (!importantDatesList) {
         return;
@@ -2558,13 +2570,23 @@ function initImportantDatesSection() {
         setImportantDatesFilter(target.dataset.importantFilter);
     });
     if (importantDatesToggleEmbedBtn && importantDatesEmbed) {
+        syncImportantDatesEmbedState();
         importantDatesToggleEmbedBtn.addEventListener('click', () => {
             const hidden = importantDatesEmbed.hidden;
-            importantDatesEmbed.hidden = !hidden;
-            importantDatesToggleEmbedBtn.setAttribute('aria-expanded', String(hidden));
-            importantDatesToggleEmbedBtn.textContent = hidden
-                ? 'Slėpti įterptą lentelę'
-                : 'Rodyti įterptą lentelę';
+            syncImportantDatesEmbedState(hidden);
+            if (hidden) {
+                window.setTimeout(() => {
+                    importantDatesEmbed.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start',
+                    });
+                }, 120);
+            }
+        });
+        window.addEventListener('resize', () => {
+            if (window.matchMedia('(min-width: 721px)').matches) {
+                syncImportantDatesEmbedState(true);
+            }
         });
     }
     refreshImportantDates(true);
