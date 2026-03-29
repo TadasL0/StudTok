@@ -960,6 +960,8 @@ const IMPORTANT_DATES_ASSESSMENT_KEYWORDS = [
     'prezentacij',
     'kontrolinis darbas',
     'laboratorinis darbas',
+    'gynim',
+    'egzamin',
 ];
 const IMPORTANT_DATES_EXCLUDED_KEYWORDS = ['tvarkarascio keitimas'];
 const importantDatesState = {
@@ -2110,17 +2112,17 @@ function formatImportantDateMeta(item) {
 }
 
 function getImportantDateTone(item) {
-    const source = [item?.type, item?.title, item?.note]
-        .filter(Boolean)
-        .join(' ')
-        .toLowerCase();
+    const source = normaliseImportantDateMatchText([item?.type, item?.title, item?.note].filter(Boolean).join(' '));
     if (!source) {
         return 'default';
     }
+    if (source.includes('egzamin')) {
+        return 'exam';
+    }
     if (
         source.includes('atsiskaitym') ||
+        source.includes('gynim') ||
         source.includes('kolokv') ||
-        source.includes('egzamin') ||
         source.includes('testas') ||
         source.includes('kontrol')
     ) {
@@ -2240,7 +2242,7 @@ function renderImportantDatesHighlight() {
             importantDatesHighlightBadge.dataset.tone = 'default';
         }
         if (importantDatesHighlightNote) {
-            importantDatesHighlightNote.textContent = 'Rodomi tik nam\u0173 darbai, ataskaitos, koliokviumai, prezentacijos, kontroliniai ir laboratoriniai darbai.';
+            importantDatesHighlightNote.textContent = 'Rodomi namų darbai, ataskaitos, koliokviumai, prezentacijos, kontroliniai, laboratoriniai darbai, gynimai ir egzaminai.';
         }
         renderImportantDatesHighlightList([]);
         importantDatesState.highlightId = null;
@@ -2289,10 +2291,10 @@ function renderImportantDatesHighlight() {
             assessments.length === 1 ? '1 artimiausias' : `${assessments.length} artimiausi`;
         importantDatesHighlightBadge.dataset.tone = tone;
     }
-    if (importantDatesHighlightNote) {
-        importantDatesHighlightNote.textContent =
-            'Rodomi tik nam\u0173 darbai, ataskaitos, koliokviumai, prezentacijos, kontroliniai ir laboratoriniai darbai.';
-    }
+        if (importantDatesHighlightNote) {
+            importantDatesHighlightNote.textContent =
+            'Rodomi namų darbai, ataskaitos, koliokviumai, prezentacijos, kontroliniai, laboratoriniai darbai, gynimai ir egzaminai.';
+        }
     renderImportantDatesHighlightList(assessments);
 }
 

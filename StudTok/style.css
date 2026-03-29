@@ -1670,6 +1670,14 @@ body.season-spring .hero__badge {
     box-shadow: 0 18px 34px rgba(222, 63, 83, 0.14);
 }
 
+.important-dates__hero[data-tone='exam'] {
+    background:
+        radial-gradient(circle at 88% 24%, rgba(255, 122, 182, 0.18), transparent 24%),
+        linear-gradient(135deg, rgba(255, 238, 246, 0.99), rgba(255, 214, 233, 0.96));
+    border-color: rgba(227, 78, 146, 0.32);
+    box-shadow: 0 20px 36px rgba(227, 78, 146, 0.16);
+}
+
 .important-dates__hero-copy {
     display: grid;
     gap: 8px;
@@ -1752,6 +1760,41 @@ body.season-spring .hero__badge {
     box-shadow: inset 0 0 0 1px rgba(222, 63, 83, 0.18);
 }
 
+.important-dates__hero-entry[data-tone='exam'] {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(135deg, rgba(255, 247, 251, 0.94), rgba(255, 229, 240, 0.94));
+    box-shadow: inset 0 0 0 1px rgba(227, 78, 146, 0.2);
+}
+
+.important-dates__hero-entry[data-tone='exam']::before {
+    content: '';
+    position: absolute;
+    width: 88px;
+    height: 88px;
+    top: -28px;
+    right: -12px;
+    border-radius: 999px;
+    background: radial-gradient(circle, rgba(255, 118, 184, 0.26) 0%, rgba(255, 118, 184, 0.08) 44%, transparent 70%);
+    animation: importantDatesExamPulse 2.8s ease-in-out infinite;
+    pointer-events: none;
+}
+
+.important-dates__hero-entry[data-tone='exam']::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1.5px;
+    background: conic-gradient(from 0deg, rgba(255, 130, 192, 0.1), rgba(255, 130, 192, 0.95), rgba(255, 243, 249, 0.22), rgba(255, 130, 192, 0.9), rgba(255, 130, 192, 0.1));
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    mask-composite: exclude;
+    animation: importantDatesExamOrbit 3.8s linear infinite;
+    pointer-events: none;
+}
+
 .important-dates__hero-entry-main {
     display: grid;
     gap: 4px;
@@ -1794,6 +1837,11 @@ body.season-spring .hero__badge {
     box-shadow: inset 0 0 0 1px rgba(222, 63, 83, 0.22);
 }
 
+.important-dates__hero-entry[data-tone='exam'] .important-dates__hero-entry-countdown {
+    color: #c42775;
+    box-shadow: inset 0 0 0 1px rgba(227, 78, 146, 0.24);
+}
+
 .important-dates__hero-badge,
 .important-dates__item-badge {
     display: inline-flex;
@@ -1815,6 +1863,13 @@ body.season-spring .hero__badge {
     background: rgba(222, 63, 83, 0.12);
     color: #b6233c;
     box-shadow: inset 0 0 0 1px rgba(222, 63, 83, 0.22);
+}
+
+.important-dates__hero-badge[data-tone='exam'],
+.important-dates__item-badge[data-tone='exam'] {
+    background: rgba(255, 93, 170, 0.14);
+    color: #c42775;
+    box-shadow: inset 0 0 0 1px rgba(227, 78, 146, 0.24);
 }
 
 .important-dates__countdown {
@@ -1929,11 +1984,51 @@ body.season-spring .hero__badge {
     border-radius: 22px;
     background: rgba(255, 255, 255, 0.92);
     box-shadow: inset 0 0 0 1px rgba(255, 157, 208, 0.15);
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
 }
 
 .important-dates__item[data-tone='assessment'] {
     background: linear-gradient(135deg, rgba(255, 248, 248, 0.98), rgba(255, 234, 236, 0.98));
     box-shadow: inset 0 0 0 1px rgba(222, 63, 83, 0.16);
+}
+
+.important-dates__item[data-tone='exam'] {
+    background:
+        radial-gradient(circle at 88% 22%, rgba(255, 122, 182, 0.14), transparent 18%),
+        linear-gradient(135deg, rgba(255, 248, 252, 0.99), rgba(255, 234, 243, 0.98));
+    box-shadow: inset 0 0 0 1px rgba(227, 78, 146, 0.2);
+}
+
+.important-dates__item[data-tone='exam']::before {
+    content: '';
+    position: absolute;
+    width: 132px;
+    height: 132px;
+    top: -42px;
+    right: -34px;
+    border-radius: 999px;
+    background: radial-gradient(circle, rgba(255, 108, 180, 0.28) 0%, rgba(255, 108, 180, 0.11) 42%, transparent 70%);
+    animation: importantDatesExamPulse 3.1s ease-in-out infinite;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.important-dates__item[data-tone='exam']::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1.5px;
+    background: conic-gradient(from 0deg, rgba(255, 130, 192, 0.12), rgba(255, 130, 192, 1), rgba(255, 242, 248, 0.22), rgba(255, 130, 192, 0.92), rgba(255, 130, 192, 0.12));
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    mask-composite: exclude;
+    animation: importantDatesExamOrbit 4.2s linear infinite;
+    pointer-events: none;
+    z-index: 0;
 }
 
 .important-dates__item-date {
@@ -1949,6 +2044,10 @@ body.season-spring .hero__badge {
     background: rgba(222, 63, 83, 0.1);
 }
 
+.important-dates__item[data-tone='exam'] .important-dates__item-date {
+    background: rgba(255, 99, 173, 0.1);
+}
+
 .important-dates__item-day {
     font-family: 'Bodoni Moda', 'Didot', 'Georgia', serif;
     font-size: 1.5rem;
@@ -1959,6 +2058,11 @@ body.season-spring .hero__badge {
 .important-dates__item[data-tone='assessment'] .important-dates__item-day,
 .important-dates__item[data-tone='assessment'] .important-dates__item-month {
     color: #b6233c;
+}
+
+.important-dates__item[data-tone='exam'] .important-dates__item-day,
+.important-dates__item[data-tone='exam'] .important-dates__item-month {
+    color: #c42775;
 }
 
 .important-dates__item-month {
@@ -1973,6 +2077,34 @@ body.season-spring .hero__badge {
     display: grid;
     gap: 8px;
     min-width: 0;
+    position: relative;
+    z-index: 1;
+}
+
+.important-dates__item-date {
+    position: relative;
+    z-index: 1;
+}
+
+@keyframes importantDatesExamPulse {
+    0%,
+    100% {
+        transform: scale(0.92);
+        opacity: 0.55;
+    }
+    50% {
+        transform: scale(1.08);
+        opacity: 0.95;
+    }
+}
+
+@keyframes importantDatesExamOrbit {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 .important-dates__item-top {
