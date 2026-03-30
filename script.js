@@ -1219,6 +1219,10 @@ function startOfDay(date) {
     return copy;
 }
 
+function getCalendarDayNumber(date) {
+    return Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) / MS_PER_DAY;
+}
+
 function getNextSpringFestivalDate(reference = new Date()) {
     const year = reference.getFullYear();
     const today = startOfDay(reference);
@@ -1393,7 +1397,7 @@ function getCurrentSemesterStart(date) {
 
 function getWeekRotationIndex(date) {
     const semesterStart = getCurrentSemesterStart(date);
-    const elapsedDays = Math.floor((startOfDay(date) - semesterStart) / MS_PER_DAY);
+    const elapsedDays = getCalendarDayNumber(date) - getCalendarDayNumber(semesterStart);
     const fullWeeksSinceStart = Math.floor(elapsedDays / WEEK_LENGTH_DAYS);
     const rotationIndex = ((fullWeeksSinceStart % WEEK_ROTATION_LENGTH) + WEEK_ROTATION_LENGTH) % WEEK_ROTATION_LENGTH;
     return rotationIndex;
