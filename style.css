@@ -2291,7 +2291,7 @@ body.season-spring .hero__badge {
 
 .timetable-card__details[open] .timetable-card__panel {
     margin-top: 16px;
-    max-height: 1200px;
+    max-height: 4000px;
     opacity: 1;
     transform: translateY(0);
 }
