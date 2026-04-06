@@ -3,7 +3,11 @@
 const rootElement = document.documentElement;
 const screens = document.querySelectorAll('.screen');
 const hero = document.querySelector('.hero');
+const heroBadge = document.querySelector('.hero__badge');
+const heroTitle = document.querySelector('.hero__title');
+const heroTagline = document.querySelector('.hero__tagline');
 const springCountdown = document.getElementById('spring-countdown');
+const birthdayConfettiCanvas = document.getElementById('birthdayConfettiCanvas');
 const nameInput = document.getElementById('name-input');
 const introForm = document.getElementById('intro-form');
 
@@ -101,10 +105,12 @@ const pdfFileNameEmptyText = pdfFileName?.dataset?.empty || 'Failas nepasirinkta
 const PASSCODE = 'differentdimension';
 const ZERO_WIDTH_SPACE_PATTERN = /[\u200B\u200C\u200D\u2060\uFEFF]/g;
 const SPRING_THEME_CLASS = 'season-spring';
+const BIRTHDAY_THEME_CLASS = 'season-birthday';
 const SPRING_THEME_ALWAYS_ON = true;
 const SPRING_FESTIVAL_MONTH_INDEX = 3;
 const SPRING_FESTIVAL_DAY = 15;
 const SPRING_FESTIVAL_SPECIAL_DAYS = new Set([10, 20, 30, 40]);
+const BIRTHDAY_AGE = 21;
 
 const state = {
     name: 'Emilija',
@@ -1212,11 +1218,16 @@ const latestWeekContext = {
     weekStart: null,
 };
 let springOverlayInitialized = false;
+let birthdayConfettiPlayed = false;
 
 function startOfDay(date) {
     const copy = new Date(date);
     copy.setHours(0, 0, 0, 0);
     return copy;
+}
+
+function getCalendarDayNumber(date) {
+    return Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) / MS_PER_DAY;
 }
 
 function getNextSpringFestivalDate(reference = new Date()) {
@@ -1230,12 +1241,52 @@ function getNextSpringFestivalDate(reference = new Date()) {
     return targetThisYear;
 }
 
+function isBirthdayCelebrationDay(date = new Date()) {
+    return date.getMonth() === SPRING_FESTIVAL_MONTH_INDEX && date.getDate() === SPRING_FESTIVAL_DAY;
+}
+
+function getHeroSeasonalCopy(reference = new Date()) {
+    if (isBirthdayCelebrationDay(reference)) {
+        const displayName = String(state.name || 'Emilija').trim();
+        const upperName = displayName.toLocaleUpperCase('lt-LT');
+        return {
+            badge: `${upperName} ${BIRTHDAY_AGE}`,
+            title: `SU ${BIRTHDAY_AGE}-UOJU, ${upperName}`,
+            tagline: '\u0160iandien StudTok pasipuo\u0161\u0117 balion\u0117liais, auksiniu 21 ir ro\u017ein\u0117mis torto \u017evakut\u0117mis.',
+        };
+    }
+
+    return {
+        badge: 'PAVASARIS AT\u0116JO',
+        title: 'PAVASARIS AT\u0116JO',
+        tagline: 'Mokykis tarp margu\u010di\u0173, torto, ro\u017ei\u0173 ir gelton\u0173 pauk\u0161teli\u0173 nuotaikos.',
+    };
+}
+
+function applyHeroSeasonalCopy(reference = new Date()) {
+    const copy = getHeroSeasonalCopy(reference);
+    if (heroBadge) {
+        heroBadge.textContent = copy.badge;
+    }
+    if (heroTitle) {
+        heroTitle.textContent = copy.title;
+    }
+    if (heroTagline) {
+        heroTagline.textContent = copy.tagline;
+    }
+}
+
 function updateSpringCountdown(reference = new Date()) {
     if (!springCountdown) {
         return;
     }
 
     const today = startOfDay(reference);
+    if (isBirthdayCelebrationDay(today)) {
+        springCountdown.innerHTML = `${state.name} \u0161iandien \u0161ven\u010dia <strong>${BIRTHDAY_AGE}-\u0105j\u012f</strong> gimtadien\u012f.`;
+        return;
+    }
+
     const target = getNextSpringFestivalDate(reference);
     const daysLeft = Math.max(0, Math.round((target - today) / MS_PER_DAY));
     let dayLabel = 'dienos';
@@ -1355,9 +1406,131 @@ function initSpringDrift() {
     step();
 }
 
+function burstBirthdayConfetti() {
+    if (birthdayConfettiPlayed || !birthdayConfettiCanvas) {
+        return;
+    }
+
+    const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    birthdayConfettiPlayed = true;
+    if (prefersReducedMotion) {
+        return;
+    }
+
+    const ctx = birthdayConfettiCanvas.getContext('2d');
+    if (!ctx) {
+        return;
+    }
+
+    let width = 0;
+    let height = 0;
+    let animationFrameId = 0;
+    const particles = [];
+    const duration = 2400;
+    const confettiPalette = ['#ff7eb6', '#ffc4dd', '#f4cf72', '#fff4cf', '#ffffff'];
+
+    function resize() {
+        const dpr = window.devicePixelRatio || 1;
+        width = window.innerWidth;
+        height = window.innerHeight;
+        birthdayConfettiCanvas.width = width * dpr;
+        birthdayConfettiCanvas.height = height * dpr;
+        birthdayConfettiCanvas.style.width = `${width}px`;
+        birthdayConfettiCanvas.style.height = `${height}px`;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    function createParticle(originX, originY, velocityX, velocityY) {
+        const size = Math.random() * 10 + 6;
+        return {
+            x: originX,
+            y: originY,
+            velocityX,
+            velocityY,
+            width: size,
+            height: size * (Math.random() * 0.8 + 1.2),
+            rotation: Math.random() * Math.PI * 2,
+            spin: (Math.random() * 0.24 + 0.08) * (Math.random() > 0.5 ? 1 : -1),
+            color: confettiPalette[Math.floor(Math.random() * confettiPalette.length)],
+            shape: Math.random() > 0.72 ? 'circle' : 'rect',
+        };
+    }
+
+    function addBurst(originX, originY, direction = 0) {
+        const particleCount = 58;
+        for (let index = 0; index < particleCount; index += 1) {
+            const spread = (Math.random() - 0.5) * 1.25;
+            const speed = Math.random() * 8 + 5.5;
+            const angle = -Math.PI / 2 + direction + spread;
+            particles.push(
+                createParticle(originX, originY, Math.cos(angle) * speed, Math.sin(angle) * speed)
+            );
+        }
+    }
+
+    function drawParticle(particle, opacity) {
+        ctx.save();
+        ctx.globalAlpha = opacity;
+        ctx.translate(particle.x, particle.y);
+        ctx.rotate(particle.rotation);
+        ctx.fillStyle = particle.color;
+        if (particle.shape === 'circle') {
+            ctx.beginPath();
+            ctx.arc(0, 0, particle.width * 0.45, 0, Math.PI * 2);
+            ctx.fill();
+        } else {
+            ctx.fillRect(-particle.width / 2, -particle.height / 2, particle.width, particle.height);
+        }
+        ctx.restore();
+    }
+
+    resize();
+    addBurst(width * 0.24, Math.min(height * 0.34, 250), -0.16);
+    addBurst(width * 0.5, Math.min(height * 0.22, 180), 0);
+    addBurst(width * 0.76, Math.min(height * 0.34, 250), 0.16);
+
+    const handleResize = () => resize();
+    window.addEventListener('resize', handleResize);
+
+    function step(startTime, now) {
+        const elapsed = now - startTime;
+        const progress = Math.min(1, elapsed / duration);
+        ctx.clearRect(0, 0, width, height);
+
+        particles.forEach((particle) => {
+            particle.x += particle.velocityX;
+            particle.y += particle.velocityY;
+            particle.velocityY += 0.18;
+            particle.velocityX *= 0.994;
+            particle.rotation += particle.spin;
+            drawParticle(particle, 1 - progress * 0.92);
+        });
+
+        if (progress < 1) {
+            animationFrameId = window.requestAnimationFrame((frameNow) => step(startTime, frameNow));
+            return;
+        }
+
+        window.removeEventListener('resize', handleResize);
+        window.cancelAnimationFrame(animationFrameId);
+        ctx.clearRect(0, 0, width, height);
+    }
+
+    animationFrameId = window.requestAnimationFrame((startTime) => step(startTime, startTime));
+}
+
 function applySeasonalTheme(date = new Date()) {
     const body = document.body;
     if (!body) {
+        return;
+    }
+
+    applyHeroSeasonalCopy(date);
+    const isBirthday = isBirthdayCelebrationDay(date);
+    body.classList.toggle(BIRTHDAY_THEME_CLASS, isBirthday);
+    if (isBirthday) {
+        body.classList.add(SPRING_THEME_CLASS);
+        burstBirthdayConfetti();
         return;
     }
 
@@ -1367,6 +1540,7 @@ function applySeasonalTheme(date = new Date()) {
         return;
     }
 
+    body.classList.remove(BIRTHDAY_THEME_CLASS);
     body.classList.remove(SPRING_THEME_CLASS);
 }
 
@@ -1393,7 +1567,7 @@ function getCurrentSemesterStart(date) {
 
 function getWeekRotationIndex(date) {
     const semesterStart = getCurrentSemesterStart(date);
-    const elapsedDays = Math.floor((startOfDay(date) - semesterStart) / MS_PER_DAY);
+    const elapsedDays = getCalendarDayNumber(date) - getCalendarDayNumber(semesterStart);
     const fullWeeksSinceStart = Math.floor(elapsedDays / WEEK_LENGTH_DAYS);
     const rotationIndex = ((fullWeeksSinceStart % WEEK_ROTATION_LENGTH) + WEEK_ROTATION_LENGTH) % WEEK_ROTATION_LENGTH;
     return rotationIndex;
@@ -2739,6 +2913,9 @@ function showScreen(id) {
 }
 
 function pickSplashGreeting() {
+    if (isBirthdayCelebrationDay()) {
+        return { salute: 'Su gimtadieniu,', name: '{name}!' };
+    }
     if (!SPLASH_GREETINGS.length) {
         return { salute: 'Labas,', name: `${state.name}!` };
     }
@@ -2758,6 +2935,7 @@ function updateGreetingNames() {
     if (splashName) {
         splashName.textContent = formatSplashText(greeting.name, `${state.name}!`);
     }
+    applyHeroSeasonalCopy();
 }
 
 function setFlashcardStatus(message, mood = 'info') {
