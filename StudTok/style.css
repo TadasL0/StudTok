@@ -1166,11 +1166,13 @@ body.season-birthday .hero__spring-pill--rose::before {
     display: grid;
     place-items: center;
     font-family: 'Quicksand', 'Century Gothic', 'Segoe UI', sans-serif;
-    font-size: 0.54em;
+    font-size: 0.58em;
     font-weight: 700;
     color: rgba(145, 47, 99, 0.96);
     letter-spacing: 0.06em;
     text-shadow: 0 1px 0 rgba(255, 247, 252, 0.65);
+    line-height: 1;
+    z-index: 2;
 }
 
 body.season-birthday .welcome-splash__rose::before {
@@ -1187,8 +1189,16 @@ body.season-birthday .hero__spring-pill--rose::after {
     content: '';
     position: absolute;
     inset: 10% 12%;
+    width: auto;
+    height: auto;
+    left: auto;
+    right: auto;
+    top: auto;
+    bottom: auto;
     border-radius: inherit;
     border: 1px solid rgba(255, 245, 250, 0.42);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0));
+    transform: none;
     opacity: 0.7;
 }
 
