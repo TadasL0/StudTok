@@ -1251,7 +1251,7 @@ function getHeroSeasonalCopy(reference = new Date()) {
         return {
             badge: 'GIMTADIENIS!',
             title: `Su gimimo diena, ${displayName}!`,
-            tagline: '\u0160iandien StudTok pasipuo\u0161\u0117 balion\u0117liais, auksiniu 21 ir ro\u017ein\u0117mis torto \u017evakut\u0117mis.',
+            tagline: 'Sveika atvykusi \u012f gimtadienin\u012f Studtok.',
         };
     }
 
