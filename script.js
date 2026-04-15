@@ -1248,10 +1248,9 @@ function isBirthdayCelebrationDay(date = new Date()) {
 function getHeroSeasonalCopy(reference = new Date()) {
     if (isBirthdayCelebrationDay(reference)) {
         const displayName = String(state.name || 'Emilija').trim();
-        const upperName = displayName.toLocaleUpperCase('lt-LT');
         return {
-            badge: `${upperName} ${BIRTHDAY_AGE}`,
-            title: `SU ${BIRTHDAY_AGE}-UOJU, ${upperName}`,
+            badge: 'GIMTADIENIS!',
+            title: `Su gimimo diena, ${displayName}!`,
             tagline: '\u0160iandien StudTok pasipuo\u0161\u0117 balion\u0117liais, auksiniu 21 ir ro\u017ein\u0117mis torto \u017evakut\u0117mis.',
         };
     }
