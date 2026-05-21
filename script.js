@@ -38,6 +38,9 @@ const shuffleQuizBtn = document.getElementById('quiz-shuffle');
 const weekIndicator = document.querySelector('.week-indicator');
 const weekIndicatorValue = document.getElementById('week-indicator-value');
 const weekIndicatorRange = document.getElementById('week-indicator-range');
+const uvMeter = document.querySelector('.uv-meter');
+const uvIndexValue = document.getElementById('uv-index-value');
+const uvIndexRisk = document.getElementById('uv-index-risk');
 const timetableWeekNumber = document.getElementById('timetable-week-number');
 const timetableWeekLabel = document.querySelector('.timetable-card__week-label');
 const timetableWeekRange = document.getElementById('timetable-week-range');
@@ -105,6 +108,14 @@ const PASSCODE = 'differentdimension';
 const ZERO_WIDTH_SPACE_PATTERN = /[\u200B\u200C\u200D\u2060\uFEFF]/g;
 const SUMMER_THEME_CLASS = 'season-summer';
 const SUMMER_THEME_ALWAYS_ON = true;
+const UV_INDEX_CACHE_KEY = 'pink-study-uv-index-v1';
+const UV_INDEX_CACHE_TTL_MS = 30 * 60 * 1000;
+const UV_INDEX_REFRESH_MS = 60 * 60 * 1000;
+const UV_INDEX_FALLBACK_LOCATION = {
+    latitude: 54.6872,
+    longitude: 25.2797,
+    label: 'Vilnius',
+};
 
 const state = {
     name: 'Emilija',
