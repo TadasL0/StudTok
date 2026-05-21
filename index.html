@@ -18,6 +18,14 @@
 </head>
 <body>
     <div class="week-indicator" role="button" tabindex="0" aria-live="polite" aria-expanded="true">
+        <div class="uv-meter" role="status" aria-live="polite" aria-label="UV indeksas">
+            <span class="uv-meter__icon" aria-hidden="true"></span>
+            <span class="uv-meter__content">
+                <span class="uv-meter__label">UV</span>
+                <span id="uv-index-value" class="uv-meter__value">&mdash;</span>
+                <span id="uv-index-risk" class="uv-meter__risk">Kraunama</span>
+            </span>
+        </div>
         <span class="week-indicator__label">&#352;i savait&#279;:</span>
         <span id="week-indicator-value" class="week-indicator__value">&mdash;</span>
         <span id="week-indicator-range" class="week-indicator__range"></span>
