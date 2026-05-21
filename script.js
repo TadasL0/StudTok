@@ -1,4 +1,4 @@
-﻿'use strict';
+'use strict';
 
 const rootElement = document.documentElement;
 const screens = document.querySelectorAll('.screen');
@@ -6,8 +6,7 @@ const hero = document.querySelector('.hero');
 const heroBadge = document.querySelector('.hero__badge');
 const heroTitle = document.querySelector('.hero__title');
 const heroTagline = document.querySelector('.hero__tagline');
-const springCountdown = document.getElementById('spring-countdown');
-const birthdayConfettiCanvas = document.getElementById('birthdayConfettiCanvas');
+const summerCountdown = document.getElementById('summer-countdown');
 const nameInput = document.getElementById('name-input');
 const introForm = document.getElementById('intro-form');
 
@@ -104,13 +103,8 @@ const blockJamQuestionFeedback = document.getElementById('blockjam-question-feed
 const pdfFileNameEmptyText = pdfFileName?.dataset?.empty || 'Failas nepasirinktas';
 const PASSCODE = 'differentdimension';
 const ZERO_WIDTH_SPACE_PATTERN = /[\u200B\u200C\u200D\u2060\uFEFF]/g;
-const SPRING_THEME_CLASS = 'season-spring';
-const BIRTHDAY_THEME_CLASS = 'season-birthday';
-const SPRING_THEME_ALWAYS_ON = true;
-const SPRING_FESTIVAL_MONTH_INDEX = 3;
-const SPRING_FESTIVAL_DAY = 15;
-const SPRING_FESTIVAL_SPECIAL_DAYS = new Set([10, 20, 30, 40]);
-const BIRTHDAY_AGE = 21;
+const SUMMER_THEME_CLASS = 'season-summer';
+const SUMMER_THEME_ALWAYS_ON = true;
 
 const state = {
     name: 'Emilija',
@@ -1217,8 +1211,7 @@ const latestWeekContext = {
     rotationIndex: 0,
     weekStart: null,
 };
-let springOverlayInitialized = false;
-let birthdayConfettiPlayed = false;
+let summerOverlayInitialized = false;
 
 function startOfDay(date) {
     const copy = new Date(date);
@@ -1230,35 +1223,11 @@ function getCalendarDayNumber(date) {
     return Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) / MS_PER_DAY;
 }
 
-function getNextSpringFestivalDate(reference = new Date()) {
-    const year = reference.getFullYear();
-    const today = startOfDay(reference);
-    const targetThisYear = new Date(year, SPRING_FESTIVAL_MONTH_INDEX, SPRING_FESTIVAL_DAY);
-    targetThisYear.setHours(0, 0, 0, 0);
-    if (today > targetThisYear) {
-        return new Date(year + 1, SPRING_FESTIVAL_MONTH_INDEX, SPRING_FESTIVAL_DAY);
-    }
-    return targetThisYear;
-}
-
-function isBirthdayCelebrationDay(date = new Date()) {
-    return date.getMonth() === SPRING_FESTIVAL_MONTH_INDEX && date.getDate() === SPRING_FESTIVAL_DAY;
-}
-
 function getHeroSeasonalCopy(reference = new Date()) {
-    if (isBirthdayCelebrationDay(reference)) {
-        const displayName = String(state.name || 'Emilija').trim();
-        return {
-            badge: 'GIMTADIENIS!',
-            title: `Su gimimo diena, ${displayName}!`,
-            tagline: 'Sveika atvykusi \u012f gimtadienin\u012f Studtok.',
-        };
-    }
-
     return {
-        badge: 'PAVASARIS AT\u0116JO',
-        title: 'PAVASARIS AT\u0116JO',
-        tagline: 'Mokykis tarp margu\u010di\u0173, torto, ro\u017ei\u0173 ir gelton\u0173 pauk\u0161teli\u0173 nuotaikos.',
+        badge: 'VASARA PRASIDEDA',
+        title: 'VASARA PRASIDEDA',
+        tagline: 'Mokykis su j\u016bros bangomis, saule, sm\u0117liu ir atostog\u0173 ramybe.',
     };
 }
 
@@ -1275,68 +1244,38 @@ function applyHeroSeasonalCopy(reference = new Date()) {
     }
 }
 
-function updateSpringCountdown(reference = new Date()) {
-    if (!springCountdown) {
+function updateSummerMessage() {
+    if (!summerCountdown) {
         return;
     }
 
-    const today = startOfDay(reference);
-    if (isBirthdayCelebrationDay(today)) {
-        springCountdown.innerHTML = `${state.name} \u0161iandien \u0161ven\u010dia <strong>${BIRTHDAY_AGE}-\u0105j\u012f</strong> gimtadien\u012f.`;
-        return;
-    }
-
-    const target = getNextSpringFestivalDate(reference);
-    const daysLeft = Math.max(0, Math.round((target - today) / MS_PER_DAY));
-    let dayLabel = 'dienos';
-    if (daysLeft === 1) {
-        dayLabel = 'diena';
-    } else if (SPRING_FESTIVAL_SPECIAL_DAYS.has(daysLeft)) {
-        dayLabel = 'dien\u0173';
-    }
-
-    springCountdown.innerHTML = `Iki laukiamiausios pavasario \u0161vent\u0117s liko <strong>${daysLeft}</strong> ${dayLabel}.`;
+    summerCountdown.innerHTML = 'Vasari\u0161ka mokymosi nuotaika jau <strong>\u010dia</strong>.';
 }
 
-function scheduleSpringCountdown() {
-    updateSpringCountdown();
-    const now = new Date();
-    const nextMidnight = new Date(now);
-    nextMidnight.setHours(24, 0, 0, 0);
-    const firstDelay = Math.max(1000, nextMidnight.getTime() - now.getTime() + 1000);
-
-    window.setTimeout(() => {
-        updateSpringCountdown();
-        window.setInterval(() => {
-            updateSpringCountdown();
-        }, MS_PER_DAY);
-    }, firstDelay);
-}
-
-function isSpringSeason(date) {
+function isSummerSeason(date) {
     const year = date.getFullYear();
-    const start = new Date(year, 2, 1, 0, 0, 0, 0);
-    const end = new Date(year, 4, 31, 23, 59, 59, 999);
+    const start = new Date(year, 5, 1, 0, 0, 0, 0);
+    const end = new Date(year, 7, 31, 23, 59, 59, 999);
     return date >= start && date <= end;
 }
 
-function initSpringDrift() {
-    if (springOverlayInitialized) return;
+function initSummerDrift() {
+    if (summerOverlayInitialized) return;
 
-    const canvas = document.getElementById('springCanvas');
+    const canvas = document.getElementById('summerCanvas');
     if (!canvas) return;
 
     const ctx = canvas.getContext('2d');
     let width = 0;
     let height = 0;
     const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const maxPetals = prefersReducedMotion ? 28 : 72;
-    const petals = [];
-    const petalPalette = [
-        'rgba(255, 170, 209, 0.82)',
-        'rgba(255, 207, 231, 0.8)',
-        'rgba(193, 238, 211, 0.78)',
-        'rgba(255, 239, 176, 0.72)',
+    const maxSparks = prefersReducedMotion ? 24 : 64;
+    const sparks = [];
+    const sparkPalette = [
+        'rgba(255, 220, 113, 0.78)',
+        'rgba(99, 201, 232, 0.66)',
+        'rgba(255, 255, 255, 0.72)',
+        'rgba(255, 181, 117, 0.68)',
     ];
 
     function resize() {
@@ -1350,49 +1289,44 @@ function initSpringDrift() {
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     }
 
-    function createPetal() {
+    function createSpark() {
         return {
             x: Math.random() * width,
             y: Math.random() * height,
-            width: Math.random() * 6 + 4,
-            height: Math.random() * 3 + 2,
-            speed: Math.random() * (prefersReducedMotion ? 0.45 : 0.95) + 0.25,
-            drift: Math.random() * 0.7 - 0.35,
+            radius: Math.random() * 2.8 + 1.6,
+            speed: Math.random() * (prefersReducedMotion ? 0.35 : 0.75) + 0.2,
+            drift: Math.random() * 0.55 - 0.2,
             sway: Math.random() * Math.PI * 2,
-            rotation: Math.random() * Math.PI * 2,
-            spin: (Math.random() * 0.02 + 0.008) * (Math.random() > 0.5 ? 1 : -1),
-            color: petalPalette[Math.floor(Math.random() * petalPalette.length)],
+            color: sparkPalette[Math.floor(Math.random() * sparkPalette.length)],
         };
     }
 
     resize();
-    for (let i = 0; i < maxPetals; i += 1) {
-        petals.push(createPetal());
+    for (let i = 0; i < maxSparks; i += 1) {
+        sparks.push(createSpark());
     }
 
     function step() {
         ctx.clearRect(0, 0, width, height);
 
-        for (const petal of petals) {
-            petal.y += petal.speed;
-            petal.x += petal.drift + Math.sin(petal.sway) * 0.45;
-            petal.sway += 0.01 + petal.speed * 0.02;
-            petal.rotation += petal.spin;
+        for (const spark of sparks) {
+            spark.y += spark.speed;
+            spark.x += spark.drift + Math.sin(spark.sway) * 0.35;
+            spark.sway += 0.01 + spark.speed * 0.02;
 
-            if (petal.y > height + 10) {
-                petal.y = -12;
-                petal.x = Math.random() * width;
+            if (spark.y > height + 10) {
+                spark.y = -12;
+                spark.x = Math.random() * width;
             }
 
-            if (petal.x > width + 12) petal.x = -12;
-            if (petal.x < -12) petal.x = width + 12;
+            if (spark.x > width + 12) spark.x = -12;
+            if (spark.x < -12) spark.x = width + 12;
 
             ctx.save();
-            ctx.translate(petal.x, petal.y);
-            ctx.rotate(petal.rotation);
-            ctx.fillStyle = petal.color;
+            ctx.translate(spark.x, spark.y);
+            ctx.fillStyle = spark.color;
             ctx.beginPath();
-            ctx.ellipse(0, 0, petal.width, petal.height, 0, 0, Math.PI * 2);
+            ctx.arc(0, 0, spark.radius, 0, Math.PI * 2);
             ctx.fill();
             ctx.restore();
         }
@@ -1401,121 +1335,8 @@ function initSpringDrift() {
     }
 
     window.addEventListener('resize', resize);
-    springOverlayInitialized = true;
+    summerOverlayInitialized = true;
     step();
-}
-
-function burstBirthdayConfetti() {
-    if (birthdayConfettiPlayed || !birthdayConfettiCanvas) {
-        return;
-    }
-
-    const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    birthdayConfettiPlayed = true;
-    if (prefersReducedMotion) {
-        return;
-    }
-
-    const ctx = birthdayConfettiCanvas.getContext('2d');
-    if (!ctx) {
-        return;
-    }
-
-    let width = 0;
-    let height = 0;
-    let animationFrameId = 0;
-    const particles = [];
-    const duration = 2400;
-    const confettiPalette = ['#ff7eb6', '#ffc4dd', '#f4cf72', '#fff4cf', '#ffffff'];
-
-    function resize() {
-        const dpr = window.devicePixelRatio || 1;
-        width = window.innerWidth;
-        height = window.innerHeight;
-        birthdayConfettiCanvas.width = width * dpr;
-        birthdayConfettiCanvas.height = height * dpr;
-        birthdayConfettiCanvas.style.width = `${width}px`;
-        birthdayConfettiCanvas.style.height = `${height}px`;
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    }
-
-    function createParticle(originX, originY, velocityX, velocityY) {
-        const size = Math.random() * 10 + 6;
-        return {
-            x: originX,
-            y: originY,
-            velocityX,
-            velocityY,
-            width: size,
-            height: size * (Math.random() * 0.8 + 1.2),
-            rotation: Math.random() * Math.PI * 2,
-            spin: (Math.random() * 0.24 + 0.08) * (Math.random() > 0.5 ? 1 : -1),
-            color: confettiPalette[Math.floor(Math.random() * confettiPalette.length)],
-            shape: Math.random() > 0.72 ? 'circle' : 'rect',
-        };
-    }
-
-    function addBurst(originX, originY, direction = 0) {
-        const particleCount = 58;
-        for (let index = 0; index < particleCount; index += 1) {
-            const spread = (Math.random() - 0.5) * 1.25;
-            const speed = Math.random() * 8 + 5.5;
-            const angle = -Math.PI / 2 + direction + spread;
-            particles.push(
-                createParticle(originX, originY, Math.cos(angle) * speed, Math.sin(angle) * speed)
-            );
-        }
-    }
-
-    function drawParticle(particle, opacity) {
-        ctx.save();
-        ctx.globalAlpha = opacity;
-        ctx.translate(particle.x, particle.y);
-        ctx.rotate(particle.rotation);
-        ctx.fillStyle = particle.color;
-        if (particle.shape === 'circle') {
-            ctx.beginPath();
-            ctx.arc(0, 0, particle.width * 0.45, 0, Math.PI * 2);
-            ctx.fill();
-        } else {
-            ctx.fillRect(-particle.width / 2, -particle.height / 2, particle.width, particle.height);
-        }
-        ctx.restore();
-    }
-
-    resize();
-    addBurst(width * 0.24, Math.min(height * 0.34, 250), -0.16);
-    addBurst(width * 0.5, Math.min(height * 0.22, 180), 0);
-    addBurst(width * 0.76, Math.min(height * 0.34, 250), 0.16);
-
-    const handleResize = () => resize();
-    window.addEventListener('resize', handleResize);
-
-    function step(startTime, now) {
-        const elapsed = now - startTime;
-        const progress = Math.min(1, elapsed / duration);
-        ctx.clearRect(0, 0, width, height);
-
-        particles.forEach((particle) => {
-            particle.x += particle.velocityX;
-            particle.y += particle.velocityY;
-            particle.velocityY += 0.18;
-            particle.velocityX *= 0.994;
-            particle.rotation += particle.spin;
-            drawParticle(particle, 1 - progress * 0.92);
-        });
-
-        if (progress < 1) {
-            animationFrameId = window.requestAnimationFrame((frameNow) => step(startTime, frameNow));
-            return;
-        }
-
-        window.removeEventListener('resize', handleResize);
-        window.cancelAnimationFrame(animationFrameId);
-        ctx.clearRect(0, 0, width, height);
-    }
-
-    animationFrameId = window.requestAnimationFrame((startTime) => step(startTime, startTime));
 }
 
 function applySeasonalTheme(date = new Date()) {
@@ -1525,22 +1346,14 @@ function applySeasonalTheme(date = new Date()) {
     }
 
     applyHeroSeasonalCopy(date);
-    const isBirthday = isBirthdayCelebrationDay(date);
-    body.classList.toggle(BIRTHDAY_THEME_CLASS, isBirthday);
-    if (isBirthday) {
-        body.classList.add(SPRING_THEME_CLASS);
-        burstBirthdayConfetti();
+    updateSummerMessage();
+    if (SUMMER_THEME_ALWAYS_ON || isSummerSeason(date)) {
+        body.classList.add(SUMMER_THEME_CLASS);
+        initSummerDrift();
         return;
     }
 
-    if (SPRING_THEME_ALWAYS_ON || isSpringSeason(date)) {
-        body.classList.add(SPRING_THEME_CLASS);
-        initSpringDrift();
-        return;
-    }
-
-    body.classList.remove(BIRTHDAY_THEME_CLASS);
-    body.classList.remove(SPRING_THEME_CLASS);
+    body.classList.remove(SUMMER_THEME_CLASS);
 }
 
 function getWeekStart(date) {
@@ -2912,9 +2725,6 @@ function showScreen(id) {
 }
 
 function pickSplashGreeting() {
-    if (isBirthdayCelebrationDay()) {
-        return { salute: 'Su gimtadieniu,', name: '{name}!' };
-    }
     if (!SPLASH_GREETINGS.length) {
         return { salute: 'Labas,', name: `${state.name}!` };
     }
@@ -5386,7 +5196,6 @@ timetableToggleWeekBtn?.addEventListener('click', () => {
 });
 updateWeekIndicator();
 applySeasonalTheme();
-scheduleSpringCountdown();
 scheduleWeekIndicatorUpdate();
 initImportantDatesSection();
 window.addEventListener('resize', scheduleLayoutTopSync);
@@ -5394,7 +5203,7 @@ document.addEventListener('visibilitychange', () => {
     if (!document.hidden) {
         updateWeekIndicator();
         applySeasonalTheme();
-        updateSpringCountdown();
+        updateSummerMessage();
     }
 });
 showScreen('intro');
