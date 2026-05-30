@@ -38,6 +38,9 @@ const shuffleQuizBtn = document.getElementById('quiz-shuffle');
 const weekIndicator = document.querySelector('.week-indicator');
 const weekIndicatorValue = document.getElementById('week-indicator-value');
 const weekIndicatorRange = document.getElementById('week-indicator-range');
+const uvMeter = document.querySelector('.uv-meter');
+const uvIndexValue = document.getElementById('uv-index-value');
+const uvIndexRisk = document.getElementById('uv-index-risk');
 const timetableWeekNumber = document.getElementById('timetable-week-number');
 const timetableWeekLabel = document.querySelector('.timetable-card__week-label');
 const timetableWeekRange = document.getElementById('timetable-week-range');
@@ -105,6 +108,14 @@ const PASSCODE = 'differentdimension';
 const ZERO_WIDTH_SPACE_PATTERN = /[\u200B\u200C\u200D\u2060\uFEFF]/g;
 const SUMMER_THEME_CLASS = 'season-summer';
 const SUMMER_THEME_ALWAYS_ON = true;
+const UV_INDEX_CACHE_KEY = 'pink-study-uv-index-v1';
+const UV_INDEX_CACHE_TTL_MS = 30 * 60 * 1000;
+const UV_INDEX_REFRESH_MS = 60 * 60 * 1000;
+const UV_INDEX_FALLBACK_LOCATION = {
+    latitude: 54.6872,
+    longitude: 25.2797,
+    label: 'Vilnius',
+};
 
 const state = {
     name: 'Emilija',
@@ -1354,6 +1365,172 @@ function applySeasonalTheme(date = new Date()) {
     }
 
     body.classList.remove(SUMMER_THEME_CLASS);
+}
+
+function getUvRiskLevel(value) {
+    if (!Number.isFinite(value)) {
+        return { key: 'unknown', label: 'Nepavyko' };
+    }
+    if (value < 3) {
+        return { key: 'low', label: 'Žemas' };
+    }
+    if (value < 6) {
+        return { key: 'moderate', label: 'Vidutinis' };
+    }
+    if (value < 8) {
+        return { key: 'high', label: 'Aukštas' };
+    }
+    if (value < 11) {
+        return { key: 'very-high', label: 'Labai aukštas' };
+    }
+    return { key: 'extreme', label: 'Ekstremalus' };
+}
+
+function renderUvIndex(value, risk, sourceLabel) {
+    if (!uvMeter || !uvIndexValue || !uvIndexRisk) {
+        return;
+    }
+
+    const displayValue = Number.isFinite(value) ? value.toFixed(1).replace(/\.0$/, '') : '—';
+    uvIndexValue.textContent = displayValue;
+    uvIndexRisk.textContent = sourceLabel ? `${risk.label} · ${sourceLabel}` : risk.label;
+    uvMeter.dataset.risk = risk.key;
+    uvMeter.title = sourceLabel ? `UV indeksas: ${displayValue} (${sourceLabel})` : `UV indeksas: ${displayValue}`;
+}
+
+function setUvIndexLoading() {
+    if (!uvMeter || !uvIndexValue || !uvIndexRisk) {
+        return;
+    }
+    uvMeter.dataset.risk = 'loading';
+    uvIndexValue.textContent = '—';
+    uvIndexRisk.textContent = 'Kraunama';
+}
+
+function readCachedUvIndex() {
+    try {
+        const raw = localStorage.getItem(UV_INDEX_CACHE_KEY);
+        if (!raw) {
+            return null;
+        }
+        const cached = JSON.parse(raw);
+        if (!cached || Date.now() - cached.savedAt > UV_INDEX_CACHE_TTL_MS) {
+            return null;
+        }
+        return cached;
+    } catch (error) {
+        return null;
+    }
+}
+
+function writeCachedUvIndex(payload) {
+    try {
+        localStorage.setItem(UV_INDEX_CACHE_KEY, JSON.stringify({ ...payload, savedAt: Date.now() }));
+    } catch (error) {
+        // Cache is only an optimization; ignore storage failures.
+    }
+}
+
+function getBrowserLocation() {
+    if (!navigator.geolocation) {
+        return Promise.resolve({ ...UV_INDEX_FALLBACK_LOCATION, fallback: true });
+    }
+
+    return new Promise((resolve) => {
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                resolve({
+                    latitude: position.coords.latitude,
+                    longitude: position.coords.longitude,
+                    label: 'čia',
+                    fallback: false,
+                });
+            },
+            () => resolve({ ...UV_INDEX_FALLBACK_LOCATION, fallback: true }),
+            {
+                enableHighAccuracy: false,
+                maximumAge: UV_INDEX_CACHE_TTL_MS,
+                timeout: 4500,
+            }
+        );
+    });
+}
+
+function pickNearestUvIndex(hourly, reference = new Date()) {
+    const times = hourly?.time;
+    const values = hourly?.uv_index;
+    if (!Array.isArray(times) || !Array.isArray(values) || !times.length) {
+        return NaN;
+    }
+
+    let bestValue = NaN;
+    let bestDistance = Number.POSITIVE_INFINITY;
+    const referenceTime = reference.getTime();
+    for (let index = 0; index < times.length; index += 1) {
+        const value = Number(values[index]);
+        const time = new Date(times[index]).getTime();
+        if (!Number.isFinite(value) || !Number.isFinite(time)) {
+            continue;
+        }
+        const distance = Math.abs(time - referenceTime);
+        if (distance < bestDistance) {
+            bestDistance = distance;
+            bestValue = value;
+        }
+    }
+    return bestValue;
+}
+
+async function fetchUvIndex(location) {
+    const params = new URLSearchParams({
+        latitude: String(location.latitude),
+        longitude: String(location.longitude),
+        hourly: 'uv_index',
+        forecast_days: '1',
+        timezone: 'auto',
+    });
+    const response = await fetch(`https://api.open-meteo.com/v1/forecast?${params.toString()}`);
+    if (!response.ok) {
+        throw new Error(`UV API returned ${response.status}`);
+    }
+    const data = await response.json();
+    return pickNearestUvIndex(data.hourly);
+}
+
+async function updateUvIndex({ force = false } = {}) {
+    if (!uvMeter) {
+        return;
+    }
+
+    const cached = readCachedUvIndex();
+    if (cached && !force) {
+        const risk = getUvRiskLevel(Number(cached.value));
+        renderUvIndex(Number(cached.value), risk, cached.sourceLabel);
+        return;
+    }
+
+    setUvIndexLoading();
+    try {
+        const location = await getBrowserLocation();
+        const value = await fetchUvIndex(location);
+        if (!Number.isFinite(value)) {
+            throw new Error('UV API response did not include a usable value');
+        }
+        const sourceLabel = location.fallback ? location.label : 'čia';
+        const risk = getUvRiskLevel(value);
+        renderUvIndex(value, risk, sourceLabel);
+        writeCachedUvIndex({ value, sourceLabel });
+    } catch (error) {
+        const fallbackRisk = getUvRiskLevel(NaN);
+        renderUvIndex(NaN, fallbackRisk, '');
+    }
+}
+
+function scheduleUvIndexUpdates() {
+    updateUvIndex();
+    window.setInterval(() => {
+        updateUvIndex({ force: true });
+    }, UV_INDEX_REFRESH_MS);
 }
 
 function getWeekStart(date) {
@@ -5186,6 +5363,9 @@ if (weekIndicator) {
         }
     });
 }
+uvMeter?.addEventListener('click', (event) => {
+    event.stopPropagation();
+});
 timetableToggleWeekBtn?.addEventListener('click', () => {
     if (!latestWeekContext.weekStart) {
         return;
@@ -5196,6 +5376,7 @@ timetableToggleWeekBtn?.addEventListener('click', () => {
 });
 updateWeekIndicator();
 applySeasonalTheme();
+scheduleUvIndexUpdates();
 scheduleWeekIndicatorUpdate();
 initImportantDatesSection();
 window.addEventListener('resize', scheduleLayoutTopSync);
@@ -5204,6 +5385,7 @@ document.addEventListener('visibilitychange', () => {
         updateWeekIndicator();
         applySeasonalTheme();
         updateSummerMessage();
+        updateUvIndex();
     }
 });
 showScreen('intro');

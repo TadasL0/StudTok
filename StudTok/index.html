@@ -10,7 +10,7 @@
         href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:wght@400;500;600;700;900&family=Caveat:wght@400;600;700&family=Quicksand:wght@400;600;700&display=swap"
         rel="stylesheet"
     />
-    <link rel="stylesheet" href="style.css?v=20260520-01" />
+    <link rel="stylesheet" href="style.css?v=20260521-01" />
     <link rel="icon" type="image/png" href="assets/favicon.png?v=2" />
     <link rel="shortcut icon" href="assets/favicon.png?v=2" type="image/png" />
     <link rel="apple-touch-icon" href="assets/favicon.png?v=2" />
@@ -18,6 +18,14 @@
 </head>
 <body>
     <div class="week-indicator" role="button" tabindex="0" aria-live="polite" aria-expanded="true">
+        <div class="uv-meter" role="status" aria-live="polite" aria-label="UV indeksas">
+            <span class="uv-meter__icon" aria-hidden="true"></span>
+            <span class="uv-meter__content">
+                <span class="uv-meter__label">UV</span>
+                <span id="uv-index-value" class="uv-meter__value">&mdash;</span>
+                <span id="uv-index-risk" class="uv-meter__risk">Kraunama</span>
+            </span>
+        </div>
         <span class="week-indicator__label">&#352;i savait&#279;:</span>
         <span id="week-indicator-value" class="week-indicator__value">&mdash;</span>
         <span id="week-indicator-range" class="week-indicator__range"></span>
@@ -351,6 +359,6 @@
     <footer class="footer">
         <span>Sukurta su &hearts;</span>
     </footer>
-<script src="script.js?v=20260520-01"></script>
+<script src="script.js?v=20260521-01"></script>
 </body>
 </html>

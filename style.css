@@ -112,7 +112,7 @@ body.week-indicator-collapsed {
     width: 100%;
     z-index: 1200;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: auto minmax(0, 1fr) auto;
     grid-auto-rows: auto;
     column-gap: clamp(14px, 6vw, 32px);
     row-gap: 2px;
@@ -141,7 +141,7 @@ body.season-summer .week-indicator {
 }
 
 .week-indicator__label {
-    grid-column: 1 / 2;
+    grid-column: 2 / 3;
     font-family: 'Quicksand', 'Century Gothic', 'Segoe UI', sans-serif;
     font-size: 0.68rem;
     letter-spacing: 0.12em;
@@ -152,7 +152,7 @@ body.season-summer .week-indicator {
 }
 
 .week-indicator__value {
-    grid-column: 1 / 2;
+    grid-column: 2 / 3;
     font-family: 'Bodoni Moda', 'Didot', 'Georgia', serif;
     font-size: 0.9rem;
     font-weight: 600;
@@ -160,7 +160,7 @@ body.season-summer .week-indicator {
 }
 
 .week-indicator__range {
-    grid-column: 1 / 2;
+    grid-column: 2 / 3;
     font-family: 'Quicksand', 'Century Gothic', 'Segoe UI', sans-serif;
     font-size: 0.7rem;
     letter-spacing: 0.06em;
@@ -169,7 +169,7 @@ body.season-summer .week-indicator {
 }
 
 .week-indicator__chevron {
-    grid-column: 1 / 2;
+    grid-column: 2 / 3;
     width: 12px;
     height: 12px;
     border-right: 2px solid rgba(68, 38, 63, 0.28);
@@ -195,19 +195,30 @@ body.season-summer .week-indicator {
         margin-top: 6px;
     }
 
+    .uv-meter {
+        grid-column: 1;
+        grid-row: auto;
+        justify-self: center;
+        margin-bottom: 4px;
+    }
+
     .week-indicator__label {
+        grid-column: 1;
         font-size: 0.62rem;
     }
 
     .week-indicator__value {
+        grid-column: 1;
         font-size: 0.78rem;
     }
 
     .week-indicator__range {
+        grid-column: 1;
         font-size: 0.68rem;
     }
 
     .week-indicator__chevron {
+        grid-column: 1;
         width: 11px;
         height: 11px;
     }
@@ -242,8 +253,92 @@ body.season-summer .week-indicator {
     transform: translateY(2px);
 }
 
+.uv-meter {
+    grid-column: 1 / 2;
+    grid-row: 1 / span 4;
+    justify-self: start;
+    align-self: start;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    max-width: min(42vw, 190px);
+    padding: 7px 11px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(255, 157, 208, 0.28);
+    box-shadow: 0 12px 26px rgba(255, 157, 208, 0.16);
+    backdrop-filter: blur(10px);
+    font-family: 'Quicksand', 'Century Gothic', 'Segoe UI', sans-serif;
+    cursor: default;
+}
+
+.uv-meter__icon {
+    width: 28px;
+    height: 28px;
+    flex: 0 0 auto;
+    border-radius: 50%;
+    background:
+        repeating-conic-gradient(from 0deg, rgba(255, 195, 74, 0.95) 0 12deg, transparent 12deg 25deg),
+        radial-gradient(circle at 50% 50%, rgba(255, 248, 154, 0.98) 0 38%, rgba(255, 177, 86, 0.96) 39% 66%, transparent 67%);
+    box-shadow: 0 6px 14px rgba(255, 157, 208, 0.18);
+}
+
+.uv-meter__content {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: auto auto;
+    column-gap: 5px;
+    align-items: baseline;
+    text-align: left;
+}
+
+.uv-meter__label {
+    font-size: 0.62rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(68, 38, 63, 0.58);
+    font-weight: 700;
+}
+
+.uv-meter__value {
+    font-family: 'Bodoni Moda', 'Didot', 'Georgia', serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    line-height: 1;
+}
+
+.uv-meter__risk {
+    grid-column: 1 / -1;
+    overflow: hidden;
+    max-width: 100%;
+    color: rgba(68, 38, 63, 0.62);
+    font-size: 0.66rem;
+    font-weight: 700;
+    line-height: 1.15;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.uv-meter[data-risk='moderate'] .uv-meter__value {
+    color: #b47a16;
+}
+
+.uv-meter[data-risk='high'] .uv-meter__value,
+.uv-meter[data-risk='very-high'] .uv-meter__value,
+.uv-meter[data-risk='extreme'] .uv-meter__value {
+    color: #c42775;
+}
+
+body.season-summer .uv-meter {
+    background: linear-gradient(135deg, rgba(255, 248, 253, 0.94), rgba(255, 246, 219, 0.9));
+    border-color: rgba(255, 151, 203, 0.34);
+    box-shadow: 0 12px 26px rgba(222, 82, 153, 0.14);
+}
+
 .reward-meter {
-    grid-column: 2 / 3;
+    grid-column: 3 / 4;
     grid-row: 1 / span 4;
     justify-self: end;
     align-self: start;
@@ -298,6 +393,10 @@ body.season-summer .week-indicator {
     align-self: start;
 }
 
+.week-indicator--collapsed .uv-meter {
+    align-self: start;
+}
+
 @keyframes rewardBounce {
     0% {
         transform: scale(1);
@@ -319,6 +418,21 @@ body.season-summer .week-indicator {
         gap: 5px;
         justify-self: center;
         max-width: min(60vw, 160px);
+    }
+    .uv-meter {
+        padding: 5px 9px;
+        gap: 5px;
+        max-width: min(72vw, 190px);
+    }
+    .uv-meter__icon {
+        width: 26px;
+        height: 26px;
+    }
+    .uv-meter__value {
+        font-size: 0.95rem;
+    }
+    .uv-meter__risk {
+        font-size: 0.62rem;
     }
     .reward-meter__icon {
         width: 26px;
