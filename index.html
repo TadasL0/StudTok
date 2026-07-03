@@ -10,7 +10,7 @@
         href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:wght@400;500;600;700;900&family=Caveat:wght@400;600;700&family=Quicksand:wght@400;600;700&display=swap"
         rel="stylesheet"
     />
-    <link rel="stylesheet" href="style.css?v=20260329-3" />
+    <link rel="stylesheet" href="style.css?v=20260703-1" />
     <link rel="icon" type="image/png" href="assets/favicon.png?v=2" />
     <link rel="shortcut icon" href="assets/favicon.png?v=2" type="image/png" />
     <link rel="apple-touch-icon" href="assets/favicon.png?v=2" />
@@ -18,6 +18,14 @@
 </head>
 <body>
     <div class="week-indicator" role="button" tabindex="0" aria-live="polite" aria-expanded="true">
+        <div class="uv-meter" role="status" aria-live="polite" aria-label="UV indeksas">
+            <span class="uv-meter__icon" aria-hidden="true"></span>
+            <span class="uv-meter__content">
+                <span class="uv-meter__label">UV</span>
+                <span id="uv-index-value" class="uv-meter__value">&mdash;</span>
+                <span id="uv-index-risk" class="uv-meter__risk">Kraunama</span>
+            </span>
+        </div>
         <span class="week-indicator__label">&#352;i savait&#279;:</span>
         <span id="week-indicator-value" class="week-indicator__value">&mdash;</span>
         <span id="week-indicator-range" class="week-indicator__range"></span>
@@ -37,44 +45,44 @@
             <span id="splash-name" class="welcome-splash__name">Emilija!</span>
         </div>
         <div class="welcome-splash__particles" aria-hidden="true">
-            <span class="welcome-splash__egg welcome-splash__egg--stripe" style="--x:7%; --delay:0s; --duration:7.4s; --size:38px;"></span>
-            <span class="welcome-splash__egg welcome-splash__egg--dots" style="--x:18%; --delay:-2.4s; --duration:8.8s; --size:32px;"></span>
-            <span class="welcome-splash__rose" style="--x:30%; --delay:-1.6s; --duration:9.1s; --size:40px;"></span>
-            <span class="welcome-splash__bird" style="--x:43%; --delay:-3.2s; --duration:7.8s; --size:42px;"></span>
-            <span class="welcome-splash__cake" style="--x:56%; --delay:-2s; --duration:8.5s; --size:42px;"></span>
-            <span class="welcome-splash__egg welcome-splash__egg--stripe" style="--x:68%; --delay:-4.2s; --duration:9.2s; --size:36px;"></span>
-            <span class="welcome-splash__rose" style="--x:81%; --delay:-5.5s; --duration:8.2s; --size:44px;"></span>
-            <span class="welcome-splash__bird welcome-splash__bird--chirp" style="--x:92%; --delay:-1.3s; --duration:8.6s; --size:38px;"></span>
-            <span class="welcome-splash__cake welcome-splash__cake--tiny" style="--x:12%; --delay:-6.4s; --duration:9.5s; --size:32px;"></span>
-            <span class="welcome-splash__rose welcome-splash__rose--mini" style="--x:24%; --delay:-4.8s; --duration:8.7s; --size:32px;"></span>
-            <span class="welcome-splash__egg welcome-splash__egg--dots" style="--x:37%; --delay:-7.1s; --duration:9.7s; --size:30px;"></span>
-            <span class="welcome-splash__bird" style="--x:50%; --delay:-6.3s; --duration:7.6s; --size:36px;"></span>
-            <span class="welcome-splash__cake" style="--x:63%; --delay:-5.1s; --duration:9.4s; --size:36px;"></span>
-            <span class="welcome-splash__rose" style="--x:76%; --delay:-6.8s; --duration:8.4s; --size:34px;"></span>
-            <span class="welcome-splash__egg welcome-splash__egg--stripe" style="--x:88%; --delay:-7.5s; --duration:9.1s; --size:28px;"></span>
+            <span class="welcome-splash__sun" style="--x:7%; --delay:0s; --duration:7.4s; --size:38px;"></span>
+            <span class="welcome-splash__shell" style="--x:18%; --delay:-2.4s; --duration:8.8s; --size:32px;"></span>
+            <span class="welcome-splash__starfish" style="--x:30%; --delay:-1.6s; --duration:9.1s; --size:40px;"></span>
+            <span class="welcome-splash__wave" style="--x:43%; --delay:-3.2s; --duration:7.8s; --size:42px;"></span>
+            <span class="welcome-splash__sun" style="--x:56%; --delay:-2s; --duration:8.5s; --size:42px;"></span>
+            <span class="welcome-splash__shell" style="--x:68%; --delay:-4.2s; --duration:9.2s; --size:36px;"></span>
+            <span class="welcome-splash__starfish" style="--x:81%; --delay:-5.5s; --duration:8.2s; --size:44px;"></span>
+            <span class="welcome-splash__wave welcome-splash__wave--small" style="--x:92%; --delay:-1.3s; --duration:8.6s; --size:38px;"></span>
+            <span class="welcome-splash__sun welcome-splash__sun--tiny" style="--x:12%; --delay:-6.4s; --duration:9.5s; --size:32px;"></span>
+            <span class="welcome-splash__starfish welcome-splash__starfish--mini" style="--x:24%; --delay:-4.8s; --duration:8.7s; --size:32px;"></span>
+            <span class="welcome-splash__shell" style="--x:37%; --delay:-7.1s; --duration:9.7s; --size:30px;"></span>
+            <span class="welcome-splash__wave" style="--x:50%; --delay:-6.3s; --duration:7.6s; --size:36px;"></span>
+            <span class="welcome-splash__sun" style="--x:63%; --delay:-5.1s; --duration:9.4s; --size:36px;"></span>
+            <span class="welcome-splash__starfish" style="--x:76%; --delay:-6.8s; --duration:8.4s; --size:34px;"></span>
+            <span class="welcome-splash__shell" style="--x:88%; --delay:-7.5s; --duration:9.1s; --size:28px;"></span>
         </div>
     </div>
     <div class="sparkle-overlay" aria-hidden="true"></div>
-    <canvas id="springCanvas" aria-hidden="true"></canvas>
-    <div class="spring-decor" aria-hidden="true">
-        <span class="spring-decor__item spring-decor__item--rose spring-decor__item--rose-a"></span>
-        <span class="spring-decor__item spring-decor__item--rose spring-decor__item--rose-b"></span>
-        <span class="spring-decor__item spring-decor__item--egg spring-decor__item--egg-a"></span>
-        <span class="spring-decor__item spring-decor__item--cake spring-decor__item--cake-a"></span>
-        <span class="spring-decor__item spring-decor__item--bird spring-decor__item--bird-a"></span>
-        <span class="spring-decor__item spring-decor__item--bird spring-decor__item--bird-b"></span>
+    <canvas id="summerCanvas" aria-hidden="true"></canvas>
+    <div class="summer-decor" aria-hidden="true">
+        <span class="summer-decor__item summer-decor__item--sun summer-decor__item--sun-a"></span>
+        <span class="summer-decor__item summer-decor__item--shell summer-decor__item--shell-a"></span>
+        <span class="summer-decor__item summer-decor__item--starfish summer-decor__item--starfish-a"></span>
+        <span class="summer-decor__item summer-decor__item--wave summer-decor__item--wave-a"></span>
+        <span class="summer-decor__item summer-decor__item--sun summer-decor__item--sun-b"></span>
+        <span class="summer-decor__item summer-decor__item--shell summer-decor__item--shell-b"></span>
     </div>
     <main class="app" role="main">
         <header class="hero">
-            <span class="hero__badge">PAVASARIS AT&#278;JO</span>
-            <h1 class="hero__title">PAVASARIS AT&#278;JO</h1>
-            <p class="hero__tagline">Mokykis tarp margu&#269;i&#371;, torto, ro&#382;i&#371; ir gelton&#371; pauk&#353;teli&#371; nuotaikos.</p>
-            <p id="spring-countdown" class="hero__countdown" aria-live="polite">Skai&#269;iuojama...</p>
-            <div class="hero__spring-strip" aria-hidden="true">
-                <span class="hero__spring-pill hero__spring-pill--egg"></span>
-                <span class="hero__spring-pill hero__spring-pill--cake"></span>
-                <span class="hero__spring-pill hero__spring-pill--rose"></span>
-                <span class="hero__spring-pill hero__spring-pill--bird"></span>
+            <span class="hero__badge">VASARA PRASIDEDA</span>
+            <h1 class="hero__title">VASARA PRASIDEDA</h1>
+            <p class="hero__tagline">Mokykis su j&#363;ros bangomis, saule, sm&#279;liu ir atostog&#371; ramybe.</p>
+            <p id="summer-countdown" class="hero__countdown" aria-live="polite">Vasari&#353;ka mokymosi nuotaika jau &#269;ia.</p>
+            <div class="hero__summer-strip" aria-hidden="true">
+                <span class="hero__summer-pill hero__summer-pill--sun"></span>
+                <span class="hero__summer-pill hero__summer-pill--wave"></span>
+                <span class="hero__summer-pill hero__summer-pill--shell"></span>
+                <span class="hero__summer-pill hero__summer-pill--starfish"></span>
             </div>
         </header>
 
