@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="lt" data-study-backend="/api/study-bundle">
 <head>
     <meta charset="utf-8" />
@@ -10,7 +10,7 @@
         href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:wght@400;500;600;700;900&family=Caveat:wght@400;600;700&family=Quicksand:wght@400;600;700&display=swap"
         rel="stylesheet"
     />
-    <link rel="stylesheet" href="style.css?v=20260521-01" />
+    <link rel="stylesheet" href="style.css?v=20260329-3" />
     <link rel="icon" type="image/png" href="assets/favicon.png?v=2" />
     <link rel="shortcut icon" href="assets/favicon.png?v=2" type="image/png" />
     <link rel="apple-touch-icon" href="assets/favicon.png?v=2" />
@@ -18,14 +18,6 @@
 </head>
 <body>
     <div class="week-indicator" role="button" tabindex="0" aria-live="polite" aria-expanded="true">
-        <div class="uv-meter" role="status" aria-live="polite" aria-label="UV indeksas">
-            <span class="uv-meter__icon" aria-hidden="true"></span>
-            <span class="uv-meter__content">
-                <span class="uv-meter__label">UV</span>
-                <span id="uv-index-value" class="uv-meter__value">&mdash;</span>
-                <span id="uv-index-risk" class="uv-meter__risk">Kraunama</span>
-            </span>
-        </div>
         <span class="week-indicator__label">&#352;i savait&#279;:</span>
         <span id="week-indicator-value" class="week-indicator__value">&mdash;</span>
         <span id="week-indicator-range" class="week-indicator__range"></span>
@@ -45,44 +37,44 @@
             <span id="splash-name" class="welcome-splash__name">Emilija!</span>
         </div>
         <div class="welcome-splash__particles" aria-hidden="true">
-            <span class="welcome-splash__sun" style="--x:7%; --delay:0s; --duration:7.4s; --size:38px;"></span>
-            <span class="welcome-splash__shell" style="--x:18%; --delay:-2.4s; --duration:8.8s; --size:32px;"></span>
-            <span class="welcome-splash__starfish" style="--x:30%; --delay:-1.6s; --duration:9.1s; --size:40px;"></span>
-            <span class="welcome-splash__wave" style="--x:43%; --delay:-3.2s; --duration:7.8s; --size:42px;"></span>
-            <span class="welcome-splash__sun" style="--x:56%; --delay:-2s; --duration:8.5s; --size:42px;"></span>
-            <span class="welcome-splash__shell" style="--x:68%; --delay:-4.2s; --duration:9.2s; --size:36px;"></span>
-            <span class="welcome-splash__starfish" style="--x:81%; --delay:-5.5s; --duration:8.2s; --size:44px;"></span>
-            <span class="welcome-splash__wave welcome-splash__wave--small" style="--x:92%; --delay:-1.3s; --duration:8.6s; --size:38px;"></span>
-            <span class="welcome-splash__sun welcome-splash__sun--tiny" style="--x:12%; --delay:-6.4s; --duration:9.5s; --size:32px;"></span>
-            <span class="welcome-splash__starfish welcome-splash__starfish--mini" style="--x:24%; --delay:-4.8s; --duration:8.7s; --size:32px;"></span>
-            <span class="welcome-splash__shell" style="--x:37%; --delay:-7.1s; --duration:9.7s; --size:30px;"></span>
-            <span class="welcome-splash__wave" style="--x:50%; --delay:-6.3s; --duration:7.6s; --size:36px;"></span>
-            <span class="welcome-splash__sun" style="--x:63%; --delay:-5.1s; --duration:9.4s; --size:36px;"></span>
-            <span class="welcome-splash__starfish" style="--x:76%; --delay:-6.8s; --duration:8.4s; --size:34px;"></span>
-            <span class="welcome-splash__shell" style="--x:88%; --delay:-7.5s; --duration:9.1s; --size:28px;"></span>
+            <span class="welcome-splash__egg welcome-splash__egg--stripe" style="--x:7%; --delay:0s; --duration:7.4s; --size:38px;"></span>
+            <span class="welcome-splash__egg welcome-splash__egg--dots" style="--x:18%; --delay:-2.4s; --duration:8.8s; --size:32px;"></span>
+            <span class="welcome-splash__rose" style="--x:30%; --delay:-1.6s; --duration:9.1s; --size:40px;"></span>
+            <span class="welcome-splash__bird" style="--x:43%; --delay:-3.2s; --duration:7.8s; --size:42px;"></span>
+            <span class="welcome-splash__cake" style="--x:56%; --delay:-2s; --duration:8.5s; --size:42px;"></span>
+            <span class="welcome-splash__egg welcome-splash__egg--stripe" style="--x:68%; --delay:-4.2s; --duration:9.2s; --size:36px;"></span>
+            <span class="welcome-splash__rose" style="--x:81%; --delay:-5.5s; --duration:8.2s; --size:44px;"></span>
+            <span class="welcome-splash__bird welcome-splash__bird--chirp" style="--x:92%; --delay:-1.3s; --duration:8.6s; --size:38px;"></span>
+            <span class="welcome-splash__cake welcome-splash__cake--tiny" style="--x:12%; --delay:-6.4s; --duration:9.5s; --size:32px;"></span>
+            <span class="welcome-splash__rose welcome-splash__rose--mini" style="--x:24%; --delay:-4.8s; --duration:8.7s; --size:32px;"></span>
+            <span class="welcome-splash__egg welcome-splash__egg--dots" style="--x:37%; --delay:-7.1s; --duration:9.7s; --size:30px;"></span>
+            <span class="welcome-splash__bird" style="--x:50%; --delay:-6.3s; --duration:7.6s; --size:36px;"></span>
+            <span class="welcome-splash__cake" style="--x:63%; --delay:-5.1s; --duration:9.4s; --size:36px;"></span>
+            <span class="welcome-splash__rose" style="--x:76%; --delay:-6.8s; --duration:8.4s; --size:34px;"></span>
+            <span class="welcome-splash__egg welcome-splash__egg--stripe" style="--x:88%; --delay:-7.5s; --duration:9.1s; --size:28px;"></span>
         </div>
     </div>
     <div class="sparkle-overlay" aria-hidden="true"></div>
-    <canvas id="summerCanvas" aria-hidden="true"></canvas>
-    <div class="summer-decor" aria-hidden="true">
-        <span class="summer-decor__item summer-decor__item--sun summer-decor__item--sun-a"></span>
-        <span class="summer-decor__item summer-decor__item--shell summer-decor__item--shell-a"></span>
-        <span class="summer-decor__item summer-decor__item--starfish summer-decor__item--starfish-a"></span>
-        <span class="summer-decor__item summer-decor__item--wave summer-decor__item--wave-a"></span>
-        <span class="summer-decor__item summer-decor__item--sun summer-decor__item--sun-b"></span>
-        <span class="summer-decor__item summer-decor__item--shell summer-decor__item--shell-b"></span>
+    <canvas id="springCanvas" aria-hidden="true"></canvas>
+    <div class="spring-decor" aria-hidden="true">
+        <span class="spring-decor__item spring-decor__item--rose spring-decor__item--rose-a"></span>
+        <span class="spring-decor__item spring-decor__item--rose spring-decor__item--rose-b"></span>
+        <span class="spring-decor__item spring-decor__item--egg spring-decor__item--egg-a"></span>
+        <span class="spring-decor__item spring-decor__item--cake spring-decor__item--cake-a"></span>
+        <span class="spring-decor__item spring-decor__item--bird spring-decor__item--bird-a"></span>
+        <span class="spring-decor__item spring-decor__item--bird spring-decor__item--bird-b"></span>
     </div>
     <main class="app" role="main">
         <header class="hero">
-            <span class="hero__badge">VASARA PRASIDEDA</span>
-            <h1 class="hero__title">VASARA PRASIDEDA</h1>
-            <p class="hero__tagline">Mokykis su j&#363;ros bangomis, saule, sm&#279;liu ir atostog&#371; ramybe.</p>
-            <p id="summer-countdown" class="hero__countdown" aria-live="polite">Vasari&#353;ka mokymosi nuotaika jau &#269;ia.</p>
-            <div class="hero__summer-strip" aria-hidden="true">
-                <span class="hero__summer-pill hero__summer-pill--sun"></span>
-                <span class="hero__summer-pill hero__summer-pill--wave"></span>
-                <span class="hero__summer-pill hero__summer-pill--shell"></span>
-                <span class="hero__summer-pill hero__summer-pill--starfish"></span>
+            <span class="hero__badge">PAVASARIS AT&#278;JO</span>
+            <h1 class="hero__title">PAVASARIS AT&#278;JO</h1>
+            <p class="hero__tagline">Mokykis tarp margu&#269;i&#371;, torto, ro&#382;i&#371; ir gelton&#371; pauk&#353;teli&#371; nuotaikos.</p>
+            <p id="spring-countdown" class="hero__countdown" aria-live="polite">Skai&#269;iuojama...</p>
+            <div class="hero__spring-strip" aria-hidden="true">
+                <span class="hero__spring-pill hero__spring-pill--egg"></span>
+                <span class="hero__spring-pill hero__spring-pill--cake"></span>
+                <span class="hero__spring-pill hero__spring-pill--rose"></span>
+                <span class="hero__spring-pill hero__spring-pill--bird"></span>
             </div>
         </header>
 
@@ -141,11 +133,54 @@
                         <div class="timetable-card__panel">
                             <div class="timetable-card__panel-content">
                                 <div class="important-dates" aria-live="polite">
+                                    <section id="important-next-card" class="important-dates__hero" data-tone="default" aria-labelledby="important-next-title">
+                                        <div class="important-dates__hero-copy">
+                                            <span class="important-dates__eyebrow">Artimiausi atsiskaitymai</span>
+                                            <div class="important-dates__hero-topline">
+                                                <h4 id="important-next-title" class="important-dates__hero-title">Kol kas be atsiskaitym&#371;</h4>
+                                                <span id="important-next-badge" class="important-dates__hero-badge" data-tone="default">3 artimiausi</span>
+                                            </div>
+                                            <p id="important-next-date" class="important-dates__hero-date">&mdash;</p>
+                                            <p id="important-next-note" class="important-dates__hero-note">Papildyk lentel&#281;, kai atsiras naujos datos.</p>
+                                            <ul id="important-next-list" class="important-dates__hero-list" aria-label="3 artimiausi atsiskaitymai" hidden></ul>
+                                        </div>
+                                        <div class="important-dates__countdown">
+                                            <span id="important-next-countdown" class="important-dates__countdown-value">&mdash;</span>
+                                            <span id="important-next-countdown-label" class="important-dates__countdown-label" hidden></span>
+                                        </div>
+                                    </section>
+
+                                    <div class="important-dates__toolbar">
+                                        <div id="important-dates-filters" class="important-dates__filters" role="group" aria-label="Svarbi&#371; dat&#371; filtrai">
+                                            <button type="button" class="important-dates__filter important-dates__filter--active" data-important-filter="upcoming">Artimiausi</button>
+                                            <button type="button" class="important-dates__filter" data-important-filter="month">&#352;is m&#279;nuo</button>
+                                            <button type="button" class="important-dates__filter" data-important-filter="all">Visi</button>
+                                        </div>
+                                        <div class="important-dates__actions">
+                                            <a
+                                                id="important-dates-sheet-link"
+                                                class="important-dates__link"
+                                                href="https://docs.google.com/spreadsheets/d/e/2PACX-1vSXYC-ZQPMy3ViRMeLZXHDIkOJx1e6dfVmqWyWkCtWWBuhD06XFycAhdjIKIVA7_L-REJh-qKL1qnS4/pubhtml?gid=1977665068&amp;single=true"
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                            >
+                                                Atidaryti Google Sheets
+                                            </a>
+                                            <button id="important-dates-refresh" type="button" class="btn btn--secondary btn--tiny">Atnaujinti</button>
+                                            <button id="important-dates-toggle-embed" type="button" class="btn btn--secondary btn--tiny" aria-expanded="false">Rodyti lentel&#281;</button>
+                                        </div>
+                                    </div>
+
+                                    <p id="important-dates-status" class="important-dates__status" data-tone="muted">Kraunamos svarbios datos...</p>
+                                    <p id="important-dates-empty" class="important-dates__empty" hidden>Kol kas n&#279;ra svarbi&#371; dat&#371;.</p>
+                                    <ul id="important-dates-list" class="important-dates__list" aria-label="Svarbi&#371; dat&#371; s&#261;ra&#353;as"></ul>
+
                                     <div
                                         id="important-dates-embed"
                                         class="important-dates-shell"
                                         data-sheet-url="https://docs.google.com/spreadsheets/d/e/2PACX-1vSXYC-ZQPMy3ViRMeLZXHDIkOJx1e6dfVmqWyWkCtWWBuhD06XFycAhdjIKIVA7_L-REJh-qKL1qnS4/pubhtml?gid=1977665068&amp;single=true"
                                         data-sheet-csv="https://docs.google.com/spreadsheets/d/e/2PACX-1vSXYC-ZQPMy3ViRMeLZXHDIkOJx1e6dfVmqWyWkCtWWBuhD06XFycAhdjIKIVA7_L-REJh-qKL1qnS4/pub?gid=1977665068&amp;single=true&amp;output=csv"
+                                        hidden
                                     >
                                         <iframe
                                             title="Svarbios datos"
@@ -155,17 +190,6 @@
                                             class="timetable-card__iframe important-dates-shell__iframe"
                                         ></iframe>
                                     </div>
-
-                                    <div class="important-dates__toolbar important-dates__toolbar--compact">
-                                        <div class="important-dates__actions">
-                                            <button id="important-dates-refresh" type="button" class="btn btn--secondary btn--tiny">Atnaujinti</button>
-                                        </div>
-                                    </div>
-
-                                    <p id="important-dates-status" class="important-dates__status" data-tone="muted">Kraunamos svarbios datos...</p>
-                                    <p id="important-dates-empty" class="important-dates__empty" hidden>Kol kas n&#279;ra svarbi&#371; dat&#371;.</p>
-                                    <ul id="important-dates-list" class="important-dates__list" aria-label="Svarbi&#371; dat&#371; s&#261;ra&#353;as"></ul>
-
                                 </div>
                             </div>
                         </div>
@@ -214,7 +238,7 @@
                                 </label>
                                 <label class="flashcard-form__toggle">
                                     <input id="mode-quiz" type="checkbox" name="mode-quiz" />
-                                    <span class="flashcard-form__toggle-label">Smagius testukus</span>
+                                    <span class="flashcard-form__toggle-label">ABCD test&#261;</span>
                                 </label>
                             </div>
                             <p class="flashcard-form__hint flashcard-form__hint--inline">Pasirink vien&#261; parinkt&#303;, kad Emilija nepervargt&#371;.</p>
@@ -300,10 +324,10 @@
 
                 <div class="card quiz-card" aria-live="polite">
                     <div class="quiz-card__header">
-                        <h3 class="card__title" id="quiz-title">Smag&#363;s testukai</h3>
-                        <p class="quiz-card__tagline">Spr&#281;sk savo tempu, per&#382;i&#363;r&#279;k paai&#353;kinim&#261; ir keliauk prie kito klausimo tada, kai pati nori.</p>
+                        <h3 class="card__title" id="quiz-title">Ro&#382;inis grei&#269;io testas</h3>
+                        <p class="quiz-card__tagline">Spr&#281;sk saugiu tempu ir rink ta&#353;kus tada, kai jautiesi pasiruo&#353;usi.</p>
                     </div>
-                    <p id="quiz-empty" class="quiz-empty">Sukurk testukus ir jie atsiras &#269;ia.</p>
+                    <p id="quiz-empty" class="quiz-empty">Sukurk korteles ir &#269;ia atsiras testas.</p>
                     <div id="quiz-widget" class="quiz-widget" hidden aria-labelledby="quiz-title">
                         <div class="quiz-widget__status">
                             <div class="quiz-widget__status-item">
@@ -316,19 +340,10 @@
                             </div>
                             <div class="quiz-widget__status-item">
                                 <span class="quiz-widget__status-label">Atsakyta</span>
-                                <span id="quiz-progress" class="quiz-widget__status-value">0 / 0</span>
-                            </div>
-                            <div class="quiz-widget__status-item">
-                                <span class="quiz-widget__status-label">Klausimas</span>
-                                <span id="quiz-current" class="quiz-widget__status-value">-</span>
+                                <span id="quiz-progress" class="quiz-widget__status-value">0</span>
                             </div>
                         </div>
-                        <div class="quiz-widget__question-shell">
-                            <div class="quiz-widget__question-meta">
-                                <span id="quiz-question-badge" class="quiz-widget__question-badge">Paruo&#353;k testukus</span>
-                            </div>
-                            <p id="quiz-question" class="quiz-widget__question"></p>
-                        </div>
+                        <p id="quiz-question" class="quiz-widget__question"></p>
                         <div
                             id="quiz-options"
                             class="quiz-widget__options"
@@ -337,18 +352,88 @@
                         ></div>
                         <p id="quiz-feedback" class="quiz-widget__feedback" role="status"></p>
                         <div class="quiz-widget__actions quiz-widget__actions--primary">
-                            <button id="quiz-start" type="button" class="btn btn--pill" disabled>Prad&#279;ti</button>
-                            <button id="quiz-next" type="button" class="btn btn--pill" disabled>Kitas klausimas</button>
-                            <button id="quiz-stop" type="button" class="btn btn--secondary btn--tiny" disabled>Baigti</button>
+                            <button id="quiz-start" type="button" class="btn btn--pill" disabled>Startuoti</button>
+                            <button id="quiz-stop" type="button" class="btn btn--secondary btn--tiny" disabled>Baigti anks&#269;iau</button>
                         </div>
                         <div class="quiz-widget__actions">
                             <button id="quiz-restart" type="button" class="btn btn--secondary btn--tiny" disabled>I&#353;valyti ir ruo&#353;tis</button>
                             <button id="quiz-shuffle" type="button" class="btn btn--secondary btn--tiny" disabled>I&#353;mai&#353;yti klausimus</button>
-                            <button id="quiz-regenerate" type="button" class="btn btn--secondary btn--tiny" disabled>Sukurti nauj&#261; testuk&#261;</button>
+                            <button id="quiz-regenerate" type="button" class="btn btn--secondary btn--tiny" disabled>Sukurti nauj&#261; test&#261;</button>
                         </div>
                     </div>
                 </div>
 
+                <div class="card blockjam-card" aria-live="polite">
+                    <div class="blockjam-card__header">
+                        <div>
+                            <h3 class="card__title" id="blockjam-title">Block Jam testukai</h3>
+                        </div>
+                        <button
+                            id="blockjam-reset"
+                            type="button"
+                            class="btn btn--secondary btn--tiny"
+                            aria-label="Prad&#279;ti Block Jam testukus i&#353; naujo"
+                        >
+                            Restartuoti
+                        </button>
+                    </div>
+                    <div class="blockjam" aria-labelledby="blockjam-title">
+                        <div class="blockjam__status-bar">
+                            <div class="blockjam__meter">
+                                <span class="blockjam__meter-label">Ta&#353;kai</span>
+                                <strong id="blockjam-score" class="blockjam__meter-value">0</strong>
+                            </div>
+                            <div class="blockjam__meter">
+                                <span class="blockjam__meter-label">Combo</span>
+                                <strong id="blockjam-combo" class="blockjam__meter-value">x1</strong>
+                            </div>
+                            <div class="blockjam__meter">
+                                <span class="blockjam__meter-label">Blokai</span>
+                                <strong id="blockjam-moves" class="blockjam__meter-value">3</strong>
+                            </div>
+                        </div>
+                        <div class="blockjam__playfield">
+                            <div
+                                id="blockjam-board"
+                                class="blockjam-board"
+                                role="grid"
+                                aria-label="Block Jam testuk&#371; saldaini&#371; lenta"
+                                aria-live="polite"
+                            ></div>
+                            <div class="blockjam-board__shadow" aria-hidden="true"></div>
+                        </div>
+                        <div class="blockjam__pieces-shell">
+                            <div class="blockjam__pieces-header">
+                                <p class="blockjam__pieces-label">Pasirink sald&#371; blok&#261; (3 vienu metu kaip &#382;aidime).</p>
+                                <button id="blockjam-rotate" type="button" class="btn btn--secondary btn--tiny" aria-label="Pasukti pasirinkt&#261; blok&#261;">
+                                    Pasukti (R)
+                                </button>
+                            </div>
+                            <div id="blockjam-pieces" class="blockjam-pieces" role="list" aria-live="polite"></div>
+                        </div>
+                        <div id="blockjam-quiz-panel" class="blockjam-quiz" aria-live="polite">
+                            <p id="blockjam-quiz-empty" class="blockjam-quiz__empty">Sukurk PDF test&#261; ir saldiniai klausimai atsiras &#269;ia.</p>
+                            <div id="blockjam-question" class="blockjam-question" hidden>
+                                <div class="blockjam-question__meta">
+                                    <span id="blockjam-question-label" class="blockjam-question__label"></span>
+                                    <span id="blockjam-question-progress" class="blockjam-question__progress"></span>
+                                </div>
+                                <p id="blockjam-question-text" class="blockjam-question__text"></p>
+                                <div
+                                    id="blockjam-question-options"
+                                    class="blockjam-question__options"
+                                    role="group"
+                                    aria-label="Pasirink teising&#261; atsakym&#261;"
+                                ></div>
+                                <p id="blockjam-question-feedback" class="blockjam-question__feedback" role="status"></p>
+                            </div>
+                        </div>
+                        <p id="blockjam-status" class="blockjam__status-text" role="status">Pasirink saldaini&#371; fig&#363;r&#261; ir vilk arba bakstelk lent&#261;.</p>
+                        <p id="blockjam-hint" class="blockjam__hint">
+                            Vilk blok&#261; ant lentos arba naudok rodykles + Enter. Sujunk bent 3 tos pa&#269;ios spalvos saldainius ir jie i&#353;garuos. Paspausk R arba mygtuk&#261;, jei reikia pasukti pasirinkt&#261; blok&#261;, Esc &ndash; at&#353;aukti pasirinkim&#261;.
+                        </p>
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -360,6 +445,6 @@
     <footer class="footer">
         <span>Sukurta su &hearts;</span>
     </footer>
-<script src="script.js?v=20260521-01"></script>
+    <script src="script.js?v=20260702-2"></script>
 </body>
 </html>

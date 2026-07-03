@@ -994,7 +994,12 @@ const TIMETABLE_CURRENT_LABEL = '\u0160ios savait\u0117s paskaitos';
 const TIMETABLE_NEXT_LABEL = 'Ateinan\u010Dios savait\u0117s paskaitos';
 const TIMETABLE_WEEK_ORDER = ['Pirmadienis', 'Antradienis', 'Tre\u010diadienis', 'Ketvirtadienis', 'Penktadienis', '\u0160e\u0161tadienis'];
 const TIMETABLE_WEEKDAY_LABELS = ['Sekmadienis', 'Pirmadienis', 'Antradienis', 'Tre\u010diadienis', 'Ketvirtadienis', 'Penktadienis', '\u0160e\u0161tadienis'];
-const ANATOMY_TITLE = '\u017dmogaus anatomija';
+const TIMETABLE_SPRING_SEMESTER_START_MONTH = 1;
+const TIMETABLE_SPRING_SEMESTER_START_DAY = 2;
+const TIMETABLE_FALL_SEMESTER_START_MONTH = 8;
+const TIMETABLE_FALL_SEMESTER_START_DAY = 1;
+const TIMETABLE_FLUIDS_TITLE = 'Skys\u010di\u0173 mechanika ir termodinamika (APAVB22501)';
+const TIMETABLE_FLUIDS_LECTURER_CHANGE_DATE = '2026-11-09';
 const IMPORTANT_DATES_MONTH_SHORT = ['Sau', 'Vas', 'Kov', 'Bal', 'Geg', 'Bir', 'Lie', 'Rgp', 'Rgs', 'Spa', 'Lap', 'Gru'];
 const IMPORTANT_DATES_WEEKDAY_SHORT = ['Sek', 'Pir', 'Ant', 'Tre', 'Ket', 'Pen', '\u0160e'];
 const IMPORTANT_DATES_MAX_UPCOMING = 3;
@@ -1047,171 +1052,183 @@ const TIMETABLE_DATA = {
     1: {
         Antradienis: [
             {
-                time: '12:10-13:45',
-                title: 'Mašinų elementai (su kursiniu projektu)',
-                location: 'P1 211',
-                lecturer: 'Doc. Dr. Nikolaj Šešok',
-                type: 'Laboratoriniai darbai',
-            },
-            {
-                time: '14:30-16:05',
-                title: 'Mašinų elementai (su kursiniu projektu)',
-                location: 'P2 505',
-                lecturer: 'Doc. Dr. Nikolaj Šešok',
-                type: 'Pratybos',
-            },
-            {
-                time: '16:20-17:55',
-                title: 'Mašinų elementai (su kursiniu projektu)',
-                location: 'P2 505',
-                lecturer: 'Doc. Dr. Nikolaj Šešok',
-                type: 'Pratybos',
-            },
-        ],
-        Trečiadienis: [
-            {
                 time: '08:30-10:05',
-                title: 'Biomechaninių sistemų projektavimas taikant CAD/CAM/CAE',
-                location: 'P2 505',
-                lecturer: 'Dr. Oleg Ardatov',
-                type: 'Laboratoriniai darbai',
+                title: 'Elektronika (ELEIB16501)',
+                location: 'P2 157',
+                lecturer: 'Prof. Dr. Vitalij Novickij',
+                type: 'Paskaitos',
             },
             {
                 time: '10:20-11:55',
-                title: 'Medžiagų mechanika 2',
+                title: 'In\u017einerini\u0173 sprendim\u0173 ekonominis pagrindimas (su kursiniu darbu) (VVEIB17104)',
                 location: 'P2 157',
-                lecturer: 'Doc. Dr. Jurijus Tretjakovas',
+                lecturer: 'Doc. Dr. Agn\u0117 \u0160imelyt\u0117',
                 type: 'Paskaitos',
             },
             {
                 time: '12:10-13:45',
-                title: 'Matavimų teorija ir praktika (su kursiniu projektu)',
-                location: 'P2 157',
-                lecturer: 'Dr. Darius Vainorius',
+                title: 'Biotechnini\u0173 sistem\u0173 mechanin\u0117s, lazerin\u0117s ir kt. gamybos technologijos (MEBIB23503)',
+                location: 'P1 321',
+                lecturer: 'Dr. Oleg Ardatov',
                 type: 'Paskaitos',
+            },
+        ],
+        'Tre\u010diadienis': [
+            {
+                time: '10:20-11:55',
+                title: 'In\u017einerini\u0173 sprendim\u0173 ekonominis pagrindimas (su kursiniu darbu) (VVEIB17104)',
+                location: 'P2 511',
+                lecturer: 'Doc. Dr. Agn\u0117 \u0160imelyt\u0117',
+                type: 'Pratybos',
+            },
+            {
+                time: '12:10-13:45',
+                title: 'Elektronika (ELEIB16501)',
+                location: 'P1 423',
+                lecturer: 'Sebastianas Kur\u010devskis',
+                type: 'Laboratoriniai darbai',
             },
             {
                 time: '14:30-16:05',
-                title: 'Specialybės anglų kalba',
-                location: 'P2 527',
-                lecturer: 'Lina Valatkienė',
-                type: 'Pratybos',
+                title: TIMETABLE_FLUIDS_TITLE,
+                location: 'S4(SRA-II) 101',
+                lecturer: 'Doc. Dr. Rasa Stankevi\u010dien\u0117',
+                type: 'Laboratoriniai darbai',
             },
         ],
         Ketvirtadienis: [
             {
+                time: '08:30-10:05',
+                title: 'Biomechanika (su kursiniu darbu) (MEBIB17029)',
+                location: 'P1 321',
+                lecturer: 'Prof. Dr. Kristina Daunoravi\u010dien\u0117',
+                type: 'Paskaitos',
+            },
+            {
                 time: '10:20-11:55',
-                title: 'Matavimų teorija ir praktika (su kursiniu projektu)',
-                location: 'P2 512',
-                lecturer: 'Ieva Švagždytė',
-                type: 'Pratybos',
-            },
-            {
-                time: '12:10-13:45',
-                title: 'Mašinų elementai (su kursiniu projektu)',
-                location: 'P2 157',
-                lecturer: 'Doc. Dr. Nikolaj Šešok',
+                title: 'Automatinis valdymas (MEBIB17028)',
+                location: 'P2 526',
+                lecturer: 'Prof. Dr. Julius Gri\u0161kevi\u010dius',
                 type: 'Paskaitos',
-            },
-            {
-                time: '14:30-16:05',
-                title: 'Suvirinimo technologijos (MEMKB93005)',
-                type: 'Paskaitos',
-                note: 'Laboratoriniai darbai po teorijos užsiėmimo tik balandžio 16 ir balandžio 30 d.',
             },
         ],
         Penktadienis: [
             {
-                time: '14:30-16:05',
-                title: 'Žmogaus anatomija',
-                location: 'P1 324',
-                lecturer: 'Dr. Rūta Dadelienė',
+                time: '08:30-10:05',
+                title: '\u017dmogaus fiziologija (MEBIB17504)',
+                location: 'P1 321',
+                lecturer: 'Dr. R\u016bta Dadelien\u0117',
                 type: 'Paskaitos',
+            },
+            {
+                time: '10:20-11:55',
+                title: '\u017dmogaus fiziologija (MEBIB17504)',
+                location: 'P1 321',
+                lecturer: 'Dr. R\u016bta Dadelien\u0117',
+                type: 'Pratybos',
+            },
+            {
+                time: '12:10-13:45',
+                title: 'Automatinis valdymas (MEBIB17028)',
+                location: 'P2 505',
+                lecturer: 'Dr. Donatas Luk\u0161ys',
+                type: 'Pratybos',
             },
         ],
     },
     2: {
-        Trečiadienis: [
-            {
-                time: '08:30-10:05',
-                title: 'Biomechaninių sistemų projektavimas taikant CAD/CAM/CAE',
-                location: 'P2 505',
-                lecturer: 'Dr. Oleg Ardatov',
-                type: 'Laboratoriniai darbai',
-            },
+        Pirmadienis: [
             {
                 time: '10:20-11:55',
-                title: 'Medžiagų mechanika 2',
+                title: TIMETABLE_FLUIDS_TITLE,
                 location: 'P2 157',
-                lecturer: 'Doc. Dr. Jurijus Tretjakovas',
+                lecturer: 'Doc. Dr. Rasa Stankevi\u010dien\u0117',
                 type: 'Paskaitos',
             },
             {
                 time: '12:10-13:45',
-                title: 'Matavimų teorija ir praktika (su kursiniu projektu)',
+                title: TIMETABLE_FLUIDS_TITLE,
+                location: 'P2 511',
+                lecturer: 'Doc. Dr. Rasa Stankevi\u010dien\u0117',
+                type: 'Pratybos',
+            },
+        ],
+        Antradienis: [
+            {
+                time: '08:30-10:05',
+                title: 'Elektronika (ELEIB16501)',
                 location: 'P2 157',
-                lecturer: 'Dr. Darius Vainorius',
+                lecturer: 'Prof. Dr. Vitalij Novickij',
                 type: 'Paskaitos',
             },
             {
-                time: '14:30-16:05',
-                title: 'Specialybės anglų kalba',
-                location: 'P2 527',
-                lecturer: 'Lina Valatkienė',
+                time: '10:20-11:55',
+                title: 'In\u017einerini\u0173 sprendim\u0173 ekonominis pagrindimas (su kursiniu darbu) (VVEIB17104)',
+                location: 'P2 157',
+                lecturer: 'Doc. Dr. Agn\u0117 \u0160imelyt\u0117',
+                type: 'Paskaitos',
+            },
+            {
+                time: '12:10-13:45',
+                title: 'Biomechanika (su kursiniu darbu) (MEBIB17029)',
+                location: 'P1 323',
+                lecturer: 'Dr. Jurgita \u017di\u017eien\u0117',
+                type: 'Laboratoriniai darbai',
+            },
+        ],
+        'Tre\u010diadienis': [
+            {
+                time: '10:20-11:55',
+                title: 'In\u017einerini\u0173 sprendim\u0173 ekonominis pagrindimas (su kursiniu darbu) (VVEIB17104)',
+                location: 'P2 511',
+                lecturer: 'Doc. Dr. Agn\u0117 \u0160imelyt\u0117',
                 type: 'Pratybos',
+            },
+            {
+                time: '12:10-13:45',
+                title: 'Automatinis valdymas (MEBIB17028)',
+                location: 'P1 324',
+                lecturer: 'Dr. Donatas Luk\u0161ys',
+                type: 'Laboratoriniai darbai',
             },
         ],
         Ketvirtadienis: [
             {
                 time: '08:30-10:05',
-                title: 'Biomechaninių sistemų projektavimas taikant CAD/CAM/CAE',
-                location: 'P2 512',
-                lecturer: 'Dr. Oleg Ardatov',
+                title: 'Biomechanika (su kursiniu darbu) (MEBIB17029)',
+                location: 'P1 321',
+                lecturer: 'Prof. Dr. Kristina Daunoravi\u010dien\u0117',
                 type: 'Paskaitos',
             },
             {
                 time: '10:20-11:55',
-                title: 'Matavimų teorija ir praktika (su kursiniu projektu)',
-                location: 'P1 221',
-                lecturer: 'Augustas Rotmanas',
-                type: 'Laboratoriniai darbai',
+                title: 'Automatinis valdymas (MEBIB17028)',
+                location: 'P2 526',
+                lecturer: 'Prof. Dr. Julius Gri\u0161kevi\u010dius',
+                type: 'Paskaitos',
             },
             {
                 time: '12:10-13:45',
-                title: 'Mašinų elementai (su kursiniu projektu)',
-                location: 'P2 157',
-                lecturer: 'Doc. Dr. Nikolaj Šešok',
-                type: 'Paskaitos',
+                title: 'Biomechanika (su kursiniu darbu) (MEBIB17029)',
+                location: 'P1 321',
+                lecturer: 'Prof. Dr. Kristina Daunoravi\u010dien\u0117',
+                type: 'Pratybos',
+            },
+            {
+                time: '14:30-16:05',
+                title: 'Biotechnini\u0173 sistem\u0173 mechanin\u0117s, lazerin\u0117s ir kt. gamybos technologijos (MEBIB23503)',
+                location: 'P2 504',
+                lecturer: 'Dr. Oleg Ardatov',
+                type: 'Pratybos',
             },
         ],
         Penktadienis: [
             {
-                time: '10:20-11:55',
-                title: 'Medžiagų mechanika 2',
-                location: 'P2 510',
-                lecturer: 'Doc. Dr. Ona Lukoševičienė',
-                type: 'Pratybos',
-            },
-            {
-                time: '12:10-13:45',
-                title: 'Medžiagų mechanika 2',
-                location: 'P2 510',
-                lecturer: 'Doc. Dr. Ona Lukoševičienė',
-                type: 'Laboratoriniai darbai',
-            },
-            {
-                time: '14:30-16:05',
-                title: 'Žmogaus anatomija',
-                location: 'P1 324',
-                lecturer: 'Dr. Rūta Dadelienė',
+                time: '08:30-10:05',
+                title: '\u017dmogaus fiziologija (MEBIB17504)',
+                location: 'P1 321',
+                lecturer: 'Dr. R\u016bta Dadelien\u0117',
                 type: 'Paskaitos',
-            },
-            {
-                time: '16:20-17:55',
-                title: 'Žmogaus anatomija',
-                location: 'P1 324',
-                lecturer: 'Dr. Rūta Dadelienė',
-                type: 'Pratybos',
             },
         ],
     },
@@ -1542,21 +1559,30 @@ function getWeekStart(date) {
     return reference;
 }
 
-function getCurrentSemesterStart(date) {
+function getCurrentSemesterStartDate(date) {
     const year = date.getFullYear();
-    const febStart = new Date(year, 1, 2);
-    const septStart = new Date(year, 8, 1);
-    febStart.setHours(0, 0, 0, 0);
-    septStart.setHours(0, 0, 0, 0);
-    if (date >= septStart) {
-        return septStart;
+    const springStart = new Date(
+        year,
+        TIMETABLE_SPRING_SEMESTER_START_MONTH,
+        TIMETABLE_SPRING_SEMESTER_START_DAY
+    );
+    const fallStart = new Date(
+        year,
+        TIMETABLE_FALL_SEMESTER_START_MONTH,
+        TIMETABLE_FALL_SEMESTER_START_DAY
+    );
+    springStart.setHours(0, 0, 0, 0);
+    fallStart.setHours(0, 0, 0, 0);
+    if (date >= fallStart) {
+        return fallStart;
     }
-    return febStart;
+    return springStart;
 }
 
 function getWeekRotationIndex(date) {
-    const semesterStart = getCurrentSemesterStart(date);
-    const elapsedDays = getCalendarDayNumber(date) - getCalendarDayNumber(semesterStart);
+    const weekStart = getWeekStart(date);
+    const semesterStart = getWeekStart(getCurrentSemesterStartDate(date));
+    const elapsedDays = getCalendarDayNumber(weekStart) - getCalendarDayNumber(semesterStart);
     const fullWeeksSinceStart = Math.floor(elapsedDays / WEEK_LENGTH_DAYS);
     const rotationIndex = ((fullWeeksSinceStart % WEEK_ROTATION_LENGTH) + WEEK_ROTATION_LENGTH) % WEEK_ROTATION_LENGTH;
     return rotationIndex;
@@ -1603,44 +1629,6 @@ function cloneTimetableWeekData(weekData) {
     );
 }
 
-function removeAnatomySessions(weekData) {
-    if (!weekData || typeof weekData !== 'object') {
-        return;
-    }
-    Object.keys(weekData).forEach((dayName) => {
-        const sessions = Array.isArray(weekData[dayName]) ? weekData[dayName] : [];
-        weekData[dayName] = sessions.filter((session) => session?.title !== ANATOMY_TITLE);
-    });
-}
-
-function addAnatomySession(weekData, dayName, session) {
-    if (!weekData || !dayName || !session) {
-        return;
-    }
-    const existing = Array.isArray(weekData[dayName]) ? weekData[dayName].slice() : [];
-    existing.push({ ...session });
-    existing.sort((a, b) => (a.time || '').localeCompare(b.time || ''));
-    weekData[dayName] = existing;
-}
-
-function removeMatchingSessions(weekData, dayName, matcher) {
-    if (!weekData || !dayName || typeof matcher !== 'function') {
-        return;
-    }
-    const sessions = Array.isArray(weekData[dayName]) ? weekData[dayName] : [];
-    weekData[dayName] = sessions.filter((session) => !matcher(session));
-}
-
-function addTimetableSession(weekData, dayName, session) {
-    if (!weekData || !dayName || !session) {
-        return;
-    }
-    const existing = Array.isArray(weekData[dayName]) ? weekData[dayName].slice() : [];
-    existing.push({ ...session });
-    existing.sort((a, b) => (a.time || '').localeCompare(b.time || ''));
-    weekData[dayName] = existing;
-}
-
 function getTimetableWeekData(weekNumber, weekStartDate) {
     const baseWeekData = TIMETABLE_DATA[weekNumber];
     if (!baseWeekData) {
@@ -1652,70 +1640,13 @@ function getTimetableWeekData(weekNumber, weekStartDate) {
         return weekData;
     }
 
-    const weekKey = formatDateKey(weekStartDate);
-    const anatomySession = {
-        time: '08:30-10:05',
-        title: ANATOMY_TITLE,
-        location: 'P1 324',
-        lecturer: 'Dr. R\u016bta Dadelien\u0117',
-        type: 'Paskaitos',
-    };
-
-    if (weekKey === '2026-03-02') {
-        removeAnatomySessions(weekData);
-        addAnatomySession(weekData, 'Ketvirtadienis', anatomySession);
-        weekData.Penktadienis = [
-            {
-                time: '12:30-14:05',
-                title: ANATOMY_TITLE,
-                lecturer: 'Dr. R\u016bta Dadelien\u0117',
-                type: 'Paskaitos',
-                note: 'Nuotoliniu b\u016bdu',
-            },
-            {
-                time: '14:20-15:55',
-                title: ANATOMY_TITLE,
-                lecturer: 'Dr. R\u016bta Dadelien\u0117',
-                type: 'Paskaitos',
-                note: 'Nuotoliniu b\u016bdu',
-            },
-        ];
-    }
-
-    if (weekKey === '2026-03-09' || weekKey === '2026-03-16') {
-        removeAnatomySessions(weekData);
-    }
-
-    if (weekKey === '2026-03-30') {
-        removeMatchingSessions(
-            weekData,
-            'Trečiadienis',
-            (session) =>
-                session?.time === '14:30-16:05' &&
-                session?.title === 'Specialybės anglų kalba' &&
-                session?.type === 'Pratybos'
-        );
-        addAnatomySession(weekData, 'Ketvirtadienis', anatomySession);
-    }
-
-    if (weekKey === '2026-04-27') {
-        removeMatchingSessions(
-            weekData,
-            'Ketvirtadienis',
-            (session) =>
-                session?.time === '10:20-11:55' &&
-                session?.title === 'Matavimų teorija ir praktika (su kursiniu projektu)' &&
-                session?.type === 'Pratybos'
-        );
-    }
-
-    if (weekKey === '2026-05-04') {
-        addTimetableSession(weekData, 'Penktadienis', {
-            time: '08:30-10:05',
-            title: 'Matavimų teorija ir praktika (su kursiniu projektu)',
-            lecturer: 'Ieva Švagždytė',
-            type: 'Pratybos',
-            note: 'Perkelta iš balandžio 30 d. 10:20 užsiėmimo.',
+    const timetableWeekKey = formatDateKey(weekStartDate);
+    if (timetableWeekKey >= TIMETABLE_FLUIDS_LECTURER_CHANGE_DATE) {
+        const mondaySessions = Array.isArray(weekData.Pirmadienis) ? weekData.Pirmadienis : [];
+        mondaySessions.forEach((session) => {
+            if (session?.title === TIMETABLE_FLUIDS_TITLE) {
+                session.lecturer = 'Doc. Dr. Giedr\u0117 Streckien\u0117';
+            }
         });
     }
 
@@ -1795,9 +1726,14 @@ function renderTimetableSection(options = {}) {
     displayStart.setDate(displayStart.getDate() + viewOffset * WEEK_LENGTH_DAYS);
     const displayEnd = new Date(displayStart);
     displayEnd.setDate(displayEnd.getDate() + WEEK_LENGTH_DAYS - 1);
+    const rangeStart = new Date(displayStart);
+    const semesterStartDate = getCurrentSemesterStartDate(displayEnd);
+    if (rangeStart < semesterStartDate && displayEnd >= semesterStartDate) {
+        rangeStart.setTime(semesterStartDate.getTime());
+    }
 
     if (timetableWeekRange) {
-        timetableWeekRange.textContent = formatMonthDay(displayStart) + ' \u2013 ' + formatMonthDay(displayEnd);
+        timetableWeekRange.textContent = formatMonthDay(rangeStart) + ' \u2013 ' + formatMonthDay(displayEnd);
     }
     const weekData = getTimetableWeekData(weekNumber, displayStart);
     timetableWeekContent.innerHTML = '';
