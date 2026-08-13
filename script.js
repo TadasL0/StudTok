@@ -102,6 +102,33 @@ const blockJamQuestionProgress = document.getElementById('blockjam-question-prog
 const blockJamQuestionText = document.getElementById('blockjam-question-text');
 const blockJamQuestionOptions = document.getElementById('blockjam-question-options');
 const blockJamQuestionFeedback = document.getElementById('blockjam-question-feedback');
+const calmPathBoard = document.getElementById('calm-path-board');
+const calmPathStatus = document.getElementById('calm-path-status');
+const calmPathCollectedValue = document.getElementById('calm-path-collected');
+const calmPathMasteredValue = document.getElementById('calm-path-mastered');
+const calmPathReviewCountValue = document.getElementById('calm-path-review-count');
+const calmPathLevelValue = document.getElementById('calm-path-level');
+const calmPathUndoButton = document.getElementById('calm-path-undo');
+const calmPathResetButton = document.getElementById('calm-path-reset');
+const calmPathTrayItems = document.querySelectorAll('[data-calm-path-token]');
+const calmPathMasteryMeter = document.getElementById('calm-path-mastery-meter');
+const calmPathMasteryFill = document.getElementById('calm-path-mastery-fill');
+const calmPathChallenge = document.getElementById('calm-path-challenge');
+const calmPathSource = document.getElementById('calm-path-source');
+const calmPathQuestionCount = document.getElementById('calm-path-question-count');
+const calmPathCue = document.getElementById('calm-path-cue');
+const calmPathQuestion = document.getElementById('calm-path-question');
+const calmPathQuestionTags = document.getElementById('calm-path-question-tags');
+const calmPathResponseWrap = document.getElementById('calm-path-response-wrap');
+const calmPathResponse = document.getElementById('calm-path-response');
+const calmPathRevealButton = document.getElementById('calm-path-reveal');
+const calmPathAnswer = document.getElementById('calm-path-answer');
+const calmPathAnswerText = document.getElementById('calm-path-answer-text');
+const calmPathRating = document.getElementById('calm-path-rating');
+const calmPathRatingButtons = document.querySelectorAll('[data-calm-path-rating]');
+const calmPathSummary = document.getElementById('calm-path-summary');
+const calmPathSummaryTitle = document.getElementById('calm-path-summary-title');
+const calmPathSummaryText = document.getElementById('calm-path-summary-text');
 
 const pdfFileNameEmptyText = pdfFileName?.dataset?.empty || 'Failas nepasirinktas';
 const PASSCODE = 'differentdimension';
@@ -347,6 +374,149 @@ let blockJamComboPulseTimer = null;
 let blockJamSparkleTimer = null;
 const blockJamStatusDefaultText = blockJamStatusText?.textContent || BLOCKJAM_DEFAULT_STATUS;
 const blockJamHintDefaultText = blockJamHintText?.textContent || '';
+
+const CALM_PATH_BOARD_SIZE = 5;
+const CALM_PATH_TOTAL_TREATS = 3;
+const CALM_PATH_MASTERY_TARGET = 3;
+const CALM_PATH_MEMORY_STORAGE_KEY = 'pinkStudy.calmPathMemory.v1';
+const CALM_PATH_REVIEW_INTERVALS_MS = [
+    10 * 60 * 1000,
+    24 * 60 * 60 * 1000,
+    3 * 24 * 60 * 60 * 1000,
+    7 * 24 * 60 * 60 * 1000,
+    14 * 24 * 60 * 60 * 1000,
+    30 * 24 * 60 * 60 * 1000,
+];
+const CALM_PATH_DEMO_CARDS = [
+    {
+        question: 'Kas ilgalaik\u0119 atmint\u012f stiprina labiau: aktyvus atsiminimas ar pakartotinis skaitymas?',
+        answer: 'Aktyvus atsiminimas: bandymas atsakym\u0105 atkurti i\u0161 atminties.',
+        tags: ['Atmintis'],
+    },
+    {
+        question: 'Kada verta v\u0117l parodyti sunkiai prisimint\u0105 klausim\u0105?',
+        answer: 'Po trumpo tarpo, o ne i\u0161kart kartojant be pertraukos.',
+        tags: ['Kartojimas'],
+    },
+    {
+        question: 'Kod\u0117l naudinga kaitalioti skirting\u0173 tem\u0173 klausimus?',
+        answer: 'Tem\u0173 mai\u0161ymas treniruoja atpa\u017Einti, kada ir kurias \u017Einias taikyti.',
+        tags: ['Mai\u0161ymas'],
+    },
+    {
+        question: 'Kuo naudinga i\u0161kart pamatyti teising\u0105 atsakym\u0105 po bandymo?',
+        answer: 'Gr\u012f\u017Etamasis ry\u0161ys pataiso klaid\u0105 ir sustiprina teising\u0105 prisiminim\u0105.',
+        tags: ['Gr\u012f\u017Etamasis ry\u0161ys'],
+    },
+    {
+        question: 'Kuris mokymosi tikslas naudingesnis: greitis ar tikslus atsiminimas?',
+        answer: 'Tikslus atsiminimas; greitis n\u0117ra b\u016Btinas mokymuisi \u012ftvirtinti.',
+        tags: ['Ramus tempas'],
+    },
+    {
+        question: 'K\u0105 parodo s\u0105\u017Einingas \u201eBeveik\u201c arba \u201eKartoti\u201c pasirinkimas?',
+        answer: 'Kur\u012f klausim\u0105 verta sugr\u0105\u017Einti anks\u010Diau ir dar kart\u0105 prisiminti.',
+        tags: ['Savistaba'],
+    },
+];
+const CALM_PATH_TREAT_DATA = {
+    chocolate: {
+        label: 'Baltas',
+        fullLabel: 'Baltas \u0161okoladas',
+        icon: 'image',
+    },
+    caramel: {
+        label: 'Karamel\u0117',
+        fullLabel: 'Salted caramel',
+        icon: 'SC',
+    },
+    redbull: {
+        label: 'Redbullis',
+        fullLabel: 'Redbullis',
+        icon: 'RB',
+    },
+};
+const CALM_PATH_LEVELS = [
+    {
+        id: 'spa-soft',
+        title: 'SPA vakaras',
+        goalLabel: 'SPA',
+        goalShort: 'SPA',
+        start: [4, 0],
+        goal: [0, 4],
+        treats: [
+            { id: 'chocolate', position: [3, 1] },
+            { id: 'caramel', position: [1, 2] },
+            { id: 'redbull', position: [2, 4] },
+        ],
+        blocks: [
+            [4, 3],
+            [3, 2],
+            [2, 2],
+            [0, 1],
+        ],
+    },
+    {
+        id: 'park-loop',
+        title: 'Parko ratas',
+        goalLabel: 'Parkas',
+        goalShort: 'P',
+        start: [0, 0],
+        goal: [4, 4],
+        treats: [
+            { id: 'redbull', position: [0, 2] },
+            { id: 'chocolate', position: [2, 1] },
+            { id: 'caramel', position: [3, 3] },
+        ],
+        blocks: [
+            [1, 1],
+            [1, 3],
+            [2, 3],
+            [3, 1],
+        ],
+    },
+    {
+        id: 'late-walk',
+        title: 'Kelias prie j\u016Bros',
+        goalLabel: 'J\u016Bra',
+        goalShort: 'J',
+        start: [2, 0],
+        goal: [2, 4],
+        treats: [
+            { id: 'chocolate', position: [0, 1] },
+            { id: 'caramel', position: [4, 1] },
+            { id: 'redbull', position: [1, 3] },
+        ],
+        blocks: [
+            [0, 3],
+            [3, 1],
+            [3, 3],
+        ],
+    },
+];
+const calmPathState = {
+    levelIndex: 0,
+    position: null,
+    collected: new Set(),
+    visited: new Set(),
+    history: [],
+    completed: false,
+    rewardedLevels: new Set(),
+    deck: [],
+    deckSignature: '',
+    deckSource: 'demo',
+    queue: [],
+    currentCard: null,
+    pendingMove: null,
+    phase: 'ready',
+    mastered: new Set(),
+    reviewKeys: new Set(),
+    retryCount: 0,
+    answeredCount: 0,
+    sessionAttempts: new Map(),
+    lastCardKey: '',
+};
+let calmPathMemory = {};
 
 function blockJamHasQuiz() {
     return (blockJamState.hasQuiz || blockJamState.demoActive) && blockJamState.questionPool.length > 0;
@@ -693,6 +863,712 @@ function loadRewardState() {
         rewardState.count = 0;
     }
     renderRewardState();
+}
+
+function getCalmPathLevel() {
+    return CALM_PATH_LEVELS[calmPathState.levelIndex] || CALM_PATH_LEVELS[0];
+}
+
+function getCalmPathKey(row, col) {
+    return `${row}:${col}`;
+}
+
+function getCalmPathPositionKey(position) {
+    return Array.isArray(position) ? getCalmPathKey(position[0], position[1]) : '';
+}
+
+function findCalmPathTreat(level, row, col) {
+    return level.treats.find((treat) => treat.position[0] === row && treat.position[1] === col) || null;
+}
+
+function isCalmPathBlocked(level, row, col) {
+    return level.blocks.some(([blockRow, blockCol]) => blockRow === row && blockCol === col);
+}
+
+function isCalmPathAdjacent(nextPosition) {
+    const current = calmPathState.position;
+    if (!Array.isArray(current)) {
+        return false;
+    }
+    const rowDistance = Math.abs(nextPosition[0] - current[0]);
+    const colDistance = Math.abs(nextPosition[1] - current[1]);
+    return rowDistance + colDistance === 1;
+}
+
+function snapshotCalmPathState() {
+    return {
+        position: calmPathState.position ? calmPathState.position.slice() : null,
+        collected: Array.from(calmPathState.collected),
+        visited: Array.from(calmPathState.visited),
+        completed: calmPathState.completed,
+    };
+}
+
+function restoreCalmPathState(snapshot) {
+    calmPathState.position = snapshot.position ? snapshot.position.slice() : null;
+    calmPathState.collected = new Set(snapshot.collected);
+    calmPathState.visited = new Set(snapshot.visited);
+    calmPathState.completed = Boolean(snapshot.completed);
+}
+
+function setCalmPathStatus(message) {
+    if (calmPathStatus) {
+        calmPathStatus.textContent = message;
+    }
+}
+
+function getCalmPathCardKey(card) {
+    const text = `${String(card?.question || '').trim().toLowerCase()}|||${String(card?.answer || '')
+        .trim()
+        .toLowerCase()}`;
+    let hash = 2166136261;
+    for (let index = 0; index < text.length; index += 1) {
+        hash ^= text.charCodeAt(index);
+        hash = Math.imul(hash, 16777619);
+    }
+    return `card-${(hash >>> 0).toString(36)}`;
+}
+
+function getCalmPathDeck() {
+    const usingGeneratedCards = flashcardState.cards.length > 0;
+    const sourceCards = usingGeneratedCards ? flashcardState.cards : CALM_PATH_DEMO_CARDS;
+    const cards = sourceCards
+        .map((card) => ({
+            question: String(card?.question || '').trim(),
+            answer: String(card?.answer || '').trim(),
+            tags: Array.isArray(card?.tags)
+                ? card.tags.map((tag) => String(tag || '').trim()).filter(Boolean).slice(0, 3)
+                : [],
+        }))
+        .filter((card) => card.question && card.answer)
+        .map((card) => ({ ...card, key: getCalmPathCardKey(card) }));
+
+    return {
+        cards,
+        source: usingGeneratedCards ? 'generated' : 'demo',
+    };
+}
+
+function loadCalmPathMemory() {
+    try {
+        const stored = localStorage.getItem(CALM_PATH_MEMORY_STORAGE_KEY);
+        const parsed = stored ? JSON.parse(stored) : null;
+        calmPathMemory = parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+    } catch (error) {
+        calmPathMemory = {};
+    }
+}
+
+function persistCalmPathMemory() {
+    try {
+        localStorage.setItem(CALM_PATH_MEMORY_STORAGE_KEY, JSON.stringify(calmPathMemory));
+    } catch (error) {
+        // The game still works when local storage is unavailable.
+    }
+}
+
+function shuffleCalmPathCards(cards) {
+    const shuffled = cards.slice();
+    for (let index = shuffled.length - 1; index > 0; index -= 1) {
+        const swapIndex = Math.floor(Math.random() * (index + 1));
+        const item = shuffled[index];
+        shuffled[index] = shuffled[swapIndex];
+        shuffled[swapIndex] = item;
+    }
+    return shuffled;
+}
+
+function interleaveCalmPathCards(cards) {
+    const remaining = cards.slice();
+    const interleaved = [];
+    let previousTag = '';
+
+    while (remaining.length > 0) {
+        let nextIndex = remaining.findIndex((card) => {
+            const primaryTag = card.tags[0] || '';
+            return !previousTag || !primaryTag || primaryTag !== previousTag;
+        });
+        if (nextIndex < 0) {
+            nextIndex = 0;
+        }
+        const [nextCard] = remaining.splice(nextIndex, 1);
+        interleaved.push(nextCard);
+        previousTag = nextCard.tags[0] || '';
+    }
+
+    return interleaved;
+}
+
+function buildCalmPathQueue(cards) {
+    const now = Date.now();
+    const shuffled = shuffleCalmPathCards(cards);
+    const due = [];
+    const newCards = [];
+    const later = [];
+
+    shuffled.forEach((card) => {
+        const memory = calmPathMemory[card.key];
+        if (!memory) {
+            newCards.push(card);
+        } else if (!Number.isFinite(memory.dueAt) || memory.dueAt <= now) {
+            due.push(card);
+        } else {
+            later.push(card);
+        }
+    });
+
+    later.sort((first, second) => {
+        const firstDue = Number(calmPathMemory[first.key]?.dueAt || 0);
+        const secondDue = Number(calmPathMemory[second.key]?.dueAt || 0);
+        return firstDue - secondDue;
+    });
+
+    return interleaveCalmPathCards([...due, ...newCards, ...later]);
+}
+
+function removeCalmPathCardFromQueue(cardKey) {
+    calmPathState.queue = calmPathState.queue.filter((card) => card.key !== cardKey);
+}
+
+function scheduleCalmPathRetry(card, distance) {
+    removeCalmPathCardFromQueue(card.key);
+    const insertionIndex = Math.min(Math.max(0, distance), calmPathState.queue.length);
+    calmPathState.queue.splice(insertionIndex, 0, card);
+}
+
+function getNextCalmPathCard() {
+    if (calmPathState.queue.length === 0) {
+        calmPathState.queue = buildCalmPathQueue(calmPathState.deck);
+    }
+    if (calmPathState.queue.length > 1 && calmPathState.lastCardKey) {
+        const first = calmPathState.queue[0];
+        if (first.key === calmPathState.lastCardKey) {
+            calmPathState.queue.push(calmPathState.queue.shift());
+        }
+    }
+    return calmPathState.queue.shift() || null;
+}
+
+function updateCalmPathMemory(card, rating) {
+    const previous = calmPathMemory[card.key] || {
+        level: 0,
+        attempts: 0,
+        successfulRetrievals: 0,
+        dueAt: 0,
+    };
+    let level = Number.isFinite(previous.level) ? previous.level : 0;
+    let dueDelay = CALM_PATH_REVIEW_INTERVALS_MS[0];
+
+    if (rating === 'known') {
+        level = Math.min(level + 1, CALM_PATH_REVIEW_INTERVALS_MS.length - 1);
+        dueDelay = CALM_PATH_REVIEW_INTERVALS_MS[level];
+    } else if (rating === 'almost') {
+        level = Math.max(0, level);
+        dueDelay = CALM_PATH_REVIEW_INTERVALS_MS[0];
+    } else {
+        level = Math.max(0, level - 1);
+        dueDelay = 2 * 60 * 1000;
+    }
+
+    calmPathMemory[card.key] = {
+        level,
+        attempts: Number(previous.attempts || 0) + 1,
+        successfulRetrievals: Number(previous.successfulRetrievals || 0) + (rating === 'known' ? 1 : 0),
+        dueAt: Date.now() + dueDelay,
+        lastRating: rating,
+        updatedAt: Date.now(),
+    };
+    persistCalmPathMemory();
+}
+
+function getCalmPathMasteryTarget() {
+    return Math.min(CALM_PATH_MASTERY_TARGET, Math.max(1, calmPathState.deck.length));
+}
+
+function setCalmPathQuestionTags(tags) {
+    if (!calmPathQuestionTags) {
+        return;
+    }
+    calmPathQuestionTags.innerHTML = '';
+    tags.forEach((tag) => {
+        const chip = document.createElement('span');
+        chip.className = 'calm-path-challenge__tag';
+        chip.textContent = tag;
+        calmPathQuestionTags.appendChild(chip);
+    });
+}
+
+function renderCalmPathChallenge() {
+    if (!calmPathChallenge || !calmPathQuestion) {
+        return;
+    }
+    const phase = calmPathState.phase;
+    const currentCard = calmPathState.currentCard;
+    const prompt = calmPathQuestion.closest('.calm-path-challenge__prompt');
+    calmPathChallenge.dataset.phase = phase;
+
+    if (calmPathSource) {
+        const sourceLabel = calmPathState.deckSource === 'generated' ? 'Tavo kortel\u0117s' : 'Ap\u0161ilimas';
+        calmPathSource.textContent = `${sourceLabel} \u00b7 ${calmPathState.deck.length}`;
+    }
+    if (calmPathQuestionCount) {
+        calmPathQuestionCount.textContent = `${calmPathState.answeredCount} atsakyta`;
+    }
+
+    const isRecall = phase === 'recall';
+    const isFeedback = phase === 'feedback';
+    const isComplete = phase === 'complete';
+    if (prompt) {
+        prompt.hidden = isComplete;
+    }
+    if (calmPathResponseWrap) {
+        calmPathResponseWrap.hidden = !isRecall && !(isFeedback && Boolean(calmPathState.responseDraft));
+    }
+    if (calmPathResponse) {
+        calmPathResponse.disabled = isFeedback;
+        calmPathResponse.value = calmPathState.responseDraft || '';
+    }
+    if (calmPathRevealButton) {
+        calmPathRevealButton.hidden = !isRecall;
+    }
+    if (calmPathAnswer) {
+        calmPathAnswer.hidden = !isFeedback;
+    }
+    if (calmPathRating) {
+        calmPathRating.hidden = !isFeedback;
+    }
+    if (calmPathSummary) {
+        calmPathSummary.hidden = !isComplete;
+    }
+
+    if (isComplete) {
+        if (calmPathSummaryTitle) {
+            calmPathSummaryTitle.textContent = `${getCalmPathLevel().title} \u012fveiktas.`;
+        }
+        if (calmPathSummaryText) {
+            const reviewMessage = calmPathState.reviewKeys.size > 0
+                ? `Pakartoti reik\u0117s: ${calmPathState.reviewKeys.size}.`
+                : 'Silpn\u0173 klausim\u0173 neliko.';
+            calmPathSummaryText.textContent = `${calmPathState.answeredCount} bandym\u0173. \u012etvirtinta: ${calmPathState.mastered.size}. ${reviewMessage}`;
+        }
+        setCalmPathQuestionTags([]);
+        return;
+    }
+
+    if (!currentCard) {
+        if (calmPathCue) calmPathCue.textContent = getCalmPathLevel().title;
+        calmPathQuestion.textContent = 'Pasirink \u0161vie\u010Diant\u012f langel\u012f.';
+        setCalmPathQuestionTags([]);
+        return;
+    }
+
+    const priorAttempts = calmPathState.sessionAttempts.get(currentCard.key) || 0;
+    if (calmPathCue) {
+        calmPathCue.textContent = priorAttempts > 0
+            ? 'Sugr\u012f\u017E\u0119s klausimas'
+            : isFeedback
+            ? 'Palygink be skub\u0117jimo'
+            : 'Atkurk i\u0161 atminties';
+    }
+    calmPathQuestion.textContent = currentCard.question;
+    setCalmPathQuestionTags(currentCard.tags);
+    if (calmPathAnswerText) {
+        calmPathAnswerText.textContent = currentCard.answer;
+    }
+}
+
+function scrollCalmPathTo(element) {
+    if (!element || !window.matchMedia('(max-width: 820px)').matches) {
+        return;
+    }
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    window.setTimeout(() => {
+        element.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'nearest' });
+    }, 20);
+}
+
+function syncCalmPathDeck(options = {}) {
+    const { announce = false, force = false } = options;
+    const nextDeck = getCalmPathDeck();
+    const signature = nextDeck.cards.map((card) => card.key).join('|');
+    if (!force && signature === calmPathState.deckSignature && nextDeck.source === calmPathState.deckSource) {
+        return;
+    }
+    calmPathState.deck = nextDeck.cards;
+    calmPathState.deckSource = nextDeck.source;
+    calmPathState.deckSignature = signature;
+    resetCalmPathLevel();
+    if (announce) {
+        setCalmPathStatus(
+            nextDeck.source === 'generated'
+                ? 'Nauja med\u017Eiaga paruo\u0161ta. Pasirink pirm\u0105 \u017Eingsn\u012f.'
+                : 'Ap\u0161ilimo klausimai paruo\u0161ti.'
+        );
+    }
+}
+
+function createCalmPathCellIcon(type, treat, level) {
+    const icon = document.createElement('span');
+    icon.className = 'calm-path-cell__icon';
+    if (type === 'current') {
+        icon.classList.add('calm-path-cell__icon--character');
+        const character = document.createElement('span');
+        character.className = 'calm-path-character';
+        character.setAttribute('aria-hidden', 'true');
+        icon.appendChild(character);
+        return icon;
+    }
+    if (type === 'start') {
+        icon.textContent = 'S';
+        return icon;
+    }
+    if (type === 'goal') {
+        icon.textContent = level?.goalShort || 'SPA';
+        return icon;
+    }
+    if (type === 'blocked') {
+        icon.textContent = '!';
+        return icon;
+    }
+    if (treat) {
+        const treatData = CALM_PATH_TREAT_DATA[treat.id];
+        if (treatData?.icon === 'image') {
+            const image = document.createElement('img');
+            image.src = 'assets/chocolate.png';
+            image.alt = '';
+            image.width = 26;
+            image.height = 26;
+            icon.appendChild(image);
+        } else {
+            icon.textContent = treatData?.icon || '+';
+        }
+        return icon;
+    }
+    icon.textContent = '';
+    return icon;
+}
+
+function getCalmPathCellType(level, row, col) {
+    const currentKey = getCalmPathPositionKey(calmPathState.position);
+    const cellKey = getCalmPathKey(row, col);
+    if (cellKey === currentKey) {
+        return 'current';
+    }
+    if (level.start[0] === row && level.start[1] === col) {
+        return 'start';
+    }
+    if (level.goal[0] === row && level.goal[1] === col) {
+        return 'goal';
+    }
+    if (isCalmPathBlocked(level, row, col)) {
+        return 'blocked';
+    }
+    if (findCalmPathTreat(level, row, col)) {
+        return 'treat';
+    }
+    return 'empty';
+}
+
+function getCalmPathCellLabel(type, treat, level) {
+    if (type === 'current') {
+        return 'Emilija';
+    }
+    if (type === 'start') {
+        return 'Startas';
+    }
+    if (type === 'goal') {
+        return level?.goalLabel || 'SPA';
+    }
+    if (type === 'blocked') {
+        return 'Stresas';
+    }
+    if (treat) {
+        return CALM_PATH_TREAT_DATA[treat.id]?.label || 'Radau';
+    }
+    return '';
+}
+
+function renderCalmPathGame() {
+    if (!calmPathBoard) {
+        return;
+    }
+    const level = getCalmPathLevel();
+    const canChooseStep = calmPathState.phase === 'ready' && !calmPathState.completed;
+    calmPathBoard.innerHTML = '';
+
+    for (let row = 0; row < CALM_PATH_BOARD_SIZE; row += 1) {
+        for (let col = 0; col < CALM_PATH_BOARD_SIZE; col += 1) {
+            const cellKey = getCalmPathKey(row, col);
+            const treat = findCalmPathTreat(level, row, col);
+            const type = getCalmPathCellType(level, row, col);
+            const label = getCalmPathCellLabel(type, treat, level);
+            const available =
+                canChooseStep &&
+                isCalmPathAdjacent([row, col]) &&
+                !isCalmPathBlocked(level, row, col);
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = `calm-path-cell calm-path-cell--${type}`;
+            button.dataset.row = String(row);
+            button.dataset.col = String(col);
+            button.setAttribute('role', 'gridcell');
+            button.setAttribute(
+                'aria-label',
+                `${available ? 'Galimas \u017Eingsnis. ' : ''}${label || `Langelis ${row + 1}, ${col + 1}`}`
+            );
+            if (calmPathState.visited.has(cellKey)) {
+                button.classList.add('calm-path-cell--visited');
+            }
+            if (treat && calmPathState.collected.has(treat.id) && type !== 'current') {
+                button.classList.add('calm-path-cell--collected');
+            }
+            if (available) {
+                button.classList.add('calm-path-cell--available');
+            }
+            button.disabled = !available;
+
+            button.appendChild(createCalmPathCellIcon(type, treat, level));
+            const labelElement = document.createElement('span');
+            labelElement.className = 'calm-path-cell__label';
+            labelElement.textContent = label;
+            button.appendChild(labelElement);
+            calmPathBoard.appendChild(button);
+        }
+    }
+
+    if (calmPathCollectedValue) {
+        calmPathCollectedValue.textContent = `${calmPathState.collected.size} / ${CALM_PATH_TOTAL_TREATS}`;
+    }
+    if (calmPathLevelValue) {
+        calmPathLevelValue.textContent = `${calmPathState.levelIndex + 1} / ${CALM_PATH_LEVELS.length}`;
+    }
+    const masteryTarget = getCalmPathMasteryTarget();
+    const masteryValue = Math.min(calmPathState.mastered.size, masteryTarget);
+    if (calmPathMasteredValue) {
+        calmPathMasteredValue.textContent = `${masteryValue} / ${masteryTarget}`;
+    }
+    if (calmPathReviewCountValue) {
+        calmPathReviewCountValue.textContent = String(calmPathState.retryCount);
+    }
+    if (calmPathMasteryMeter) {
+        calmPathMasteryMeter.setAttribute('aria-valuemax', String(masteryTarget));
+        calmPathMasteryMeter.setAttribute('aria-valuenow', String(masteryValue));
+    }
+    if (calmPathMasteryFill) {
+        calmPathMasteryFill.style.width = `${(masteryValue / masteryTarget) * 100}%`;
+    }
+    if (calmPathUndoButton) {
+        calmPathUndoButton.disabled =
+            calmPathState.history.length === 0 || calmPathState.completed || calmPathState.phase !== 'ready';
+    }
+    calmPathTrayItems.forEach((item) => {
+        const token = item.dataset.calmPathToken || '';
+        item.classList.toggle('calm-path__tray-item--active', calmPathState.collected.has(token));
+    });
+    renderCalmPathChallenge();
+}
+
+function resetCalmPathLevel(options = {}) {
+    const { advance = false } = options;
+    if (advance) {
+        calmPathState.levelIndex = (calmPathState.levelIndex + 1) % CALM_PATH_LEVELS.length;
+    }
+    const level = getCalmPathLevel();
+    calmPathState.position = level.start.slice();
+    calmPathState.collected = new Set();
+    calmPathState.visited = new Set([getCalmPathPositionKey(level.start)]);
+    calmPathState.history = [];
+    calmPathState.completed = false;
+    calmPathState.queue = buildCalmPathQueue(calmPathState.deck);
+    calmPathState.currentCard = null;
+    calmPathState.pendingMove = null;
+    calmPathState.phase = 'ready';
+    calmPathState.mastered = new Set();
+    calmPathState.reviewKeys = new Set();
+    calmPathState.retryCount = 0;
+    calmPathState.answeredCount = 0;
+    calmPathState.sessionAttempts = new Map();
+    calmPathState.lastCardKey = '';
+    calmPathState.responseDraft = '';
+    setCalmPathStatus(`${level.title}. Pasirink artimiausi\u0105 \u0161vie\u010diant\u012f langel\u012f.`);
+    renderCalmPathGame();
+}
+
+function beginCalmPathQuestion(nextPosition) {
+    const card = getNextCalmPathCard();
+    if (!card) {
+        commitCalmPathMove(nextPosition, 'Ramus \u017eingsnis.');
+        return;
+    }
+    calmPathState.currentCard = card;
+    calmPathState.pendingMove = nextPosition.slice();
+    calmPathState.phase = 'recall';
+    calmPathState.responseDraft = '';
+    setCalmPathStatus('Vienas klausimas atveria pasirinkt\u0105 \u017eingsn\u012f.');
+    renderCalmPathGame();
+    scrollCalmPathTo(calmPathChallenge);
+    window.setTimeout(() => calmPathResponse?.focus({ preventScroll: true }), 40);
+}
+
+function moveCalmPathTo(row, col) {
+    if (calmPathState.completed || calmPathState.phase !== 'ready') {
+        setCalmPathStatus('Pirma u\u017ebaik atvert\u0105 klausim\u0105.');
+        return;
+    }
+    const level = getCalmPathLevel();
+    if (isCalmPathBlocked(level, row, col)) {
+        setCalmPathStatus('\u010cia stresas. Apeinam.');
+        return;
+    }
+    const nextPosition = [row, col];
+    if (!isCalmPathAdjacent(nextPosition)) {
+        setCalmPathStatus('Po vien\u0105 ram\u0173 \u017eingsn\u012f.');
+        return;
+    }
+
+    const isGoal = level.goal[0] === row && level.goal[1] === col;
+    if (isGoal && calmPathState.collected.size < CALM_PATH_TOTAL_TREATS) {
+        const remaining = CALM_PATH_TOTAL_TREATS - calmPathState.collected.size;
+        setCalmPathStatus(`${level.goalLabel} dar palauks. Liko ${remaining} radiniai.`);
+        return;
+    }
+
+    beginCalmPathQuestion(nextPosition);
+}
+
+function revealCalmPathAnswer() {
+    if (calmPathState.phase !== 'recall' || !calmPathState.currentCard) {
+        return;
+    }
+    calmPathState.responseDraft = calmPathResponse?.value.trim() || '';
+    calmPathState.phase = 'feedback';
+    setCalmPathStatus('Palygink atsakymus ir s\u0105\u017einingai pasirink, kaip sek\u0117si.');
+    renderCalmPathGame();
+    const firstRatingButton = Array.from(calmPathRatingButtons)[0];
+    window.setTimeout(() => firstRatingButton?.focus({ preventScroll: true }), 30);
+}
+
+function commitCalmPathMove(nextPosition, learningMessage) {
+    const level = getCalmPathLevel();
+    const [row, col] = nextPosition;
+    const isGoal = level.goal[0] === row && level.goal[1] === col;
+
+    calmPathState.history.push(snapshotCalmPathState());
+    calmPathState.position = nextPosition;
+    calmPathState.visited.add(getCalmPathKey(row, col));
+
+    const statusParts = [learningMessage];
+    const treat = findCalmPathTreat(level, row, col);
+    if (treat && !calmPathState.collected.has(treat.id)) {
+        calmPathState.collected.add(treat.id);
+        const treatLabel = CALM_PATH_TREAT_DATA[treat.id]?.fullLabel || 'Radau';
+        statusParts.push(`${treatLabel} rasta.`);
+    }
+
+    if (isGoal && calmPathState.collected.size >= CALM_PATH_TOTAL_TREATS) {
+        calmPathState.completed = true;
+        calmPathState.phase = 'complete';
+        if (!calmPathState.rewardedLevels.has(level.id)) {
+            calmPathState.rewardedLevels.add(level.id);
+            awardReward('calm-path');
+        }
+        statusParts.push('Kelion\u0117 baigta. Baltas \u0161okoladas prid\u0117tas.');
+    }
+
+    setCalmPathStatus(statusParts.join(' '));
+    renderCalmPathGame();
+    scrollCalmPathTo(calmPathState.completed ? calmPathChallenge : calmPathBoard);
+}
+
+function rateCalmPathRecall(rating) {
+    if (
+        calmPathState.phase !== 'feedback' ||
+        !calmPathState.currentCard ||
+        !Array.isArray(calmPathState.pendingMove) ||
+        !['known', 'almost', 'again'].includes(rating)
+    ) {
+        return;
+    }
+
+    const card = calmPathState.currentCard;
+    const pendingMove = calmPathState.pendingMove.slice();
+    const priorAttempts = calmPathState.sessionAttempts.get(card.key) || 0;
+    calmPathState.sessionAttempts.set(card.key, priorAttempts + 1);
+    calmPathState.lastCardKey = card.key;
+    calmPathState.answeredCount += 1;
+    updateCalmPathMemory(card, rating);
+
+    let learningMessage = '';
+    if (rating === 'known') {
+        calmPathState.mastered.add(card.key);
+        calmPathState.reviewKeys.delete(card.key);
+        removeCalmPathCardFromQueue(card.key);
+        learningMessage = '\u017dini\u0105 \u012ftvirtinai.';
+    } else if (rating === 'almost') {
+        calmPathState.retryCount += 1;
+        calmPathState.reviewKeys.add(card.key);
+        scheduleCalmPathRetry(card, 3);
+        learningMessage = 'Beveik. Klausimas sugr\u012f\u0161 netrukus.';
+    } else {
+        calmPathState.retryCount += 1;
+        calmPathState.reviewKeys.add(card.key);
+        scheduleCalmPathRetry(card, 2);
+        learningMessage = 'Ramu. Klausimas sugr\u012f\u0161 po dviej\u0173 kit\u0173.';
+    }
+
+    calmPathState.currentCard = null;
+    calmPathState.pendingMove = null;
+    calmPathState.responseDraft = '';
+    calmPathState.phase = 'ready';
+    commitCalmPathMove(pendingMove, learningMessage);
+}
+
+function undoCalmPathMove() {
+    if (calmPathState.phase !== 'ready') {
+        return;
+    }
+    const snapshot = calmPathState.history.pop();
+    if (!snapshot) {
+        return;
+    }
+    restoreCalmPathState(snapshot);
+    setCalmPathStatus('Gr\u012f\u017eom vienu \u017eingsniu.');
+    renderCalmPathGame();
+}
+
+function initCalmPathGame() {
+    if (!calmPathBoard) {
+        return;
+    }
+    loadCalmPathMemory();
+    calmPathBoard.addEventListener('click', (event) => {
+        const cell = event.target instanceof Element ? event.target.closest('.calm-path-cell') : null;
+        if (!cell || !calmPathBoard.contains(cell)) {
+            return;
+        }
+        const row = Number.parseInt(cell.dataset.row || '', 10);
+        const col = Number.parseInt(cell.dataset.col || '', 10);
+        if (Number.isFinite(row) && Number.isFinite(col)) {
+            moveCalmPathTo(row, col);
+        }
+    });
+    calmPathRevealButton?.addEventListener('click', revealCalmPathAnswer);
+    calmPathResponse?.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+            event.preventDefault();
+            revealCalmPathAnswer();
+        }
+    });
+    calmPathRatingButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+            rateCalmPathRecall(button.dataset.calmPathRating || '');
+        });
+    });
+    calmPathUndoButton?.addEventListener('click', undoCalmPathMove);
+    calmPathResetButton?.addEventListener('click', () => {
+        resetCalmPathLevel({ advance: true });
+    });
+    syncCalmPathDeck({ force: true });
 }
 
 function normaliseFlashcardText(value) {
@@ -3402,6 +4278,7 @@ function clearFlashcardWidget() {
     if (flashcardCard) flashcardCard.dataset.flipped = 'false';
     updateRegenerateButtonsAvailability();
     updateFlashcardWidgetVisibility();
+    syncCalmPathDeck({ announce: true });
 }
 
 function clearQuizWidget() {
@@ -5227,6 +6104,7 @@ flashcardForm?.addEventListener('submit', async (event) => {
             persistFlashcardHistoryKeys(keys);
             requestFlashcardFrontReset();
             renderFlashcard();
+            syncCalmPathDeck({ announce: true });
             if (duplicatesRemoved > 0) {
                 flashcardExtraMessage = ' Pasikartojan\u010dios kortel\u0117s praleistos automati\u0161kai.';
             }
@@ -5270,6 +6148,7 @@ flashcardForm?.addEventListener('submit', async (event) => {
             flashcardState.flipped = Boolean(previousFlipped && flashcardState.cards.length > 0);
             requestFlashcardFrontReset();
             renderFlashcard();
+            syncCalmPathDeck({ announce: true });
         }
         setFlashcardStatus(error.message || 'Kuriant korteles \u012fvyko klaida.', 'error');
     } finally {
@@ -5329,5 +6208,6 @@ scheduleSplashHide();
 if (typeof ensureNotepadPlaceholder === 'function') {
     ensureNotepadPlaceholder(true);
 }
+initCalmPathGame();
 initialiseBlockJamMode();
 scheduleLayoutTopSync();
