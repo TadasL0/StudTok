@@ -6,7 +6,7 @@ const hero = document.querySelector('.hero');
 const heroBadge = document.querySelector('.hero__badge');
 const heroTitle = document.querySelector('.hero__title');
 const heroTagline = document.querySelector('.hero__tagline');
-const summerCountdown = document.getElementById('summer-countdown');
+const autumnCountdown = document.getElementById('autumn-countdown');
 const nameInput = document.getElementById('name-input');
 const introForm = document.getElementById('intro-form');
 
@@ -133,8 +133,8 @@ const calmPathSummaryText = document.getElementById('calm-path-summary-text');
 const pdfFileNameEmptyText = pdfFileName?.dataset?.empty || 'Failas nepasirinktas';
 const PASSCODE = 'differentdimension';
 const ZERO_WIDTH_SPACE_PATTERN = /[\u200B\u200C\u200D\u2060\uFEFF]/g;
-const SUMMER_THEME_CLASS = 'season-summer';
-const SUMMER_THEME_ALWAYS_ON = true;
+const AUTUMN_THEME_CLASS = 'season-autumn';
+const AUTUMN_THEME_ALWAYS_ON = true;
 const UV_INDEX_CACHE_KEY = 'pink-study-uv-index-v1';
 const UV_INDEX_CACHE_TTL_MS = 30 * 60 * 1000;
 const UV_INDEX_REFRESH_MS = 60 * 60 * 1000;
@@ -2115,7 +2115,7 @@ const latestWeekContext = {
     rotationIndex: 0,
     weekStart: null,
 };
-let summerOverlayInitialized = false;
+let autumnOverlayInitialized = false;
 
 function startOfDay(date) {
     const copy = new Date(date);
@@ -2129,9 +2129,9 @@ function getCalendarDayNumber(date) {
 
 function getHeroSeasonalCopy(reference = new Date()) {
     return {
-        badge: 'VASARA PRASIDEDA',
-        title: 'VASARA PRASIDEDA',
-        tagline: 'Mokykis su j\u016bros bangomis, saule, sm\u0117liu ir atostog\u0173 ramybe.',
+        badge: 'RUDENS SEZONAS',
+        title: 'RUDENS SEZONAS',
+        tagline: 'Mokykis su krintan\u010diais lapais, \u0161ilta arbata ir ramiu studij\u0173 ritmu.',
     };
 }
 
@@ -2148,38 +2148,39 @@ function applyHeroSeasonalCopy(reference = new Date()) {
     }
 }
 
-function updateSummerMessage() {
-    if (!summerCountdown) {
+function updateAutumnMessage() {
+    if (!autumnCountdown) {
         return;
     }
 
-    summerCountdown.innerHTML = 'Vasari\u0161ka mokymosi nuotaika jau <strong>\u010dia</strong>.';
+    autumnCountdown.innerHTML = 'Rudeni\u0161ka mokymosi nuotaika jau <strong>\u010dia</strong>.';
 }
 
-function isSummerSeason(date) {
+function isAutumnSeason(date) {
     const year = date.getFullYear();
-    const start = new Date(year, 5, 1, 0, 0, 0, 0);
-    const end = new Date(year, 7, 31, 23, 59, 59, 999);
+    const start = new Date(year, 8, 1, 0, 0, 0, 0);
+    const end = new Date(year, 10, 30, 23, 59, 59, 999);
     return date >= start && date <= end;
 }
 
-function initSummerDrift() {
-    if (summerOverlayInitialized) return;
+function initAutumnDrift() {
+    if (autumnOverlayInitialized) return;
 
-    const canvas = document.getElementById('summerCanvas');
+    const canvas = document.getElementById('autumnCanvas');
     if (!canvas) return;
 
     const ctx = canvas.getContext('2d');
     let width = 0;
     let height = 0;
     const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const maxSparks = prefersReducedMotion ? 24 : 64;
-    const sparks = [];
-    const sparkPalette = [
-        'rgba(255, 220, 113, 0.78)',
-        'rgba(99, 201, 232, 0.66)',
-        'rgba(255, 255, 255, 0.72)',
-        'rgba(255, 181, 117, 0.68)',
+    const maxLeaves = prefersReducedMotion ? 20 : 58;
+    const leaves = [];
+    const leafPalette = [
+        'rgba(214, 86, 72, 0.7)',
+        'rgba(230, 151, 70, 0.68)',
+        'rgba(174, 92, 100, 0.62)',
+        'rgba(116, 143, 98, 0.58)',
+        'rgba(245, 213, 151, 0.58)',
     ];
 
     function resize() {
@@ -2193,45 +2194,55 @@ function initSummerDrift() {
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     }
 
-    function createSpark() {
+    function createLeaf() {
         return {
             x: Math.random() * width,
             y: Math.random() * height,
-            radius: Math.random() * 2.8 + 1.6,
-            speed: Math.random() * (prefersReducedMotion ? 0.35 : 0.75) + 0.2,
-            drift: Math.random() * 0.55 - 0.2,
+            size: Math.random() * 8 + 7,
+            speed: Math.random() * (prefersReducedMotion ? 0.25 : 0.62) + 0.16,
+            drift: Math.random() * 0.42 - 0.12,
             sway: Math.random() * Math.PI * 2,
-            color: sparkPalette[Math.floor(Math.random() * sparkPalette.length)],
+            rotation: Math.random() * Math.PI * 2,
+            spin: (Math.random() - 0.5) * 0.018,
+            color: leafPalette[Math.floor(Math.random() * leafPalette.length)],
         };
     }
 
     resize();
-    for (let i = 0; i < maxSparks; i += 1) {
-        sparks.push(createSpark());
+    for (let i = 0; i < maxLeaves; i += 1) {
+        leaves.push(createLeaf());
     }
 
     function step() {
         ctx.clearRect(0, 0, width, height);
 
-        for (const spark of sparks) {
-            spark.y += spark.speed;
-            spark.x += spark.drift + Math.sin(spark.sway) * 0.35;
-            spark.sway += 0.01 + spark.speed * 0.02;
+        for (const leaf of leaves) {
+            leaf.y += leaf.speed;
+            leaf.x += leaf.drift + Math.sin(leaf.sway) * 0.5;
+            leaf.sway += 0.012 + leaf.speed * 0.018;
+            leaf.rotation += leaf.spin + Math.sin(leaf.sway) * 0.003;
 
-            if (spark.y > height + 10) {
-                spark.y = -12;
-                spark.x = Math.random() * width;
+            if (leaf.y > height + 18) {
+                leaf.y = -22;
+                leaf.x = Math.random() * width;
             }
 
-            if (spark.x > width + 12) spark.x = -12;
-            if (spark.x < -12) spark.x = width + 12;
+            if (leaf.x > width + 20) leaf.x = -20;
+            if (leaf.x < -20) leaf.x = width + 20;
 
             ctx.save();
-            ctx.translate(spark.x, spark.y);
-            ctx.fillStyle = spark.color;
+            ctx.translate(leaf.x, leaf.y);
+            ctx.rotate(leaf.rotation);
+            ctx.fillStyle = leaf.color;
             ctx.beginPath();
-            ctx.arc(0, 0, spark.radius, 0, Math.PI * 2);
+            ctx.ellipse(0, 0, leaf.size * 0.42, leaf.size, Math.PI / 4, 0, Math.PI * 2);
             ctx.fill();
+            ctx.strokeStyle = 'rgba(255, 246, 225, 0.42)';
+            ctx.lineWidth = 0.8;
+            ctx.beginPath();
+            ctx.moveTo(-leaf.size * 0.34, leaf.size * 0.34);
+            ctx.lineTo(leaf.size * 0.34, -leaf.size * 0.34);
+            ctx.stroke();
             ctx.restore();
         }
 
@@ -2239,7 +2250,7 @@ function initSummerDrift() {
     }
 
     window.addEventListener('resize', resize);
-    summerOverlayInitialized = true;
+    autumnOverlayInitialized = true;
     step();
 }
 
@@ -2250,14 +2261,14 @@ function applySeasonalTheme(date = new Date()) {
     }
 
     applyHeroSeasonalCopy(date);
-    updateSummerMessage();
-    if (SUMMER_THEME_ALWAYS_ON || isSummerSeason(date)) {
-        body.classList.add(SUMMER_THEME_CLASS);
-        initSummerDrift();
+    updateAutumnMessage();
+    if (AUTUMN_THEME_ALWAYS_ON || isAutumnSeason(date)) {
+        body.classList.add(AUTUMN_THEME_CLASS);
+        initAutumnDrift();
         return;
     }
 
-    body.classList.remove(SUMMER_THEME_CLASS);
+    body.classList.remove(AUTUMN_THEME_CLASS);
 }
 
 function getUvRiskLevel(value) {
@@ -6199,7 +6210,7 @@ document.addEventListener('visibilitychange', () => {
     if (!document.hidden) {
         updateWeekIndicator();
         applySeasonalTheme();
-        updateSummerMessage();
+        updateAutumnMessage();
         updateUvIndex();
     }
 });
