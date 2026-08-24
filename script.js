@@ -1876,6 +1876,7 @@ const TIMETABLE_FALL_SEMESTER_START_MONTH = 8;
 const TIMETABLE_FALL_SEMESTER_START_DAY = 1;
 const TIMETABLE_FLUIDS_TITLE = 'Skys\u010di\u0173 mechanika ir termodinamika (APAVB22501)';
 const TIMETABLE_FLUIDS_LECTURER_CHANGE_DATE = '2026-11-09';
+const TIMETABLE_NEXT_WEEK_AFTER_FRIDAY_MINUTES = 14 * 60;
 const IMPORTANT_DATES_MONTH_SHORT = ['Sau', 'Vas', 'Kov', 'Bal', 'Geg', 'Bir', 'Lie', 'Rgp', 'Rgs', 'Spa', 'Lap', 'Gru'];
 const IMPORTANT_DATES_WEEKDAY_SHORT = ['Sek', 'Pir', 'Ant', 'Tre', 'Ket', 'Pen', '\u0160e'];
 const IMPORTANT_DATES_MAX_UPCOMING = 3;
@@ -2013,22 +2014,6 @@ const TIMETABLE_DATA = {
         ],
     },
     2: {
-        Pirmadienis: [
-            {
-                time: '10:20-11:55',
-                title: TIMETABLE_FLUIDS_TITLE,
-                location: 'P2 157',
-                lecturer: 'Doc. Dr. Rasa Stankevi\u010dien\u0117',
-                type: 'Paskaitos',
-            },
-            {
-                time: '12:10-13:45',
-                title: TIMETABLE_FLUIDS_TITLE,
-                location: 'P2 511',
-                lecturer: 'Doc. Dr. Rasa Stankevi\u010dien\u0117',
-                type: 'Pratybos',
-            },
-        ],
         Antradienis: [
             {
                 time: '08:30-10:05',
@@ -2105,6 +2090,20 @@ const TIMETABLE_DATA = {
                 location: 'P1 321',
                 lecturer: 'Dr. R\u016bta Dadelien\u0117',
                 type: 'Paskaitos',
+            },
+            {
+                time: '10:20-11:55',
+                title: TIMETABLE_FLUIDS_TITLE,
+                location: 'P2 157',
+                lecturer: 'Doc. Dr. Rasa Stankevi\u010dien\u0117',
+                type: 'Paskaitos',
+            },
+            {
+                time: '12:10-13:45',
+                title: TIMETABLE_FLUIDS_TITLE,
+                location: 'P2 511',
+                lecturer: 'Doc. Dr. Rasa Stankevi\u010dien\u0117',
+                type: 'Pratybos',
             },
         ],
     },
@@ -2529,11 +2528,15 @@ function getTimetableWeekData(weekNumber, weekStartDate) {
 
     const timetableWeekKey = formatDateKey(weekStartDate);
     if (timetableWeekKey >= TIMETABLE_FLUIDS_LECTURER_CHANGE_DATE) {
-        const mondaySessions = Array.isArray(weekData.Pirmadienis) ? weekData.Pirmadienis : [];
-        mondaySessions.forEach((session) => {
-            if (session?.title === TIMETABLE_FLUIDS_TITLE) {
-                session.lecturer = 'Doc. Dr. Giedr\u0117 Streckien\u0117';
+        Object.values(weekData).forEach((sessions) => {
+            if (!Array.isArray(sessions)) {
+                return;
             }
+            sessions.forEach((session) => {
+                if (session?.title === TIMETABLE_FLUIDS_TITLE) {
+                    session.lecturer = 'Doc. Dr. Giedr\u0117 Streckien\u0117';
+                }
+            });
         });
     }
 
@@ -2543,7 +2546,7 @@ function getTimetableWeekData(weekNumber, weekStartDate) {
 function shouldPreferNextWeekView(date) {
     const day = date.getDay();
     const minutes = date.getHours() * 60 + date.getMinutes();
-    if (day === 5 && minutes >= 12 * 60) {
+    if (day === 5 && minutes >= TIMETABLE_NEXT_WEEK_AFTER_FRIDAY_MINUTES) {
         return true;
     }
     if (day === 6 || day === 0) {
