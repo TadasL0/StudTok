@@ -2526,6 +2526,8 @@ function getTimetableWeekData(weekNumber, weekStartDate) {
         return weekData;
     }
 
+    delete weekData.Pirmadienis;
+
     const timetableWeekKey = formatDateKey(weekStartDate);
     if (timetableWeekKey >= TIMETABLE_FLUIDS_LECTURER_CHANGE_DATE) {
         Object.values(weekData).forEach((sessions) => {
